@@ -70,11 +70,8 @@ if 'generated_poster_prompt' not in st.session_state: st.session_state.generated
 # ==========================================
 # 🎨 UI Header & Sidebar
 # ==========================================
-# ✨ แก้ไขโค้ดส่วนนี้เพื่อป้องกันบั๊กคู่มือแสดงบนหน้าเว็บ ✨
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
-
-st.sidebar.metric(label="💳 เครดิตคงเหลือ", value="25000")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 st.markdown("**1. อัปโหลดรูป -> 2. ดึงข้อความ -> 3. เลือกแท็บ -> 4. กดเจน Prompt**")
@@ -164,7 +161,7 @@ with tab_video:
     with col2:
         st.selectbox("🎥 สไตล์วิดีโอ:", ["UGC (รีวิวบ้านๆ จริงใจ)", "Cinematic (พรีเมียม)", "Unboxing / ASMR"], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)"], key="v_story")
-        st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)"], key="v_duration")
+        st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
         st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่เน้นๆ)", "ข้อความภาษาอังกฤษ", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
     with col3:
         st.selectbox("🎨 สไตล์ภาพ (Visual):", ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar Style)", "อนิเมะญี่ปุ่น (Anime)"], key="v_visual")
@@ -191,20 +188,22 @@ with tab_video:
                         ข้อความบนจอ: {st.session_state.v_text_overlay} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก (Strict Rules) ต้องทำตามอย่างเคร่งครัด:
-                        1. ห้ามมีคำเกริ่นนำ ทักทาย สรุป หรือคำอธิบายใดๆ นอกเหนือจากสคริปต์เด็ดขาด
-                        2. ให้เริ่มต้นข้อความบรรทัดแรกด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. ประมวลผลและเขียนสคริปต์ออกมาให้ครบถ้วนสมบูรณ์จนจบฉากสุดท้าย ห้ามตัดจบกลางคันเด็ดขาด
-                        4. รูปแบบของแต่ละฉากต้องมีองค์ประกอบครบถ้วนตามนี้เป๊ะๆ (ห้ามเปลี่ยนคำนำหน้าหัวข้อ):
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับ:" แล้ววิเคราะห์สั้นๆ (1-2 บรรทัด) ว่าการตั้งค่าสคริปต์นี้เหมาะจะเอาไปใช้ยิงแอดแพลตฟอร์มไหน หรือเหมาะกับสินค้าประเภทใด
+                        2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที ห้ามเกริ่นนำอย่างอื่นอีก
+                        3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท ดูเป็นโฆษณาระดับมืออาชีพ
+                        4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration} และสอดคล้องกับความยาวของบทพูด ห้ามยัดเยียดฉากมากเกินไปจนตัดต่อไม่ทัน
+                        5. ประมวลผลและเขียนสคริปต์ออกมาให้ครบถ้วนสมบูรณ์จนจบฉากสุดท้าย ห้ามตัดจบกลางคันเด็ดขาด
+                        6. รูปแบบของแต่ละฉากต้องมีองค์ประกอบครบถ้วนตามนี้เป๊ะๆ (ห้ามเปลี่ยนคำนำหน้าหัวข้อ):
                         
                         ฉากที่ [หมายเลข]
                         -⏱️ ความยาว: [กี่วินาที]
-                        -🎥 มุมกล้อง: [เช่น Close-up, Pan left, Zoom in]
+                        -🎥 มุมกล้อง: [เช่น Close-up, Pan left, Smooth transition from previous scene]
                         -🎬 ภาพที่เห็น: [อธิบายการกระทำ หรือสิ่งที่เกิดขึ้นในวิดีโอ]
                         -💬 ข้อความบนจอ: [คำโปรยตามสไตล์ {st.session_state.v_text_overlay}]
                         -🎵 เสียง: [ดนตรีประกอบ หรือเสียงเอฟเฟกต์]
                         -🗣️ บทพูด: [ข้อความบทพูดภาษา {st.session_state.v_lang} และเน้น CTA {st.session_state.v_cta} ในฉากสุดท้าย]
-                        -🖼️ Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษล้วน บรรยายภาพ {st.session_state.v_visual} อย่างละเอียด เพื่อใช้สร้างรูปตั้งต้น)
-                        -🎞️ Prompt สร้างวิดีโอ: (ภาษาอังกฤษล้วน บรรยายการเคลื่อนไหว/Motion ที่ต่อเนื่องจากภาพนิ่ง เพื่อให้ AI วิดีโอขยับภาพ)"""
+                        -🖼️ Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษล้วน บรรยายภาพ {st.session_state.v_visual} อย่างละเอียด)
+                        -🎞️ Prompt สร้างวิดีโอ: (ภาษาอังกฤษล้วน บรรยายการเคลื่อนไหวที่ต่อเนื่องจากภาพนิ่ง เพื่อให้ AI วิดีโอขยับภาพ)"""
                         
                         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
                         st.session_state.generated_video_prompt = response.text
@@ -240,46 +239,78 @@ with tab_video:
         st.markdown("##### ✍️ แคปชั่นสำหรับนำไปโพสต์ (Copy ได้เลย)")
         st.info(st.session_state.generated_captions)
 
+    # แผงควบคุมโรงงาน (Pipeline)
     if st.session_state.generated_video_prompt:
         st.markdown("---")
-        st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา (คิวถ่ายทำทีละฉาก)")
-        st.info("💡 ระบบจะดึงรูปที่คุณอัปโหลดไว้รูปแรกสุด ไปเป็น 'รูปอ้างอิง' ในการสร้างภาพนิ่งให้โดยอัตโนมัติ")
-        st.markdown("⚙️ **ตั้งค่าเครดิตสำหรับบอท (ใช้กับทุกฉาก):**")
-        bot_credit = st.radio("เลือกระบบเครดิต (Veo 3.1):", ["Lower Priority (ฟรี 0 เครดิต)", "Fast (ใช้ 10 เครดิต)"], horizontal=True)
-        credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
+        st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา")
+        
+        view_mode = st.radio(
+            "🖥️ เลือกรูปแบบการใช้งานของคุณ:",
+            ["💻 ใช้บนคอมพิวเตอร์ (รันบอทอัตโนมัติทีละฉาก)", "📱 ใช้บนมือถือ (โชว์สคริปต์รวม ก๊อปปี้ไปทำเอง)"],
+            horizontal=True
+        )
+
         raw_text = st.session_state.generated_video_prompt
-        scenes = raw_text.split("ฉากที่")
+        
+        # ✨แยกระบบโชว์ "ไฮไลต์วิเคราะห์ความเหมาะสม" ไว้ด้านบน
+        if "ฉากที่ 1" in raw_text:
+            header_text, scenes_text = raw_text.split("ฉากที่ 1", 1)
+            if header_text.strip():
+                st.success(header_text.strip())
+            scenes = ("ฉากที่ 1" + scenes_text).split("ฉากที่")
+        else:
+            scenes = raw_text.split("ฉากที่")
+            
         valid_scenes = [s for s in scenes if len(s.strip()) > 5]
-        for i, scene_text in enumerate(valid_scenes):
-            scene_num = i + 1
-            full_scene_text = "ฉากที่" + scene_text
-            with st.expander(f"🎬 คิวถ่ายทำ: ฉากที่ {scene_num}", expanded=True):
-                edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
-                terminal_box = st.empty()
-                if st.button(f"🚀 สั่งบอทลุย 'ฉากที่ {scene_num}' (อัปโหลดรูปต้นฉบับ ➡️ เจนภาพนิ่งพื้นฐาน)", type="primary", key=f"btn_scene_{i}"):
-                    if not st.session_state.uploaded_img_paths: st.error("🛑 กรุณาอัปโหลดรูปภาพด้านบนให้เรียบร้อยก่อนครับ")
-                    else:
-                        ref_img_path = st.session_state.uploaded_img_paths[0] 
-                        extracted_img_prompt = edited_prompt
-                        if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
-                            parts = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")
-                            if len(parts) > 1:
-                                extracted = parts[1]
-                                if "-🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
-                                elif "🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
-                                extracted_img_prompt = extracted.strip()
-                        with open("bot_task.json", "w", encoding="utf-8") as f: json.dump({"type": "scene_pipeline", "prompt": extracted_img_prompt, "credit_mode": credit_val, "ref_image": ref_img_path }, f, ensure_ascii=False)
-                        log_text = f"> เริ่มเดินเครื่องผลิต ฉากที่ {scene_num}...\n"
-                        terminal_box.code(log_text, language="bash")
-                        try:
-                            custom_env = os.environ.copy()
-                            custom_env["PYTHONIOENCODING"] = "utf-8"
-                            process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env)
-                            for line in process.stdout: log_text += line; terminal_box.code(log_text, language="bash")
-                            process.wait() 
-                            if process.returncode == 0: st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ!")
-                            else: st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
-                        except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
+
+        # ----------------------------------------------------
+        # 💻 โหมดคอมพิวเตอร์ (รันบอททีละฉาก)
+        # ----------------------------------------------------
+        if "คอมพิวเตอร์" in view_mode:
+            st.info("💡 ระบบจะดึงรูปที่คุณอัปโหลดไว้รูปแรกสุด ไปเป็น 'รูปอ้างอิง' ในการสร้างภาพนิ่งให้โดยอัตโนมัติ")
+            st.markdown("⚙️ **ตั้งค่าเครดิตสำหรับบอท (ใช้กับทุกฉาก):**")
+            bot_credit = st.radio("เลือกระบบเครดิต (Veo 3.1):", ["Lower Priority (ฟรี 0 เครดิต)", "Fast (ใช้ 10 เครดิต)"], horizontal=True)
+            credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
+            
+            for i, scene_text in enumerate(valid_scenes):
+                scene_num = i + 1
+                full_scene_text = "ฉากที่" + scene_text
+                with st.expander(f"🎬 คิวถ่ายทำ: ฉากที่ {scene_num}", expanded=True):
+                    edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
+                    terminal_box = st.empty()
+                    if st.button(f"🚀 สั่งบอทลุย 'ฉากที่ {scene_num}'", type="primary", key=f"btn_scene_{i}"):
+                        if not st.session_state.uploaded_img_paths: 
+                            st.error("🛑 กรุณาอัปโหลดรูปภาพด้านบนให้เรียบร้อยก่อนครับ")
+                        else:
+                            ref_img_path = st.session_state.uploaded_img_paths[0] 
+                            extracted_img_prompt = edited_prompt
+                            if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
+                                parts = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")
+                                if len(parts) > 1:
+                                    extracted = parts[1]
+                                    if "-🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
+                                    elif "🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
+                                    extracted_img_prompt = extracted.strip()
+                            with open("bot_task.json", "w", encoding="utf-8") as f: 
+                                json.dump({"type": "scene_pipeline", "prompt": extracted_img_prompt, "credit_mode": credit_val, "ref_image": ref_img_path }, f, ensure_ascii=False)
+                            log_text = f"> เริ่มเดินเครื่องผลิต ฉากที่ {scene_num}...\n"
+                            terminal_box.code(log_text, language="bash")
+                            try:
+                                custom_env = os.environ.copy()
+                                custom_env["PYTHONIOENCODING"] = "utf-8"
+                                process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env)
+                                for line in process.stdout: log_text += line; terminal_box.code(log_text, language="bash")
+                                process.wait() 
+                                if process.returncode == 0: st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ!")
+                                else: st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
+                            except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
+        
+        # ----------------------------------------------------
+        # 📱 โหมดมือถือ (แสดงสคริปต์รวมในกล่องเดียว)
+        # ----------------------------------------------------
+        else:
+            st.info("📱 คุณสามารถกดปุ่ม Copy 📄 ที่มุมขวาบนของกล่องข้อความ เพื่อนำไปวางใน Google Flow ได้เลยครับ")
+            st.code(st.session_state.generated_video_prompt, language="markdown")
 
 # ==========================================
 # 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
