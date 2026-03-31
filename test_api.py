@@ -1,7 +1,7 @@
 from google import genai
 
 # วาง API Key ของคุณ (ใช้ตัวล่าสุดที่คุณสร้างมาได้เลยครับ)
-API_KEY = "AIzaSyBVwfDhiN1BfFfgrbvjD865CCPv2o38H5o" 
+API_KEY = "ใส่คีย์เทส" 
 
 # รูปแบบการเรียกใช้งานแบบใหม่
 client = genai.Client(api_key=API_KEY)
