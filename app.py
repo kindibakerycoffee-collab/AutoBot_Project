@@ -38,6 +38,7 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
+# ค่าเริ่มต้นวิดีโอ
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "ชาย (Male)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
@@ -50,6 +51,7 @@ if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจร
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
+# ค่าเริ่มต้นโปสเตอร์
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
@@ -58,13 +60,12 @@ if 'generated_poster_prompt' not in st.session_state: st.session_state.generated
 # --- ✨ ระบบความจำสำหรับจัดการ API Key ✨ ---
 if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
 if 'key_status' not in st.session_state: 
-    # สร้างสถานะเริ่มต้นให้ทุกคีย์
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
     if api_keys_list:
         st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
 
 # ==========================================
-# 🧠 ฟังก์ชันผู้จัดการคีย์อัจฉริยะ (อัปเดตสถานะขึ้น Sidebar ด้วย)
+# 🧠 ฟังก์ชันผู้จัดการคีย์อัจฉริยะ
 # ==========================================
 def smart_generate(prompt_contents):
     if not api_keys_list:
@@ -75,7 +76,6 @@ def smart_generate(prompt_contents):
     total_keys = len(api_keys_list)
     
     for i in range(total_keys):
-        # วนลูปเริ่มจากคีย์ล่าสุดที่ใช้งานได้
         idx = (start_idx + i) % total_keys 
         key = api_keys_list[idx]
         
@@ -86,7 +86,6 @@ def smart_generate(prompt_contents):
                 contents=prompt_contents
             )
             
-            # ถ้าสำเร็จ: อัปเดตคีย์นี้เป็นสีเขียว และเปลี่ยนคีย์อื่นที่ไม่ได้พังเป็นสแตนด์บาย
             st.session_state.current_key_idx = idx
             st.session_state.key_status[idx] = "🟢 กำลังใช้งาน"
             for j in range(total_keys):
@@ -96,13 +95,10 @@ def smart_generate(prompt_contents):
             return response.text 
             
         except Exception as e:
-            # ถ้าพัง: อัปเดตคีย์นี้เป็นสีแดง แล้ววนลูปไปลองคีย์ถัดไป
             last_error = str(e)
             st.session_state.key_status[idx] = "🔴 ติดลิมิต (รอ 1 นาที)"
-            print(f"⚠️ คีย์ตัวที่ {idx+1} มีปัญหา -> สลับคีย์...")
             continue
             
-    # ถ้าพังหมดทุกตัว
     raise Exception(f"กองกำลัง API Key ทั้ง {total_keys} ตัว ติดลิมิตหมดแล้วครับ! กรุณารอประมาณ 1 นาทีเพื่อให้โควต้ารีเซ็ตตัวเอง")
 
 # ==========================================
@@ -111,7 +107,7 @@ def smart_generate(prompt_contents):
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
 
-# --- ✨ แดชบอร์ดมอนิเตอร์ API Key ที่ Sidebar ✨ ---
+# --- ✨ แดชบอร์ดมอนิเตอร์ API Key + ปุ่มรีเซ็ต ✨ ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
 if not api_keys_list:
@@ -121,14 +117,22 @@ else:
         status = st.session_state.key_status.get(i, "⏳ สแตนด์บาย")
         st.sidebar.markdown(f"**หมายเลข {i+1}:** {status}")
 
-st.sidebar.caption("💡 ทริค: หากขึ้น 🔴 ติดลิมิต บอทจะสลับคีย์ให้เอง หากแดงทั้งหมด ให้รอประมาณ 1 นาทีเพื่อให้ระบบรีเซ็ตโควต้าครับ")
+    # ✨ เพิ่มปุ่มรีเซ็ตคีย์ ✨
+    if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์ทั้งหมด", use_container_width=True):
+        st.session_state.current_key_idx = 0
+        st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
+        if api_keys_list:
+            st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
+        st.rerun() # สั่งให้หน้าเว็บโหลดใหม่ทันทีเพื่ออัปเดตสีไฟสถานะ
+
+st.sidebar.caption("💡 ทริค: ปุ่มรีเซ็ตจะล้างสถานะ 🔴 ให้กลับมาพร้อมใช้งานใหม่ทันที (แนะนำให้กดเมื่อพักใช้งานไปแล้ว 1 นาที)")
 st.sidebar.markdown("---")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 st.markdown("**1. อัปโหลดรูป -> 2. ดึงข้อความ -> 3. เลือกแท็บ -> 4. กดเจน Prompt**")
 
 # ==========================================
-# 📸 1. ส่วนดึงข้อความและบันทึกรูปภาพ
+# 📸 1. ส่วนดึงข้อความ
 # ==========================================
 with st.expander("➕ อัปโหลดรูปภาพอ้างอิง (สินค้า, พรีเซนเตอร์)", expanded=True):
     uploaded_files = st.file_uploader("Drag and drop files here", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
@@ -147,21 +151,18 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
         if not uploaded_files:
             st.warning("⚠️ กรุณาอัปโหลดรูปภาพก่อนครับ")
         elif not api_keys_list:
-            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ก่อนครับ")
+            st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
         else:
-            with st.spinner("กำลังให้ AI สแกนข้อความจากรูปภาพ (ระบบสลับคีย์อัตโนมัติ)..."):
+            with st.spinner("กำลังให้ AI สแกนข้อความจากรูปภาพ..."):
                 try:
                     extracted_info = ""
                     for i, img_file in enumerate(uploaded_files):
                         img = Image.open(img_file)
-                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ โดยให้ความสำคัญกับความถูกต้องของหน้าตาสินค้าต้นฉบับ"
-                        
+                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ"
                         result_text = smart_generate([img, prompt]) 
                         extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{result_text}\n\n"
-                        
                         if i < len(uploaded_files) - 1:
                             time.sleep(4)
-                    
                     st.session_state.product_text = extracted_info
                     st.success("✅ ดึงข้อความและบันทึกรูปต้นฉบับสำเร็จ!")
                 except Exception as e:
@@ -227,7 +228,7 @@ with tab_video:
             elif not api_keys_list:
                 st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
             else:
-                with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์ (ระบบสลับคีย์อัตโนมัติ)..."):
+                with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
@@ -236,27 +237,16 @@ with tab_video:
                         งานภาพ: {st.session_state.v_visual} | กลุ่มเป้าหมาย: {st.session_state.v_target} 
                         ข้อความบนจอ: {st.session_state.v_text_overlay} | ปิดการขาย: {st.session_state.v_cta}
                         
-                        🚨 กฎเหล็ก (Strict Rules) ต้องทำตามอย่างเคร่งครัด:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับ:" แล้ววิเคราะห์สั้นๆ (1-2 บรรทัด) ว่าการตั้งค่าสคริปต์นี้เหมาะจะเอาไปใช้ยิงแอดแพลตฟอร์มไหน หรือเหมาะกับสินค้าประเภทใด
-                        2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที ห้ามเกริ่นนำอย่างอื่นอีก
-                        3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท ดูเป็นโฆษณาระดับมืออาชีพ
-                        4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration} และสอดคล้องกับความยาวของบทพูด ห้ามยัดเยียดฉากมากเกินไปจนตัดต่อไม่ทัน
-                        5. ประมวลผลและเขียนสคริปต์ออกมาให้ครบถ้วนสมบูรณ์จนจบฉากสุดท้าย ห้ามตัดจบกลางคันเด็ดขาด
-                        6. รูปแบบของแต่ละฉากต้องมีองค์ประกอบครบถ้วนตามนี้เป๊ะๆ (ห้ามเปลี่ยนคำนำหน้าหัวข้อ):
-                        
-                        ฉากที่ [หมายเลข]
-                        -⏱️ ความยาว: [กี่วินาที]
-                        -🎥 มุมกล้อง: [เช่น Close-up, Pan left, Smooth transition from previous scene]
-                        -🎬 ภาพที่เห็น: [อธิบายการกระทำ หรือสิ่งที่เกิดขึ้นในวิดีโอ]
-                        -💬 ข้อความบนจอ: [คำโปรยตามสไตล์ {st.session_state.v_text_overlay}]
-                        -🎵 เสียง: [ดนตรีประกอบ หรือเสียงเอฟเฟกต์]
-                        -🗣️ บทพูด: [ข้อความบทพูดภาษา {st.session_state.v_lang} และเน้น CTA {st.session_state.v_cta} ในฉากสุดท้าย]
-                        -🖼️ Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษล้วน บรรยายภาพ {st.session_state.v_visual} อย่างละเอียด)
-                        -🎞️ Prompt สร้างวิดีโอ: (ภาษาอังกฤษล้วน บรรยายการเคลื่อนไหวที่ต่อเนื่องจากภาพนิ่ง เพื่อให้ AI วิดีโอขยับภาพ)"""
+                        🚨 กฎเหล็ก:
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับ:" แล้ววิเคราะห์สั้นๆ
+                        2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
+                        3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
+                        4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
+                        5. รูปแบบฉากต้องครบถ้วน: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
-                        st.success("✅ สร้าง Prompt วิดีโอสำเร็จ! เลื่อนลงไปดูคิวถ่ายทำด้านล่างได้เลย")
+                        st.success("✅ สร้าง Prompt วิดีโอสำเร็จ!")
                     except Exception as e:
                         st.error(f"❌ โหมดเจนวิดีโอล้มเหลว: {e}")
                         
@@ -272,11 +262,8 @@ with tab_video:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
                         ปิดการขายด้วย: {st.session_state.v_cta}
-                        
-                        จงเขียนแคปชั่นขายของแยกเป็น 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
-                        🚨 กฎเหล็ก: สำหรับแคปชั่น Shopee ต้องมีความยาวรวมแฮชแท็กแล้ว "ห้ามเกิน 150 ตัวอักษรเด็ดขาด" เน้นให้สั้น กระชับ และดึงดูดที่สุด 
-                        ห้ามตัดจบดื้อๆ เขียนให้จบประโยคสมบูรณ์ทุกแพลตฟอร์ม"""
-                        
+                        จงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
+                        🚨 สำหรับแคปชั่น Shopee ต้องไม่เกิน 150 ตัวอักษร"""
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_captions = result_text
                         st.success("✅ คิดแคปชั่นสำเร็จ!")
@@ -285,138 +272,68 @@ with tab_video:
 
     if st.session_state.generated_captions:
         st.markdown("---")
-        st.markdown("##### ✍️ แคปชั่นสำหรับนำไปโพสต์ (Copy ได้เลย)")
         st.info(st.session_state.generated_captions)
 
     if st.session_state.generated_video_prompt:
         st.markdown("---")
-        st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา")
-        
-        view_mode = st.radio(
-            "🖥️ เลือกรูปแบบการใช้งานของคุณ:",
-            ["💻 ใช้บนคอมพิวเตอร์ (รันบอทอัตโนมัติทีละฉาก)", "📱 ใช้บนมือถือ (โชว์สคริปต์รวม ก๊อปปี้ไปทำเอง)"],
-            horizontal=True
-        )
-
+        view_mode = st.radio("🖥️ เลือกรูปแบบการใช้งาน:", ["💻 ใช้บนคอมพิวเตอร์", "📱 ใช้บนมือถือ"], horizontal=True)
         raw_text = st.session_state.generated_video_prompt
-        
         if "ฉากที่ 1" in raw_text:
             header_text, scenes_text = raw_text.split("ฉากที่ 1", 1)
-            if header_text.strip():
-                st.success(header_text.strip())
+            if header_text.strip(): st.success(header_text.strip())
             scenes = ("ฉากที่ 1" + scenes_text).split("ฉากที่")
-        else:
-            scenes = raw_text.split("ฉากที่")
-            
+        else: scenes = raw_text.split("ฉากที่")
         valid_scenes = [s for s in scenes if len(s.strip()) > 5]
 
         if "คอมพิวเตอร์" in view_mode:
-            st.info("💡 ระบบจะดึงรูปที่คุณอัปโหลดไว้รูปแรกสุด ไปเป็น 'รูปอ้างอิง' ในการสร้างภาพนิ่งให้โดยอัตโนมัติ")
-            st.markdown("⚙️ **ตั้งค่าเครดิตสำหรับบอท (ใช้กับทุกฉาก):**")
-            bot_credit = st.radio("เลือกระบบเครดิต (Veo 3.1):", ["Lower Priority (ฟรี 0 เครดิต)", "Fast (ใช้ 10 เครดิต)"], horizontal=True)
+            bot_credit = st.radio("เลือกระบบเครดิต:", ["Lower Priority (ฟรี)", "Fast (10 เครดิต)"], horizontal=True)
             credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
-            
             for i, scene_text in enumerate(valid_scenes):
                 scene_num = i + 1
                 full_scene_text = "ฉากที่" + scene_text
-                with st.expander(f"🎬 คิวถ่ายทำ: ฉากที่ {scene_num}", expanded=True):
+                with st.expander(f"🎬 ฉากที่ {scene_num}", expanded=True):
                     edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
                     terminal_box = st.empty()
-                    if st.button(f"🚀 สั่งบอทลุย 'ฉากที่ {scene_num}'", type="primary", key=f"btn_scene_{i}"):
-                        if not st.session_state.uploaded_img_paths: 
-                            st.error("🛑 กรุณาอัปโหลดรูปภาพด้านบนให้เรียบร้อยก่อนครับ")
+                    if st.button(f"🚀 สั่งบอทลุยฉาก {scene_num}", type="primary", key=f"btn_scene_{i}"):
+                        if not st.session_state.uploaded_img_paths: st.error("🛑 อัปโหลดรูปภาพก่อน!")
                         else:
                             ref_img_path = st.session_state.uploaded_img_paths[0] 
                             extracted_img_prompt = edited_prompt
                             if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
-                                parts = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")
-                                if len(parts) > 1:
-                                    extracted = parts[1]
-                                    if "-🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
-                                    elif "🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
-                                    extracted_img_prompt = extracted.strip()
+                                extracted_img_prompt = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")[1].split("-🎞️")[0].strip()
                             with open("bot_task.json", "w", encoding="utf-8") as f: 
                                 json.dump({"type": "scene_pipeline", "prompt": extracted_img_prompt, "credit_mode": credit_val, "ref_image": ref_img_path }, f, ensure_ascii=False)
-                            log_text = f"> เริ่มเดินเครื่องผลิต ฉากที่ {scene_num}...\n"
+                            log_text = f"> เริ่มรันบอทฉาก {scene_num}...\n"
                             terminal_box.code(log_text, language="bash")
                             try:
-                                custom_env = os.environ.copy()
-                                custom_env["PYTHONIOENCODING"] = "utf-8"
-                                process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env)
+                                process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
                                 for line in process.stdout: log_text += line; terminal_box.code(log_text, language="bash")
                                 process.wait() 
-                                if process.returncode == 0: st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ!")
-                                else: st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
-                            except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
+                                if process.returncode == 0: st.success(f"✅ บอททำงานสำเร็จ!")
+                                else: st.error("❌ บอทขัดข้อง ดูใน Terminal")
+                            except Exception as e: st.error(f"❌ เรียกบอทล้มเหลว: {e}")
         else:
-            st.info("📱 คุณสามารถกดปุ่ม Copy 📄 ที่มุมขวาบนของกล่องข้อความ เพื่อนำไปวางใน Google Flow ได้เลยครับ")
+            st.info("📱 กดปุ่ม Copy ที่มุมขวากล่องข้อความด้านล่าง เพื่อนำไปใช้ในมือถือ")
             st.code(st.session_state.generated_video_prompt, language="markdown")
 
-# ==========================================
-# 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
-# ==========================================
 with tab_poster:
     st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.selectbox("📄 สไตล์โปสเตอร์โฆษณา:", [
-            "Hard Sale / โปรแรง (ตะโกนขาย)",
-            "Soft Sell / อารมณ์ไลฟ์สไตล์",
-            "Minimalist / มินิมอล (คลีนๆ)",
-            "Infographic / อธิบายจุดขาย",
-            "Magazine Cover / ปกนิตยสาร",
-            "Pop-Art / Y2K (กราฟิกสีจัดจ้าน)",
-            "Meme / มีมไวรัล (ตลกขบขัน)"
-        ], key="p_style", help="ตัวหนังสือใหญ่ เน้นราคา (Shopee/Lazada/TikTok)")
-
+        st.selectbox("📄 สไตล์โปสเตอร์:", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์", "Minimalist / มินิมอล", "Infographic / อธิบายจุดขาย", "Magazine Cover", "Pop-Art / Y2K", "Meme / มีมไวรัล"], key="p_style")
     with col2:
-        st.selectbox("📏 สัดส่วนภาพโปสเตอร์:", [
-            "แนวนอน 16:9 (YouTube / TV)",
-            "แนวนอน 4:3 (Standard Photo)",
-            "จัตุรัส 1:1 (FB / IG Post)",
-            "แนวตั้ง 3:4 (Portrait)",
-            "แนวตั้ง 9:16 (Story / Reels / TikTok)"
-        ], key="p_ratio", help="เลือกสัดส่วนให้ตรงกับตำแหน่งที่จะยิงแอด")
-
-    st.selectbox("🎨 โทนสีหลักของโปสเตอร์:", [
-        "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)",
-        "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)",
-        "สีพาสเทล (น่ารัก ละมุน)",
-        "สีขาวดำ/เทา (หรูหรา มินิมอล)",
-        "สีนีออนสะท้อนแสง (โดดเด่น ไซไฟ)"
-    ], key="p_color", help="กำหนดอารมณ์และโทนสีหลักของภาพ")
-
+        st.selectbox("📏 สัดส่วนภาพ:", ["แนวนอน 16:9", "แนวนอน 4:3", "จัตุรัส 1:1", "แนวตั้ง 3:4", "แนวตั้ง 9:16"], key="p_ratio")
+    st.selectbox("🎨 โทนสีหลัก:", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม", "สีพาสเทล", "สีขาวดำ/เทา", "สีนีออน"], key="p_color")
     if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
-        if not st.session_state.product_text.strip():
-            st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
-        elif not api_keys_list:
-            st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
+        if not st.session_state.product_text.strip(): st.warning("⚠️ ใส่ข้อมูลสินค้าก่อน!")
+        elif not api_keys_list: st.error("🛑 ตั้งค่าคีย์ก่อน!")
         else:
-            with st.spinner("🧠 ผู้กำกับ AI กำลังออกแบบและเขียน Prompt (ระบบสลับคีย์อัตโนมัติ)..."):
+            with st.spinner("🧠 ออกแบบโปสเตอร์..."):
                 try:
-                    prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt ภาษาอังกฤษโดยละเอียดเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดและได้ผลลัพธ์ที่ดีที่สุด โดยใช้ข้อมูลดังนี้:
-                    สินค้า: {st.session_state.product_text}
-                    
-                    🎨 ข้อกำหนดการออกแบบ:
-                    สไตล์: {st.session_state.p_style}
-                    สัดส่วน: {st.session_state.p_ratio}
-                    โทนสี: {st.session_state.p_color}
-                    
-                    🚨 กฎเหล็ก:
-                    1. Prompt ต้องเป็นภาษาอังกฤษล้วน บรรยายองค์ประกอบภาพ เลย์เอาต์ และอารมณ์ของภาพอย่างละเอียด
-                    2. หากสไตล์เป็น Hard Sale, Infographic หรือ Pop-Art ต้องระบุให้ AI ใส่ข้อความโปรโมชั่นหลักลงในภาพด้วย โดยใช้ภาษาอังกฤษหรือไทยมาตรฐาน (เช่น 'SALE', 'PROMOTION', 'ราคาพิเศษ')
-                    3. หากสไตล์เป็น Hard Sale หรือ Minimalist ต้องเน้นให้ตัวหน้าตาสินค้าต้นฉบับโดดเด่นและถูกต้องที่สุด โดยอิงตามรูปภาพอ้างอิงที่ผู้ใช้อัปโหลด
-                    """
-                    
-                    result_text = smart_generate(prompt_cmd)
-                    st.session_state.generated_poster_prompt = result_text
+                    prompt_cmd = f"เขียน Prompt ภาษาอังกฤษสร้างโปสเตอร์: {st.session_state.product_text} สไตล์ {st.session_state.p_style} สัดส่วน {st.session_state.p_ratio} โทนสี {st.session_state.p_color}"
+                    st.session_state.generated_poster_prompt = smart_generate(prompt_cmd)
                     st.success("✅ สร้าง Prompt โปสเตอร์สำเร็จ!")
-                except Exception as e:
-                    st.error(f"❌ โหมดเจนโปสเตอร์ล้มเหลว: {e}")
-
+                except Exception as e: st.error(f"❌ ล้มเหลว: {e}")
     if st.session_state.generated_poster_prompt:
         st.markdown("---")
-        st.markdown("##### 🖼️ Prompt สำหรับสร้างโปสเตอร์ (Copy ไปใช้กับ AI สร้างภาพ)")
         st.code(st.session_state.generated_poster_prompt, language="markdown")
