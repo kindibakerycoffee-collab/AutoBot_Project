@@ -13,7 +13,7 @@ import re
 try:
     logo_img = Image.open("logo.png") 
 except FileNotFoundError:
-    logo_img = "🤖" # สำรองไว้เผื่อหาไฟล์รูปไม่เจอ
+    logo_img = "🤖" 
 
 st.set_page_config(
     page_title="AutoBot Director | NextGen Ai STORE",
@@ -22,23 +22,13 @@ st.set_page_config(
 )
 
 # ==========================================
-# 📡 เรดาร์สแกนตู้เซฟ (เช็คว่าแอปตาบอดไหม?)
+# 📡 ดึงกองกำลัง API Key จากตู้เซฟ
 # ==========================================
-if "GEMINI_API_KEY" in st.secrets:
-    st.success(f"✅ เรดาร์ทำงาน: บอทมองเห็นตู้เซฟแล้ว! (ความยาวคีย์: {len(st.secrets['GEMINI_API_KEY'])} ตัวอักษร)")
-else:
-    st.error("❌ เรดาร์ทำงาน: บอทตาบอด! หาตู้เซฟ .streamlit/secrets.toml ไม่เจอครับเจ้านาย!")
-
-# ==========================================
-# 🔑 ดึง API Key จาก "ตู้เซฟ"
-# ==========================================
-try:
-    MY_API_KEY = st.secrets["GEMINI_API_KEY"]
-    client = genai.Client(api_key=MY_API_KEY)
-except Exception as e:
-    MY_API_KEY = ""
-    client = None
-    st.warning(f"⚠️ ระบบแจ้งเตือน: ดึงคีย์ไม่ได้เพราะ -> {e}")
+api_keys_list = []
+if "GEMINI_API_KEYS" in st.secrets:
+    api_keys_list = st.secrets["GEMINI_API_KEYS"]
+elif "GEMINI_API_KEY" in st.secrets:
+    api_keys_list = [st.secrets["GEMINI_API_KEY"]]
 
 # ==========================================
 # 🧠 0. ตั้งค่าระบบความจำ (Session State) 
@@ -48,7 +38,6 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-# ค่าเริ่มต้นสำหรับ Dropdown โหมดวิดีโอ
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "ชาย (Male)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
@@ -61,11 +50,60 @@ if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจร
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
-# ค่าเริ่มต้นสำหรับ Dropdown โหมดโปสเตอร์ 
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
+
+# --- ✨ ระบบความจำสำหรับจัดการ API Key ✨ ---
+if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
+if 'key_status' not in st.session_state: 
+    # สร้างสถานะเริ่มต้นให้ทุกคีย์
+    st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
+    if api_keys_list:
+        st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
+
+# ==========================================
+# 🧠 ฟังก์ชันผู้จัดการคีย์อัจฉริยะ (อัปเดตสถานะขึ้น Sidebar ด้วย)
+# ==========================================
+def smart_generate(prompt_contents):
+    if not api_keys_list:
+        raise Exception("ไม่พบ API Key ในระบบเลยครับ กรุณาตั้งค่าก่อน")
+        
+    last_error = ""
+    start_idx = st.session_state.current_key_idx
+    total_keys = len(api_keys_list)
+    
+    for i in range(total_keys):
+        # วนลูปเริ่มจากคีย์ล่าสุดที่ใช้งานได้
+        idx = (start_idx + i) % total_keys 
+        key = api_keys_list[idx]
+        
+        try:
+            temp_client = genai.Client(api_key=key.strip())
+            response = temp_client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt_contents
+            )
+            
+            # ถ้าสำเร็จ: อัปเดตคีย์นี้เป็นสีเขียว และเปลี่ยนคีย์อื่นที่ไม่ได้พังเป็นสแตนด์บาย
+            st.session_state.current_key_idx = idx
+            st.session_state.key_status[idx] = "🟢 กำลังใช้งาน"
+            for j in range(total_keys):
+                if j != idx and st.session_state.key_status.get(j) != "🔴 ติดลิมิต (รอ 1 นาที)":
+                    st.session_state.key_status[j] = "⏳ สแตนด์บาย"
+                    
+            return response.text 
+            
+        except Exception as e:
+            # ถ้าพัง: อัปเดตคีย์นี้เป็นสีแดง แล้ววนลูปไปลองคีย์ถัดไป
+            last_error = str(e)
+            st.session_state.key_status[idx] = "🔴 ติดลิมิต (รอ 1 นาที)"
+            print(f"⚠️ คีย์ตัวที่ {idx+1} มีปัญหา -> สลับคีย์...")
+            continue
+            
+    # ถ้าพังหมดทุกตัว
+    raise Exception(f"กองกำลัง API Key ทั้ง {total_keys} ตัว ติดลิมิตหมดแล้วครับ! กรุณารอประมาณ 1 นาทีเพื่อให้โควต้ารีเซ็ตตัวเอง")
 
 # ==========================================
 # 🎨 UI Header & Sidebar
@@ -73,11 +111,21 @@ if 'generated_poster_prompt' not in st.session_state: st.session_state.generated
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
 
+# --- ✨ แดชบอร์ดมอนิเตอร์ API Key ที่ Sidebar ✨ ---
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔑 สถานะ API Key")
+if not api_keys_list:
+    st.sidebar.error("❌ ยังไม่ได้ใส่ API Key")
+else:
+    for i in range(len(api_keys_list)):
+        status = st.session_state.key_status.get(i, "⏳ สแตนด์บาย")
+        st.sidebar.markdown(f"**หมายเลข {i+1}:** {status}")
+
+st.sidebar.caption("💡 ทริค: หากขึ้น 🔴 ติดลิมิต บอทจะสลับคีย์ให้เอง หากแดงทั้งหมด ให้รอประมาณ 1 นาทีเพื่อให้ระบบรีเซ็ตโควต้าครับ")
+st.sidebar.markdown("---")
+
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 st.markdown("**1. อัปโหลดรูป -> 2. ดึงข้อความ -> 3. เลือกแท็บ -> 4. กดเจน Prompt**")
-
-if not MY_API_KEY:
-    st.error("🛑 กรุณาตั้งค่า GEMINI_API_KEY ในเมนู Secrets ของ Streamlit บนหน้าเว็บ Share ก่อนใช้งานครับ")
 
 # ==========================================
 # 📸 1. ส่วนดึงข้อความและบันทึกรูปภาพ
@@ -98,17 +146,18 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
     if st.button("🔍 ดึงข้อความและจุดขายจากรูปภาพ", type="secondary", use_container_width=True):
         if not uploaded_files:
             st.warning("⚠️ กรุณาอัปโหลดรูปภาพก่อนครับ")
-        elif not MY_API_KEY or client is None:
-            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
+        elif not api_keys_list:
+            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ก่อนครับ")
         else:
-            with st.spinner("กำลังให้ AI สแกนข้อความจากรูปภาพ (พักหายใจทีละใบเพื่อความเสถียร)..."):
+            with st.spinner("กำลังให้ AI สแกนข้อความจากรูปภาพ (ระบบสลับคีย์อัตโนมัติ)..."):
                 try:
                     extracted_info = ""
                     for i, img_file in enumerate(uploaded_files):
                         img = Image.open(img_file)
                         prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ โดยให้ความสำคัญกับความถูกต้องของหน้าตาสินค้าต้นฉบับ"
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=[img, prompt])
-                        extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{response.text}\n\n"
+                        
+                        result_text = smart_generate([img, prompt]) 
+                        extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{result_text}\n\n"
                         
                         if i < len(uploaded_files) - 1:
                             time.sleep(4)
@@ -175,10 +224,10 @@ with tab_video:
         if st.button("🚀 เจน Prompt วิดีโอ", type="primary", use_container_width=True):
             if not st.session_state.product_text.strip():
                 st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
-            elif not MY_API_KEY or client is None:
-                st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
+            elif not api_keys_list:
+                st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
             else:
-                with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์ Full Storyboard..."):
+                with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์ (ระบบสลับคีย์อัตโนมัติ)..."):
                     try:
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
@@ -205,8 +254,8 @@ with tab_video:
                         -🖼️ Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษล้วน บรรยายภาพ {st.session_state.v_visual} อย่างละเอียด)
                         -🎞️ Prompt สร้างวิดีโอ: (ภาษาอังกฤษล้วน บรรยายการเคลื่อนไหวที่ต่อเนื่องจากภาพนิ่ง เพื่อให้ AI วิดีโอขยับภาพ)"""
                         
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
-                        st.session_state.generated_video_prompt = response.text
+                        result_text = smart_generate(prompt_cmd)
+                        st.session_state.generated_video_prompt = result_text
                         st.success("✅ สร้าง Prompt วิดีโอสำเร็จ! เลื่อนลงไปดูคิวถ่ายทำด้านล่างได้เลย")
                     except Exception as e:
                         st.error(f"❌ โหมดเจนวิดีโอล้มเหลว: {e}")
@@ -215,8 +264,8 @@ with tab_video:
         if st.button("✍️ AI คิดแคปชั่นป้ายยา", type="secondary", use_container_width=True):
             if not st.session_state.product_text.strip():
                 st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
-            elif not MY_API_KEY or client is None:
-                st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
+            elif not api_keys_list:
+                st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
             else:
                 with st.spinner("✍️ นักก็อปปี้ไรท์เตอร์ AI กำลังปั่นแคปชั่น..."):
                     try:
@@ -228,8 +277,8 @@ with tab_video:
                         🚨 กฎเหล็ก: สำหรับแคปชั่น Shopee ต้องมีความยาวรวมแฮชแท็กแล้ว "ห้ามเกิน 150 ตัวอักษรเด็ดขาด" เน้นให้สั้น กระชับ และดึงดูดที่สุด 
                         ห้ามตัดจบดื้อๆ เขียนให้จบประโยคสมบูรณ์ทุกแพลตฟอร์ม"""
                         
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
-                        st.session_state.generated_captions = response.text
+                        result_text = smart_generate(prompt_cmd)
+                        st.session_state.generated_captions = result_text
                         st.success("✅ คิดแคปชั่นสำเร็จ!")
                     except Exception as e:
                         st.error(f"❌ โหมดคิดแคปชั่นล้มเหลว: {e}")
@@ -239,7 +288,6 @@ with tab_video:
         st.markdown("##### ✍️ แคปชั่นสำหรับนำไปโพสต์ (Copy ได้เลย)")
         st.info(st.session_state.generated_captions)
 
-    # แผงควบคุมโรงงาน (Pipeline)
     if st.session_state.generated_video_prompt:
         st.markdown("---")
         st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา")
@@ -252,7 +300,6 @@ with tab_video:
 
         raw_text = st.session_state.generated_video_prompt
         
-        # ✨แยกระบบโชว์ "ไฮไลต์วิเคราะห์ความเหมาะสม" ไว้ด้านบน
         if "ฉากที่ 1" in raw_text:
             header_text, scenes_text = raw_text.split("ฉากที่ 1", 1)
             if header_text.strip():
@@ -263,9 +310,6 @@ with tab_video:
             
         valid_scenes = [s for s in scenes if len(s.strip()) > 5]
 
-        # ----------------------------------------------------
-        # 💻 โหมดคอมพิวเตอร์ (รันบอททีละฉาก)
-        # ----------------------------------------------------
         if "คอมพิวเตอร์" in view_mode:
             st.info("💡 ระบบจะดึงรูปที่คุณอัปโหลดไว้รูปแรกสุด ไปเป็น 'รูปอ้างอิง' ในการสร้างภาพนิ่งให้โดยอัตโนมัติ")
             st.markdown("⚙️ **ตั้งค่าเครดิตสำหรับบอท (ใช้กับทุกฉาก):**")
@@ -304,10 +348,6 @@ with tab_video:
                                 if process.returncode == 0: st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ!")
                                 else: st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
                             except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
-        
-        # ----------------------------------------------------
-        # 📱 โหมดมือถือ (แสดงสคริปต์รวมในกล่องเดียว)
-        # ----------------------------------------------------
         else:
             st.info("📱 คุณสามารถกดปุ่ม Copy 📄 ที่มุมขวาบนของกล่องข้อความ เพื่อนำไปวางใน Google Flow ได้เลยครับ")
             st.code(st.session_state.generated_video_prompt, language="markdown")
@@ -351,10 +391,10 @@ with tab_poster:
     if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
         if not st.session_state.product_text.strip():
             st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
-        elif not MY_API_KEY or client is None:
-            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
+        elif not api_keys_list:
+            st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
         else:
-            with st.spinner("🧠 ผู้กำกับ AI กำลังออกแบบและเขียน Prompt โปสเตอร์..."):
+            with st.spinner("🧠 ผู้กำกับ AI กำลังออกแบบและเขียน Prompt (ระบบสลับคีย์อัตโนมัติ)..."):
                 try:
                     prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt ภาษาอังกฤษโดยละเอียดเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดและได้ผลลัพธ์ที่ดีที่สุด โดยใช้ข้อมูลดังนี้:
                     สินค้า: {st.session_state.product_text}
@@ -370,8 +410,8 @@ with tab_poster:
                     3. หากสไตล์เป็น Hard Sale หรือ Minimalist ต้องเน้นให้ตัวหน้าตาสินค้าต้นฉบับโดดเด่นและถูกต้องที่สุด โดยอิงตามรูปภาพอ้างอิงที่ผู้ใช้อัปโหลด
                     """
                     
-                    response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
-                    st.session_state.generated_poster_prompt = response.text
+                    result_text = smart_generate(prompt_cmd)
+                    st.session_state.generated_poster_prompt = result_text
                     st.success("✅ สร้าง Prompt โปสเตอร์สำเร็จ!")
                 except Exception as e:
                     st.error(f"❌ โหมดเจนโปสเตอร์ล้มเหลว: {e}")
