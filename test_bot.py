@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains # 👈 อิมพอร์ตระบบเมาส์จริง
+from selenium.webdriver.common.action_chains import ActionChains
 
 def is_chrome_ready():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -57,10 +57,8 @@ def real_mouse_click(driver, xpath_list):
         try:
             el = driver.find_element(By.XPATH, xpath)
             if el.is_displayed():
-                # เลื่อนหน้าจอไปหาปุ่ม
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
                 time.sleep(0.5)
-                # ใช้ ActionChains จำลองการขยับเมาส์ไปชี้แล้วคลิกซ้าย
                 ActionChains(driver).move_to_element(el).click().perform()
                 return True
         except:
@@ -70,6 +68,20 @@ def real_mouse_click(driver, xpath_list):
 try:
     if job_type == "scene_pipeline":
         
+        # 🧹 สเต็ป 0: กดแชทใหม่ (New Chat) เคลียร์สมองบอท ป้องกันการจำข้อมูลแชทเก่ามามั่ว!
+        print("📌 [0/5] กำลังสร้างแชทใหม่เพื่อล้างความจำ...")
+        new_chat_xpaths = [
+            "//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]",
+            "//button[@aria-label='New chat' or @aria-label='สร้างแชทใหม่']",
+            "//a[contains(@href, '/app')]" 
+        ]
+        
+        if real_mouse_click(driver, new_chat_xpaths):
+            print("   ✅ เปิดแชทใหม่สำเร็จ! ความจำขาวสะอาดแล้ว")
+            time.sleep(2.5) 
+        else:
+            print("   ⚠️ หาปุ่ม New Chat ไม่เจอ (ระวังบอทเอาข้อมูลเก่ามาปนนะ!)")
+
         # 🚀 สเต็ป 1: อัปโหลดรูปอ้างอิง
         if job_ref_image and os.path.exists(job_ref_image):
             print("📌 [1/5] กำลังอัปโหลดรูปอ้างอิงเข้าสู่ระบบ Google Flow...")
@@ -84,7 +96,6 @@ try:
 
         # 🎯 สเต็ป 2: เปิดตั้งค่าป๊อปอัป (แก้บั๊กผีหลอก)
         print("📌 [2/5] กำลังใช้เมาส์จำลองคลิกเปิดป๊อปอัป...")
-        # เล็งปุ่มที่อยู่ก่อนหน้าปุ่มส่งข้อความเป๊ะๆ
         settings_xpaths = [
             "//button[descendant::*[@name='arrow-forward']]/preceding::button[1]",
             "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message']/preceding::button[1]"
@@ -92,7 +103,7 @@ try:
         
         if real_mouse_click(driver, settings_xpaths):
             print("   ✅ คลิกปุ่มด้วยเมาส์จำลองสำเร็จ! (รอเมนูกางออก 2 วินาที)")
-            time.sleep(2) # รอให้แอนิเมชันป๊อปอัปเด้งจนสุด
+            time.sleep(2) 
         else:
             print("   ❌ หาปุ่มตั้งค่าข้างๆ ปุ่มส่งข้อความไม่เจอ!")
 
@@ -120,12 +131,11 @@ try:
         real_mouse_click(driver, x1_xpaths)
         time.sleep(1)
 
-        # 🎯 สเต็ป 4: พิมพ์ Prompt
+        # 🎯 สเต็ป 4: พิมพ์ Prompt (ตอนนี้นำมาเฉพาะ Prompt สร้างภาพนิ่งแล้ว)
         print("📌 [4/5] กำลังพิมพ์ Prompt ของฉากลงไป...")
         try:
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
-            # ใช้เมาส์คลิกกล่องข้อความก่อนพิมพ์
             ActionChains(driver).move_to_element(input_box).click().perform()
             time.sleep(0.5)
             

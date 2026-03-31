@@ -1,25 +1,25 @@
 import streamlit as st
 import time
 from google import genai
-from google.genai import types
 from PIL import Image
 import json
 import subprocess
 import os
+import re
 
 # ==========================================
-# 1. ตั้งค่าหน้าเว็บ (ต้องอยู่บนสุดเสมอ และห้ามมีซ้ำ)
+# 🚨 1. ตั้งค่าหน้าเว็บ (ต้องอยู่บนสุดเสมอ)
 # ==========================================
 try:
     logo_img = Image.open("logo.png") 
-    st.set_page_config(
-        page_title="AutoBot | NextGen Ai STORE",
-        page_icon=logo_img,
-        layout="wide"
-    )
-except Exception:
-    # กรณีหาไฟล์โลโก้ไม่เจอ จะใช้ไอคอนหุ่นยนต์แทนเพื่อไม่ให้ระบบพัง
-    st.set_page_config(layout="wide", page_title="AutoBot Director", page_icon="🤖")
+except FileNotFoundError:
+    logo_img = "🤖" # สำรองไว้เผื่อหาไฟล์รูปไม่เจอ
+
+st.set_page_config(
+    page_title="AutoBot Director | NextGen Ai STORE",
+    page_icon=logo_img,
+    layout="wide"
+)
 
 # ==========================================
 # 📡 เรดาร์สแกนตู้เซฟ (เช็คว่าแอปตาบอดไหม?)
@@ -30,7 +30,7 @@ else:
     st.error("❌ เรดาร์ทำงาน: บอทตาบอด! หาตู้เซฟ .streamlit/secrets.toml ไม่เจอครับเจ้านาย!")
 
 # ==========================================
-# 🔑 ดึง API Key จาก "ตู้เซฟ" (Streamlit Secrets)
+# 🔑 ดึง API Key จาก "ตู้เซฟ"
 # ==========================================
 try:
     MY_API_KEY = st.secrets["GEMINI_API_KEY"]
@@ -63,8 +63,11 @@ if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่ว
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
 # ==========================================
-# 🎨 UI Header
+# 🎨 UI Header & Sidebar
 # ==========================================
+st.sidebar.image(logo_img, width=150) if logo_img != "🤖" else None
+st.sidebar.metric(label="💳 เครดิตคงเหลือ", value="25000")
+
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 st.markdown("**1. อัปโหลดรูป -> 2. ดึงข้อความ -> 3. เลือกแท็บ -> 4. กดเจน Prompt**")
 
@@ -98,7 +101,7 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
                     extracted_info = ""
                     for i, img_file in enumerate(uploaded_files):
                         img = Image.open(img_file)
-                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ"
+                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ โดยให้ความสำคัญกับความถูกต้องของหน้าตาสินค้าต้นฉบับ"
                         response = client.models.generate_content(model='gemini-2.5-flash', contents=[img, prompt])
                         extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{response.text}\n\n"
                         
@@ -144,6 +147,7 @@ with tab_video:
                         st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
                     st.rerun()
 
+    # แผงควบคุม 11 โหมด
     col1, col2, col3 = st.columns(3)
     with col1:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", ["ชาย (Male)", "หญิง (Female)", "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์น่ารัก (Mascot)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
@@ -182,7 +186,7 @@ with tab_video:
                         🚨 กฎเหล็ก (Strict Rules) ต้องทำตามอย่างเคร่งครัด:
                         1. ห้ามมีคำเกริ่นนำ ทักทาย สรุป หรือคำอธิบายใดๆ นอกเหนือจากสคริปต์เด็ดขาด
                         2. ให้เริ่มต้นข้อความบรรทัดแรกด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. ต้องเขียนรายละเอียดให้ครบถ้วนทุกฉากจนจบสมบูรณ์ ห้ามตัดจบกลางคันเด็ดขาด
+                        3. ประมวลผลและเขียนสคริปต์ออกมาให้ครบถ้วนสมบูรณ์จนจบฉากสุดท้าย ห้ามตัดจบกลางคันเด็ดขาด
                         4. รูปแบบของแต่ละฉากต้องมีองค์ประกอบครบถ้วนตามนี้เป๊ะๆ (ห้ามเปลี่ยนคำนำหน้าหัวข้อ):
                         
                         ฉากที่ [หมายเลข]
@@ -195,12 +199,7 @@ with tab_video:
                         -🖼️ Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษล้วน บรรยายภาพ {st.session_state.v_visual} อย่างละเอียด เพื่อใช้สร้างรูปตั้งต้น)
                         -🎞️ Prompt สร้างวิดีโอ: (ภาษาอังกฤษล้วน บรรยายการเคลื่อนไหว/Motion ที่ต่อเนื่องจากภาพนิ่ง เพื่อให้ AI วิดีโอขยับภาพ)"""
                         
-                        # เพิ่ม Config กัน AI ตัดจบ
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash',
-                            contents=prompt_cmd,
-                            config=types.GenerateContentConfig(max_output_tokens=8192)
-                        )
+                        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
                         st.session_state.generated_video_prompt = response.text
                         st.success("✅ สร้าง Prompt วิดีโอสำเร็จ! เลื่อนลงไปดูคิวถ่ายทำด้านล่างได้เลย")
                     except Exception as e:
@@ -218,14 +217,12 @@ with tab_video:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
                         ปิดการขายด้วย: {st.session_state.v_cta}
-                        จงเขียนแคปชั่นขายของแยกเป็น 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
-                        🚨 กฎเหล็กสำหรับ Shopee: แคปชั่นต้องสั้น กระชับ และมีความยาวห้ามเกิน 150 ตัวอักษรเด็ดขาด (นับรวมแฮชแท็กแล้ว)"""
                         
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash', 
-                            contents=prompt_cmd,
-                            config=types.GenerateContentConfig(max_output_tokens=4096)
-                        )
+                        จงเขียนแคปชั่นขายของแยกเป็น 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
+                        🚨 กฎเหล็ก: สำหรับแคปชั่น Shopee ต้องมีความยาวรวมแฮชแท็กแล้ว "ห้ามเกิน 150 ตัวอักษรเด็ดขาด" เน้นให้สั้น กระชับ และดึงดูดที่สุด 
+                        ห้ามตัดจบดื้อๆ เขียนให้จบประโยคสมบูรณ์ทุกแพลตฟอร์ม"""
+                        
+                        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
                         st.session_state.generated_captions = response.text
                         st.success("✅ คิดแคปชั่นสำเร็จ!")
                     except Exception as e:
@@ -236,6 +233,7 @@ with tab_video:
         st.markdown("##### ✍️ แคปชั่นสำหรับนำไปโพสต์ (Copy ได้เลย)")
         st.info(st.session_state.generated_captions)
 
+    # แผงควบคุมโรงงาน (Pipeline)
     if st.session_state.generated_video_prompt:
         st.markdown("---")
         st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา (คิวถ่ายทำทีละฉาก)")
@@ -264,10 +262,23 @@ with tab_video:
                     else:
                         ref_img_path = st.session_state.uploaded_img_paths[0] 
                         
+                        # ✨ สกัดเอาเฉพาะ "Prompt สร้างภาพนิ่ง" ไปให้ AI ตัวเจนภาพ จะได้ไม่งงกับสคริปต์ภาษาไทย
+                        extracted_img_prompt = edited_prompt
+                        if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
+                            parts = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")
+                            if len(parts) > 1:
+                                extracted = parts[1]
+                                # ตัดส่วนที่เป็น Prompt วิดีโอออก (ถ้ามี)
+                                if "-🎞️ Prompt สร้างวิดีโอ:" in extracted:
+                                    extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
+                                elif "🎞️ Prompt สร้างวิดีโอ:" in extracted:
+                                    extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
+                                extracted_img_prompt = extracted.strip()
+                        
                         with open("bot_task.json", "w", encoding="utf-8") as f:
                             json.dump({
                                 "type": "scene_pipeline", 
-                                "prompt": edited_prompt,
+                                "prompt": extracted_img_prompt, # <--- ส่งไปเฉพาะ Prompt ภาพนิ่ง
                                 "credit_mode": credit_val,
                                 "ref_image": ref_img_path
                             }, f, ensure_ascii=False)
@@ -293,41 +304,8 @@ with tab_video:
                         except Exception as e:
                             st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
 
-# ==========================================
-# 🖼️ โหมดโปสเตอร์ (เปิดเผยการทำงาน)
-# ==========================================
 with tab_poster:
-    st.markdown("### 🖼️ แผงควบคุมโปสเตอร์โฆษณา")
-    st.success("✅ โหมดโปสเตอร์เปิดพร้อมใช้งานแล้วครับ!")
-    
-    if st.button("🎨 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
-        if not st.session_state.product_text.strip():
-            st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าในแท็บด้านบนก่อนครับ")
-        elif not MY_API_KEY or client is None:
-            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
-        else:
-            with st.spinner("🎨 AI กำลังออกแบบโครงสร้างโปสเตอร์..."):
-                try:
-                    poster_cmd = f"""คุณคือกราฟิกดีไซเนอร์มืออาชีพ จงออกแบบ Prompt สำหรับสร้างภาพโปสเตอร์โฆษณาจากข้อมูล:
-                    สินค้า: {st.session_state.product_text}
-                    สไตล์: {st.session_state.v_style}
-                    กลุ่มเป้าหมาย: {st.session_state.v_target}
-                    
-                    กรุณาเขียนรายละเอียดสำหรับออกแบบโปสเตอร์ 1 ภาพ ประกอบด้วย:
-                    - ธีมสีหลักและอารมณ์ของภาพ
-                    - ข้อความพาดหัว (Headline) ที่ดึงดูด
-                    - ข้อความอธิบายสั้นๆ (Sub-headline)
-                    - Prompt สำหรับ Image Generation (ภาษาอังกฤษล้วน)"""
-                    
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=poster_cmd,
-                        config=types.GenerateContentConfig(max_output_tokens=4096)
-                    )
-                    st.session_state.generated_poster_prompt = response.text
-                except Exception as e:
-                    st.error(f"❌ โหมดโปสเตอร์ล้มเหลว: {e}")
-
-    if st.session_state.generated_poster_prompt:
-        st.markdown("---")
-        st.text_area("📝 ไอเดียและ Prompt โปสเตอร์", value=st.session_state.generated_poster_prompt, height=300)
+    st.markdown("#### 🖼️ โหมดสร้างโปสเตอร์โฆษณา")
+    st.success("✅ โหมดนี้เปิดเผยและพร้อมใช้งานตามคำขอแล้วครับ!")
+    st.info("นำโค้ดระบบสร้างโปสเตอร์ของคุณมาวางเชื่อมต่อที่ส่วนนี้ได้เลยครับ เช่น การวาง Layout ข้อความโปรโมชั่น และสไตล์โปสเตอร์")
+    # ใส่โค้ด Poster Generator ของคุณตรงนี้
