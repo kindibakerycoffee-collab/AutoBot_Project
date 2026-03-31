@@ -38,26 +38,25 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-# ค่าเริ่มต้นวิดีโอ
-if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "ชาย (Male)"
+# --- ✨ อัปเดตค่าเริ่มต้นให้ตรงกับตัวเลือกใหม่ ✨ ---
+if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "หญิงสาว (Young Female)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
-if 'v_lang' not in st.session_state: st.session_state.v_lang = "ไทยมาตรฐาน"
+if 'v_lang' not in st.session_state: st.session_state.v_lang = "ไทยภาคกลาง (มาตรฐาน)"
 if 'v_style' not in st.session_state: st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
 if 'v_story' not in st.session_state: st.session_state.v_story = "PAS (ขยี้ปัญหาแล้วเสนอทางแก้)"
 if 'v_duration' not in st.session_state: st.session_state.v_duration = "มาตรฐานกำลังดี (30 วินาที)"
-if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "ข้อความภาษาไทย"
-if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริง (Photorealistic)"
+if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)"
+if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
-# ค่าเริ่มต้นโปสเตอร์
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
-# --- ✨ ระบบความจำสำหรับจัดการ API Key ✨ ---
+# --- ระบบความจำสำหรับจัดการ API Key ---
 if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
 if 'key_status' not in st.session_state: 
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
@@ -107,7 +106,6 @@ def smart_generate(prompt_contents):
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
 
-# --- ✨ แดชบอร์ดมอนิเตอร์ API Key + ปุ่มรีเซ็ต ✨ ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
 if not api_keys_list:
@@ -117,13 +115,12 @@ else:
         status = st.session_state.key_status.get(i, "⏳ สแตนด์บาย")
         st.sidebar.markdown(f"**หมายเลข {i+1}:** {status}")
 
-    # ✨ เพิ่มปุ่มรีเซ็ตคีย์ ✨
     if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์ทั้งหมด", use_container_width=True):
         st.session_state.current_key_idx = 0
         st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
         if api_keys_list:
             st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
-        st.rerun() # สั่งให้หน้าเว็บโหลดใหม่ทันทีเพื่ออัปเดตสีไฟสถานะ
+        st.rerun()
 
 st.sidebar.caption("💡 ทริค: ปุ่มรีเซ็ตจะล้างสถานะ 🔴 ให้กลับมาพร้อมใช้งานใหม่ทันที (แนะนำให้กดเมื่อพักใช้งานไปแล้ว 1 นาที)")
 st.sidebar.markdown("---")
@@ -191,11 +188,12 @@ with tab_video:
                 with st.spinner("🧠 AI กำลังคิด..."):
                     time.sleep(1) 
                     text = st.session_state.product_text.lower()
-                    if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิง (Female)"
-                    elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์น่ารัก (Mascot)"
-                    else: st.session_state.v_presenter = "ชาย (Male)"
+                    # อัปเดตให้สอดคล้องกับตัวเลือกใหม่
+                    if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิงสาว (Young Female)"
+                    elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์ (Animal Mascot)"
+                    else: st.session_state.v_presenter = "ชายหนุ่ม (Young Male)"
                     if any(w in text for w in ["พรีเมียม", "หรู", "แพง", "อสังหา"]): 
-                        st.session_state.v_style = "Cinematic (พรีเมียม)"
+                        st.session_state.v_style = "โทนภาพยนตร์ (Cinematic)"
                         st.session_state.v_tone = "หรูหรา / พรีเมียม"
                     else:
                         st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
@@ -204,18 +202,62 @@ with tab_video:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", ["ชาย (Male)", "หญิง (Female)", "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์น่ารัก (Mascot)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
+        # ✨ อัปเกรดตัวเลือกพรีเซนเตอร์
+        st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", [
+            "ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", 
+            "ชายวัยกลางคน (Middle-aged Male)", "หญิงวัยกลางคน (Middle-aged Female)",
+            "คุณตา/คุณปู่ (Elderly Male)", "คุณยาย/คุณย่า (Elderly Female)",
+            "เด็กผู้ชาย (Boy)", "เด็กผู้หญิง (Girl)",
+            "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์ (Animal Mascot)", "หุ่นยนต์ AI (AI Robot)",
+            "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"
+        ], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
         st.selectbox("📱 สัดส่วนวิดีโอ:", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
-        st.selectbox("🌐 ภาษาของคลิป:", ["ไทยมาตรฐาน", "อังกฤษ (English)", "ไม่มีเสียงพูด"], key="v_lang")
+        
+        # ✨ อัปเกรดตัวเลือกภาษาถิ่น
+        st.selectbox("🌐 ภาษาของคลิป:", [
+            "ไทยภาคกลาง (มาตรฐาน)", 
+            "ไทยภาคเหนือ (คำเมือง)", 
+            "ไทยภาคอีสาน", 
+            "ไทยภาคใต้", 
+            "ผสมไทย-อังกฤษ (Tinglish)",
+            "อังกฤษ (English)", 
+            "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"
+        ], key="v_lang")
+        
     with col2:
-        st.selectbox("🎥 สไตล์วิดีโอ:", ["UGC (รีวิวบ้านๆ จริงใจ)", "Cinematic (พรีเมียม)", "Unboxing / ASMR"], key="v_style")
-        st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)"], key="v_story")
+        # ✨ อัปเกรดตัวเลือกสไตล์ภาพ
+        st.selectbox("🎥 สไตล์วิดีโอ:", [
+            "UGC (รีวิวบ้านๆ จริงใจ)", 
+            "โทนภาพยนตร์ (Cinematic)", 
+            "Unboxing / ASMR",
+            "โฆษณาทีวี (TV Commercial)",
+            "มิวสิควิดีโอ (MV Style)"
+        ], key="v_style")
+        st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
-        st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่เน้นๆ)", "ข้อความภาษาอังกฤษ", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
+        
+        # ✨ อัปเกรดตัวเลือกข้อความบนจอ
+        st.selectbox("💬 สไตล์ข้อความบนจอ:", [
+            "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", 
+            "ข้อความภาษาอังกฤษ (อินเตอร์)", 
+            "เน้นสัญลักษณ์/Emoji แทนข้อความ",
+            "ป๊อปอัปข้อความสั้นๆ (Pop-up Text)",
+            "ซับไตเติ้ลบรรยาย (Subtitle)",
+            "ไม่มีข้อความบนจอ"
+        ], key="v_text_overlay")
+        
     with col3:
-        st.selectbox("🎨 สไตล์ภาพ (Visual):", ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar Style)", "อนิเมะญี่ปุ่น (Anime)"], key="v_visual")
-        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว"], key="v_target")
+        st.selectbox("🎨 สไตล์ภาพ (Visual):", [
+            "สมจริงเหมือนถ่ายทำจริง (Photorealistic)", 
+            "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", 
+            "อนิเมะญี่ปุ่น (Anime)",
+            "ลายเส้นมินิมอลคลีนๆ (Minimalist)",
+            "สีน้ำละมุนๆ (Watercolor)",
+            "สดใสป๊อปอาร์ต (Pop-Art)",
+            "แสงสีไซไฟ (Cyberpunk)"
+        ], key="v_visual")
+        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
         st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
 
     st.write("")
@@ -230,6 +272,7 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
+                        # ✨ อัปเกรดกฎเหล็กสำหรับข้อความภาษา
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
@@ -242,7 +285,8 @@ with tab_video:
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
                         3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
                         4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
-                        5. รูปแบบฉากต้องครบถ้วน: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
+                        5. 🚨 ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100% ห้ามใช้คำแปลกประหลาดหรือภาษาเพี้ยนเด็ดขาด หากเลือกสไตล์ "เน้นสัญลักษณ์/Emoji" ให้นำไอคอนหรือสัญลักษณ์มาใช้แทนคำพูดให้มากที่สุดเพื่อความกระชับ
+                        6. รูปแบบฉากต้องครบถ้วน: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -262,6 +306,7 @@ with tab_video:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
                         ปิดการขายด้วย: {st.session_state.v_cta}
+                        ภาษาหลักที่ใช้: {st.session_state.v_lang}
                         จงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
                         🚨 สำหรับแคปชั่น Shopee ต้องไม่เกิน 150 ตัวอักษร"""
                         result_text = smart_generate(prompt_cmd)
@@ -278,11 +323,14 @@ with tab_video:
         st.markdown("---")
         view_mode = st.radio("🖥️ เลือกรูปแบบการใช้งาน:", ["💻 ใช้บนคอมพิวเตอร์", "📱 ใช้บนมือถือ"], horizontal=True)
         raw_text = st.session_state.generated_video_prompt
+        
         if "ฉากที่ 1" in raw_text:
             header_text, scenes_text = raw_text.split("ฉากที่ 1", 1)
             if header_text.strip(): st.success(header_text.strip())
-            scenes = ("ฉากที่ 1" + scenes_text).split("ฉากที่")
-        else: scenes = raw_text.split("ฉากที่")
+            scenes = re.split(r'(?:\n|^)(?=ฉากที่\s*\d+)', "ฉากที่ 1" + scenes_text)
+        else: 
+            scenes = re.split(r'(?:\n|^)(?=ฉากที่\s*\d+)', raw_text)
+            
         valid_scenes = [s for s in scenes if len(s.strip()) > 5]
 
         if "คอมพิวเตอร์" in view_mode:
@@ -290,7 +338,7 @@ with tab_video:
             credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
             for i, scene_text in enumerate(valid_scenes):
                 scene_num = i + 1
-                full_scene_text = "ฉากที่" + scene_text
+                full_scene_text = scene_text.strip() 
                 with st.expander(f"🎬 ฉากที่ {scene_num}", expanded=True):
                     edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
                     terminal_box = st.empty()
