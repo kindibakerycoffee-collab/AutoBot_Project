@@ -1,24 +1,32 @@
 import streamlit as st
 import time
-from google import genai 
+from google import genai
 from PIL import Image
 import json
 import subprocess
 import os
 
 # 🚨 ตั้งค่าหน้าจอ (ต้องอยู่บนสุด)
-st.set_page_config(layout="wide", page_title="AutoBot Director", page_icon="🎬")
+st.set_page_config(layout="wide", page_title="AutoBot Director", page_icon="🤖")
 
 # ==========================================
-# 🔑 ดึง API Key จาก "ตู้เซฟ" (Streamlit Secrets) ป้องกันคีย์หลุด!
+# 📡 เรดาร์สแกนตู้เซฟ (เช็คว่าแอปตาบอดไหม?)
+# ==========================================
+if "GEMINI_API_KEY" in st.secrets:
+    st.success(f"✅ เรดาร์ทำงาน: บอทมองเห็นตู้เซฟแล้ว! (ความยาวคีย์: {len(st.secrets['GEMINI_API_KEY'])} ตัวอักษร)")
+else:
+    st.error("❌ เรดาร์ทำงาน: บอทตาบอด! หาตู้เซฟ .streamlit/secrets.toml ไม่เจอครับเจ้านาย!")
+
+# ==========================================
+# 🔑 ดึง API Key จาก "ตู้เซฟ" (Streamlit Secrets)
 # ==========================================
 try:
     MY_API_KEY = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=MY_API_KEY)
-except:
+except Exception as e:
     MY_API_KEY = ""
     client = None
-
+    st.warning(f"⚠️ ระบบแจ้งเตือน: ดึงคีย์ไม่ได้เพราะ -> {e}")
 # ==========================================
 # 🧠 0. ตั้งค่าระบบความจำ (Session State) 
 # ==========================================
