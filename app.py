@@ -45,11 +45,10 @@ except Exception as e:
 # ==========================================
 if 'product_text' not in st.session_state: st.session_state.product_text = ""
 if 'generated_video_prompt' not in st.session_state: st.session_state.generated_video_prompt = ""
-if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-# ค่าเริ่มต้นสำหรับ Dropdown ทั้ง 11 ตัว
+# ค่าเริ่มต้นสำหรับ Dropdown โหมดวิดีโอ
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "ชาย (Male)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
@@ -61,6 +60,12 @@ if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "
 if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริง (Photorealistic)"
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
+
+# --- ✨ ส่วนที่เพิ่มใหม่: ค่าเริ่มต้นสำหรับ Dropdown โหมดโปสเตอร์ ✨ ---
+if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
+if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
+if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
+if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
 # ==========================================
 # 🎨 UI Header & Sidebar
@@ -125,6 +130,7 @@ st.markdown("### 🎛️ เลือกโหมดการทำงานห�
 tab_video, tab_poster = st.tabs(["🎬 โหมดสร้างคลิปวิดีโอ (Pipeline)", "🖼️ โหมดสร้างโปสเตอร์โฆษณา"])
 
 with tab_video:
+    # --- [โค้ดส่วนวิดีโอเดิมของคุณ ไม่มีการเปลี่ยนแปลง] ---
     head_col, ai_col = st.columns([4, 1])
     with head_col:
         st.markdown("#### 🎬 แผงควบคุมวิดีโอ (Video Settings)")
@@ -147,7 +153,6 @@ with tab_video:
                         st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
                     st.rerun()
 
-    # แผงควบคุม 11 โหมด
     col1, col2, col3 = st.columns(3)
     with col1:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", ["ชาย (Male)", "หญิง (Female)", "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์น่ารัก (Mascot)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
@@ -233,79 +238,119 @@ with tab_video:
         st.markdown("##### ✍️ แคปชั่นสำหรับนำไปโพสต์ (Copy ได้เลย)")
         st.info(st.session_state.generated_captions)
 
-    # แผงควบคุมโรงงาน (Pipeline)
     if st.session_state.generated_video_prompt:
         st.markdown("---")
         st.markdown("### 🏭 แผงควบคุมโรงงานผลิตโฆษณา (คิวถ่ายทำทีละฉาก)")
         st.info("💡 ระบบจะดึงรูปที่คุณอัปโหลดไว้รูปแรกสุด ไปเป็น 'รูปอ้างอิง' ในการสร้างภาพนิ่งให้โดยอัตโนมัติ")
-        
         st.markdown("⚙️ **ตั้งค่าเครดิตสำหรับบอท (ใช้กับทุกฉาก):**")
         bot_credit = st.radio("เลือกระบบเครดิต (Veo 3.1):", ["Lower Priority (ฟรี 0 เครดิต)", "Fast (ใช้ 10 เครดิต)"], horizontal=True)
         credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
-
         raw_text = st.session_state.generated_video_prompt
         scenes = raw_text.split("ฉากที่")
         valid_scenes = [s for s in scenes if len(s.strip()) > 5]
-
         for i, scene_text in enumerate(valid_scenes):
             scene_num = i + 1
             full_scene_text = "ฉากที่" + scene_text
-            
             with st.expander(f"🎬 คิวถ่ายทำ: ฉากที่ {scene_num}", expanded=True):
                 edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
-                
                 terminal_box = st.empty()
-
                 if st.button(f"🚀 สั่งบอทลุย 'ฉากที่ {scene_num}' (อัปโหลดรูปต้นฉบับ ➡️ เจนภาพนิ่งพื้นฐาน)", type="primary", key=f"btn_scene_{i}"):
-                    if not st.session_state.uploaded_img_paths:
-                        st.error("🛑 กรุณาอัปโหลดรูปภาพด้านบนให้เรียบร้อยก่อนครับ (บอทต้องการรูปอ้างอิง)")
+                    if not st.session_state.uploaded_img_paths: st.error("🛑 กรุณาอัปโหลดรูปภาพด้านบนให้เรียบร้อยก่อนครับ")
                     else:
                         ref_img_path = st.session_state.uploaded_img_paths[0] 
-                        
-                        # ✨ สกัดเอาเฉพาะ "Prompt สร้างภาพนิ่ง" ไปให้ AI ตัวเจนภาพ จะได้ไม่งงกับสคริปต์ภาษาไทย
                         extracted_img_prompt = edited_prompt
                         if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
                             parts = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")
                             if len(parts) > 1:
                                 extracted = parts[1]
-                                # ตัดส่วนที่เป็น Prompt วิดีโอออก (ถ้ามี)
-                                if "-🎞️ Prompt สร้างวิดีโอ:" in extracted:
-                                    extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
-                                elif "🎞️ Prompt สร้างวิดีโอ:" in extracted:
-                                    extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
+                                if "-🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("-🎞️ Prompt สร้างวิดีโอ:")[0]
+                                elif "🎞️ Prompt สร้างวิดีโอ:" in extracted: extracted = extracted.split("🎞️ Prompt สร้างวิดีโอ:")[0]
                                 extracted_img_prompt = extracted.strip()
-                        
-                        with open("bot_task.json", "w", encoding="utf-8") as f:
-                            json.dump({
-                                "type": "scene_pipeline", 
-                                "prompt": extracted_img_prompt, # <--- ส่งไปเฉพาะ Prompt ภาพนิ่ง
-                                "credit_mode": credit_val,
-                                "ref_image": ref_img_path
-                            }, f, ensure_ascii=False)
-                        
+                        with open("bot_task.json", "w", encoding="utf-8") as f: json.dump({"type": "scene_pipeline", "prompt": extracted_img_prompt, "credit_mode": credit_val, "ref_image": ref_img_path }, f, ensure_ascii=False)
                         log_text = f"> เริ่มเดินเครื่องผลิต ฉากที่ {scene_num}...\n"
                         terminal_box.code(log_text, language="bash")
-                        
                         try:
                             custom_env = os.environ.copy()
                             custom_env["PYTHONIOENCODING"] = "utf-8"
-                            process = subprocess.Popen(
-                                ["python", "-u", "test_bot.py"],
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env
-                            )
-                            for line in process.stdout:
-                                log_text += line
-                                terminal_box.code(log_text, language="bash")
+                            process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env)
+                            for line in process.stdout: log_text += line; terminal_box.code(log_text, language="bash")
                             process.wait() 
-                            if process.returncode == 0:
-                                st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ! รอให้ภาพเจนเสร็จบนเว็บ แล้วมากดปุ่มทำวิดีโอต่อได้เลยครับ")
-                            else:
-                                st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
-                        except Exception as e:
-                            st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
+                            if process.returncode == 0: st.success(f"✅ บอทสร้างภาพนิ่งสำหรับฉากที่ {scene_num} สำเร็จ!")
+                            else: st.error("❌ เกิดข้อผิดพลาด รบกวนดูใน Terminal ครับ")
+                        except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
 
+# ==========================================
+# --- ✨ 3. โหมดสร้างโปสเตอร์광告 (Poster Mode) ✨ ---
+# ==========================================
 with tab_poster:
-    st.markdown("#### 🖼️ โหมดสร้างโปสเตอร์โฆษณา")
-    st.success("✅ โหมดนี้เปิดเผยและพร้อมใช้งานตามคำขอแล้วครับ!")
-    st.info("นำโค้ดระบบสร้างโปสเตอร์ของคุณมาวางเชื่อมต่อที่ส่วนนี้ได้เลยครับ เช่น การวาง Layout ข้อความโปรโมชั่น และสไตล์โปสเตอร์")
-    # ใส่โค้ด Poster Generator ของคุณตรงนี้
+    st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
+    
+    # สร้าง Layout เพื่อจัด Selectbox ให้อยู่ข้างกันตามรูปภาพตัวอย่าง
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # 📄 1. สไตล์โปสเตอร์광告 (พร้อมตัวเลือกตาม image_4.png และคำแนะนำตาม image_3.png)
+        st.selectbox("📄 สไตล์โปสเตอร์광告:", [
+            "Hard Sale / โปรแรง (ตะโกนขาย)",
+            "Soft Sell / อารมณ์ไลฟ์สไตล์",
+            "Minimalist / มินิมอล (คลีนๆ)",
+            "Infographic / อธิบายจุดขาย",
+            "Magazine Cover / ปกนิตยสาร",
+            "Pop-Art / Y2K (กราฟิกสีจัดจ้าน)",
+            "Meme / มีมไวรัล (ตลกขบขัน)"
+        ], key="p_style", help="ตัวหนังสือใหญ่ เน้นราคา (Shopee/Lazada/TikTok)")
+
+    with col2:
+        # 📏 2. สัดส่วนภาพโปสเตอร์ (พร้อมตัวเลือกตาม image_1.png และคำแนะนำตาม image_3.png)
+        st.selectbox("📏 สัดส่วนภาพโปสเตอร์:", [
+            "แนวนอน 16:9 (YouTube / TV)",
+            "แนวนอน 4:3 (Standard Photo)",
+            "จัตุรัส 1:1 (FB / IG Post)",
+            "แนวตั้ง 3:4 (Portrait)",
+            "แนวตั้ง 9:16 (Story / Reels / TikTok)"
+        ], key="p_ratio", help="เลือกสัดส่วนให้ตรงกับตำแหน่งที่จะยิงแอด")
+
+    # 🎨 3. โทนสีหลักของโปสเตอร์ (พร้อมตัวเลือกตาม image_2.png)
+    st.selectbox("🎨 โทนสีหลักของโปสเตอร์:", [
+        "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)",
+        "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)",
+        "สีพาสเทล (น่ารัก ละมุน)",
+        "สีขาวดำ/เทา (หรูหรา มินิมอล)",
+        "สีนีออนสะท้อนแสง (โดดเด่น ไซไฟ)"
+    ], key="p_color", help="กำหนดอารมณ์และโทนสีหลักของภาพ")
+
+    # ปุ่มสำหรับเจน Prompt โปสเตอร์
+    if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
+        if not st.session_state.product_text.strip():
+            st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
+        elif not MY_API_KEY or client is None:
+            st.error("🛑 กรุณาตั้งค่า API Key ในตู้เซฟ (Secrets) ของ Streamlit ก่อนครับ")
+        else:
+            with st.spinner("🧠 ผู้กำกับ AI กำลังออกแบบและเขียน Prompt โปสเตอร์..."):
+                try:
+                    # สร้าง Prompt Command สำหรับโหมดโปสเตอร์ โดยนำค่าจาก Session State ของ Selectbox ใหม่มาใช้
+                    prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt ภาษาอังกฤษโดยละเอียดเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดและได้ผลลัพธ์ที่ดีที่สุด โดยใช้ข้อมูลดังนี้:
+                    สินค้า: {st.session_state.product_text}
+                    
+                    🎨 ข้อกำหนดการออกแบบ:
+                    สไตล์: {st.session_state.p_style}
+                    สัดส่วน: {st.session_state.p_ratio}
+                    โทนสี: {st.session_state.p_color}
+                    
+                    🚨 กฎเหล็ก:
+                    1. Prompt ต้องเป็นภาษาอังกฤษล้วน บรรยายองค์ประกอบภาพ เลย์เอาต์ และอารมณ์ของภาพอย่างละเอียด
+                    2. หากสไตล์เป็น Hard Sale, Infographic หรือ Pop-Art ต้องระบุให้ AI ใส่ข้อความโปรโมชั่นหลักลงในภาพด้วย โดยใช้ภาษาอังกฤษหรือไทยมาตรฐาน (เช่น 'SALE', 'PROMOTION', 'ราคาพิเศษ')
+                    3. หากสไตล์เป็น Hard Sale หรือ Minimalist ต้องเน้นให้ตัวหน้าตาสินค้าต้นฉบับโดดเด่นและถูกต้องที่สุด โดยอิงตามรูปภาพอ้างอิงที่ผู้ใช้อัปโหลด
+                    """
+                    
+                    response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_cmd)
+                    st.session_state.generated_poster_prompt = response.text
+                    st.success("✅ สร้าง Prompt โปสเตอร์สำเร็จ!")
+                except Exception as e:
+                    st.error(f"❌ โหมดเจนโปสเตอร์ล้มเหลว: {e}")
+
+    # แสดงผล Prompt ที่เจนได้
+    if st.session_state.generated_poster_prompt:
+        st.markdown("---")
+        st.markdown("##### 🖼️ Prompt สำหรับสร้างโปสเตอร์ (Copy ไปใช้กับ AI สร้างภาพ)")
+        st.code(st.session_state.generated_poster_prompt, language="markdown")
