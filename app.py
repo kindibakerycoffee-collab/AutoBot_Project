@@ -12,7 +12,7 @@ st.set_page_config(layout="wide", page_title="AutoBot Director", page_icon="🎬
 # ==========================================
 # 🔑 ตั้งค่า API Key ถาวร (ฝังในโค้ด)
 # ==========================================
-MY_API_KEY = "AIzaSyDtWuQH1jibqUk5AT5yHu35E00InHjRvuA"
+MY_API_KEY = "AIzaSyBVwfDhiN1BfFfgrbvjD865CCPv2o38H5o"
 
 if MY_API_KEY != "ใส่_API_KEY_ของคุณที่นี่":
     client = genai.Client(api_key=MY_API_KEY)
