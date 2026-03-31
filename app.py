@@ -61,7 +61,7 @@ if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจร
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
-# --- ✨ ส่วนที่เพิ่มใหม่: ค่าเริ่มต้นสำหรับ Dropdown โหมดโปสเตอร์ ✨ ---
+# ค่าเริ่มต้นสำหรับ Dropdown โหมดโปสเตอร์ 
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
@@ -70,7 +70,10 @@ if 'generated_poster_prompt' not in st.session_state: st.session_state.generated
 # ==========================================
 # 🎨 UI Header & Sidebar
 # ==========================================
-st.sidebar.image(logo_img, width=150) if logo_img != "🤖" else None
+# ✨ แก้ไขโค้ดส่วนนี้เพื่อป้องกันบั๊กคู่มือแสดงบนหน้าเว็บ ✨
+if logo_img != "🤖":
+    st.sidebar.image(logo_img, width=150)
+
 st.sidebar.metric(label="💳 เครดิตคงเหลือ", value="25000")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
@@ -130,7 +133,6 @@ st.markdown("### 🎛️ เลือกโหมดการทำงานห�
 tab_video, tab_poster = st.tabs(["🎬 โหมดสร้างคลิปวิดีโอ (Pipeline)", "🖼️ โหมดสร้างโปสเตอร์โฆษณา"])
 
 with tab_video:
-    # --- [โค้ดส่วนวิดีโอเดิมของคุณ ไม่มีการเปลี่ยนแปลง] ---
     head_col, ai_col = st.columns([4, 1])
     with head_col:
         st.markdown("#### 🎬 แผงควบคุมวิดีโอ (Video Settings)")
@@ -280,17 +282,15 @@ with tab_video:
                         except Exception as e: st.error(f"❌ เรียกบอทไม่สำเร็จ: {e}")
 
 # ==========================================
-# --- ✨ 3. โหมดสร้างโปสเตอร์광告 (Poster Mode) ✨ ---
+# 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
 # ==========================================
 with tab_poster:
     st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
     
-    # สร้าง Layout เพื่อจัด Selectbox ให้อยู่ข้างกันตามรูปภาพตัวอย่าง
     col1, col2 = st.columns(2)
     
     with col1:
-        # 📄 1. สไตล์โปสเตอร์광告 (พร้อมตัวเลือกตาม image_4.png และคำแนะนำตาม image_3.png)
-        st.selectbox("📄 สไตล์โปสเตอร์광告:", [
+        st.selectbox("📄 สไตล์โปสเตอร์โฆษณา:", [
             "Hard Sale / โปรแรง (ตะโกนขาย)",
             "Soft Sell / อารมณ์ไลฟ์สไตล์",
             "Minimalist / มินิมอล (คลีนๆ)",
@@ -301,7 +301,6 @@ with tab_poster:
         ], key="p_style", help="ตัวหนังสือใหญ่ เน้นราคา (Shopee/Lazada/TikTok)")
 
     with col2:
-        # 📏 2. สัดส่วนภาพโปสเตอร์ (พร้อมตัวเลือกตาม image_1.png และคำแนะนำตาม image_3.png)
         st.selectbox("📏 สัดส่วนภาพโปสเตอร์:", [
             "แนวนอน 16:9 (YouTube / TV)",
             "แนวนอน 4:3 (Standard Photo)",
@@ -310,7 +309,6 @@ with tab_poster:
             "แนวตั้ง 9:16 (Story / Reels / TikTok)"
         ], key="p_ratio", help="เลือกสัดส่วนให้ตรงกับตำแหน่งที่จะยิงแอด")
 
-    # 🎨 3. โทนสีหลักของโปสเตอร์ (พร้อมตัวเลือกตาม image_2.png)
     st.selectbox("🎨 โทนสีหลักของโปสเตอร์:", [
         "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)",
         "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)",
@@ -319,7 +317,6 @@ with tab_poster:
         "สีนีออนสะท้อนแสง (โดดเด่น ไซไฟ)"
     ], key="p_color", help="กำหนดอารมณ์และโทนสีหลักของภาพ")
 
-    # ปุ่มสำหรับเจน Prompt โปสเตอร์
     if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
         if not st.session_state.product_text.strip():
             st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
@@ -328,7 +325,6 @@ with tab_poster:
         else:
             with st.spinner("🧠 ผู้กำกับ AI กำลังออกแบบและเขียน Prompt โปสเตอร์..."):
                 try:
-                    # สร้าง Prompt Command สำหรับโหมดโปสเตอร์ โดยนำค่าจาก Session State ของ Selectbox ใหม่มาใช้
                     prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt ภาษาอังกฤษโดยละเอียดเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดและได้ผลลัพธ์ที่ดีที่สุด โดยใช้ข้อมูลดังนี้:
                     สินค้า: {st.session_state.product_text}
                     
@@ -349,7 +345,6 @@ with tab_poster:
                 except Exception as e:
                     st.error(f"❌ โหมดเจนโปสเตอร์ล้มเหลว: {e}")
 
-    # แสดงผล Prompt ที่เจนได้
     if st.session_state.generated_poster_prompt:
         st.markdown("---")
         st.markdown("##### 🖼️ Prompt สำหรับสร้างโปสเตอร์ (Copy ไปใช้กับ AI สร้างภาพ)")
