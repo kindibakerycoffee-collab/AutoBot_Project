@@ -38,7 +38,6 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-# --- ✨ อัปเดตค่าเริ่มต้นให้ตรงกับตัวเลือกใหม่ ✨ ---
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "หญิงสาว (Young Female)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
@@ -56,7 +55,7 @@ if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวต�
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
-# --- ระบบความจำสำหรับจัดการ API Key ---
+# --- ✨ ระบบความจำสำหรับจัดการ API Key ✨ ---
 if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
 if 'key_status' not in st.session_state: 
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
@@ -106,8 +105,17 @@ def smart_generate(prompt_contents):
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
 
+# --- ✨ แดชบอร์ดมอนิเตอร์ API Key + ปุ่มรีเซ็ต (แบบใหม่ไม่กระทบส่วนอื่น) ✨ ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
+
+# ย้ายปุ่มรีเซ็ตมาทำงานก่อน เพื่อให้แสดงผลสถานะใหม่ได้ทันทีโดยไม่ต้องใช้ st.rerun()
+if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์ทั้งหมด", use_container_width=True):
+    st.session_state.current_key_idx = 0
+    st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
+    if api_keys_list:
+        st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
+
 if not api_keys_list:
     st.sidebar.error("❌ ยังไม่ได้ใส่ API Key")
 else:
@@ -115,14 +123,7 @@ else:
         status = st.session_state.key_status.get(i, "⏳ สแตนด์บาย")
         st.sidebar.markdown(f"**หมายเลข {i+1}:** {status}")
 
-    if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์ทั้งหมด", use_container_width=True):
-        st.session_state.current_key_idx = 0
-        st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
-        if api_keys_list:
-            st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
-        st.rerun()
-
-st.sidebar.caption("💡 ทริค: ปุ่มรีเซ็ตจะล้างสถานะ 🔴 ให้กลับมาพร้อมใช้งานใหม่ทันที (แนะนำให้กดเมื่อพักใช้งานไปแล้ว 1 นาที)")
+st.sidebar.caption("💡 ทริค: ปุ่มรีเซ็ตจะล้างสถานะ 🔴 ให้กลับมาพร้อมใช้งานใหม่ทันที")
 st.sidebar.markdown("---")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
@@ -188,7 +189,6 @@ with tab_video:
                 with st.spinner("🧠 AI กำลังคิด..."):
                     time.sleep(1) 
                     text = st.session_state.product_text.lower()
-                    # อัปเดตให้สอดคล้องกับตัวเลือกใหม่
                     if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิงสาว (Young Female)"
                     elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์ (Animal Mascot)"
                     else: st.session_state.v_presenter = "ชายหนุ่ม (Young Male)"
@@ -202,7 +202,6 @@ with tab_video:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        # ✨ อัปเกรดตัวเลือกพรีเซนเตอร์
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", [
             "ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", 
             "ชายวัยกลางคน (Middle-aged Male)", "หญิงวัยกลางคน (Middle-aged Female)",
@@ -213,8 +212,6 @@ with tab_video:
         ], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
         st.selectbox("📱 สัดส่วนวิดีโอ:", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
-        
-        # ✨ อัปเกรดตัวเลือกภาษาถิ่น
         st.selectbox("🌐 ภาษาของคลิป:", [
             "ไทยภาคกลาง (มาตรฐาน)", 
             "ไทยภาคเหนือ (คำเมือง)", 
@@ -226,7 +223,6 @@ with tab_video:
         ], key="v_lang")
         
     with col2:
-        # ✨ อัปเกรดตัวเลือกสไตล์ภาพ
         st.selectbox("🎥 สไตล์วิดีโอ:", [
             "UGC (รีวิวบ้านๆ จริงใจ)", 
             "โทนภาพยนตร์ (Cinematic)", 
@@ -236,8 +232,6 @@ with tab_video:
         ], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
-        
-        # ✨ อัปเกรดตัวเลือกข้อความบนจอ
         st.selectbox("💬 สไตล์ข้อความบนจอ:", [
             "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", 
             "ข้อความภาษาอังกฤษ (อินเตอร์)", 
@@ -272,7 +266,6 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
-                        # ✨ อัปเกรดกฎเหล็กสำหรับข้อความภาษา
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
