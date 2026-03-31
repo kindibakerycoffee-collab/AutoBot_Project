@@ -5,7 +5,20 @@ from PIL import Image
 import json
 import subprocess
 import os
+import streamlit as st
+from PIL import Image
 
+# 1. โหลดไฟล์รูปโลโก้ของคุณ
+logo_img = Image.open("logo.png") 
+
+# 2. ตั้งค่าหน้าเว็บ (ต้องอยู่บนสุดเสมอ)
+st.set_page_config(
+    page_title="AutoBot | NextGen Ai STORE", # ข้อความที่จะโชว์บนแท็บ
+    page_icon=logo_img,                      # รูปโลโก้ที่จะโชว์บนแท็บ
+    layout="wide"                            # (ใส่หรือไม่ใส่ก็ได้) ทำให้เว็บเต็มจอ
+)
+
+# โค้ดส่วนอื่นๆ ของคุณตามปกติ...
 # 🚨 ตั้งค่าหน้าจอ (ต้องอยู่บนสุด)
 st.set_page_config(layout="wide", page_title="AutoBot Director", page_icon="🤖")
 
