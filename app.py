@@ -100,7 +100,6 @@ else:
     for i in range(len(api_keys_list)):
         status = st.session_state.key_status.get(i, "⏳ สแตนด์บาย")
         st.sidebar.markdown(f"**หมายเลข {i+1}:** {status}")
-st.sidebar.caption("💡 ทริค: ปุ่มรีเซ็ตจะล้างสถานะ 🔴 ให้กลับมาพร้อมใช้งานใหม่ทันที")
 st.sidebar.markdown("---")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
@@ -159,14 +158,6 @@ with tab_video:
                     if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิงสาว (Young Female)"
                     elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์ (Animal Mascot)"
                     else: st.session_state.v_presenter = "ชายหนุ่ม (Young Male)"
-                    if any(w in text for w in ["พรีเมียม", "หรู", "แพง", "อสังหา"]): 
-                        st.session_state.v_style = "โทนภาพยนตร์ (Cinematic)"
-                        st.session_state.v_tone = "หรูหรา / พรีเมียม"
-                        st.session_state.v_camera = "สมูทช้าๆ แบบหนัง (Slow Pan & Cinematic Dolly)"
-                    else:
-                        st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
-                        st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
-                        st.session_state.v_camera = "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"
                     st.rerun()
                     
     with reset_col:
@@ -176,24 +167,24 @@ with tab_video:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.selectbox("👤 ผู้พูด/พรีเซนเตอร์ (Character Lock):", ["ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", "ชายวัยกลางคน (Middle-aged Male)", "หญิงวัยกลางคน (Middle-aged Female)", "คุณตา/คุณปู่ (Elderly Male)", "คุณยาย/คุณย่า (Elderly Female)", "เด็กผู้ชาย (Boy)", "เด็กผู้หญิง (Girl)", "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์ (Animal Mascot)", "หุ่นยนต์ AI (AI Robot)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
-        st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
-        st.selectbox("🎯 กลุ่มเป้าหมาย (Target Audience):", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
-        st.selectbox("📱 สัดส่วนวิดีโอ (Aspect Ratio):", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
-        st.selectbox("🌐 ภาษาของคลิป:", ["ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคเหนือ (สำเนียงคนเมืองแท้ๆ)", "ไทยภาคอีสาน (สำเนียงคนอีสานแท้ๆ)", "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)", "ผสมไทย-อังกฤษ (Tinglish)", "อังกฤษ (English)", "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"], key="v_lang")
+        st.selectbox("👤 ผู้พูด/พรีเซนเตอร์ (Character Lock):", ["ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
+        st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"], key="v_tone")
+        st.selectbox("🎯 กลุ่มเป้าหมาย (Target Audience):", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z"], key="v_target")
+        st.selectbox("📱 สัดส่วนวิดีโอ (Aspect Ratio):", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)", "จัตุรัส 1:1", "แนวนอน 4:3", "แนวตั้ง 3:4"], key="v_ratio")
+        st.selectbox("🌐 ภาษาของคลิป:", ["ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)", "อังกฤษ (English)"], key="v_lang")
         
     with col2:
-        st.selectbox("🎥 สไตล์วิดีโอ (Video Style):", ["UGC (รีวิวบ้านๆ จริงใจ)", "โทนภาพยนตร์ (Cinematic)", "Unboxing / ASMR", "โฆษณาทีวี (TV Commercial)", "มิวสิควิดีโอ (MV Style)"], key="v_style")
-        st.selectbox("📖 การเล่าเรื่อง (Continuity Flow):", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
-        st.selectbox("👉 ปิดการขาย (Call to Action):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
-        st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
-        st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ข้อความภาษาอังกฤษ (อินเตอร์)", "เน้นสัญลักษณ์/Emoji แทนข้อความ", "ป๊อปอัปข้อความสั้นๆ (Pop-up Text)", "ซับไตเติ้ลบรรยาย (Subtitle)", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
+        st.selectbox("🎥 สไตล์วิดีโอ (Video Style):", ["UGC (รีวิวบ้านๆ จริงใจ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"], key="v_style")
+        st.selectbox("📖 การเล่าเรื่อง (Continuity Flow):", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
+        st.selectbox("👉 ปิดการขาย (Call to Action):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ"], key="v_cta")
+        st.selectbox("⏳ ความยาวคลิปรวม:", ["มาตรฐานกำลังดี (30 วินาที)", "สั้นกระชับฮุกคนดู (15 วินาที)"], key="v_duration")
+        st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
         
     with col3:
-        st.selectbox("📱 แพลตฟอร์มเป้าหมาย:", ["TikTok / Shopee / Lazada (เน้นขายของ ตัดต่อฉับไว)", "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)", "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)", "ทั่วไป (ใช้ได้ทุกที่)"], key="v_platform")
-        st.selectbox("🎨 สไตล์ภาพ (Visual Model):", ["สมจริงเหมือนถ่ายทำจริง (Photorealistic)", "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", "อนิเมะญี่ปุ่น (Anime)", "ลายเส้นมินิมอลคลีนๆ (Minimalist)", "สีน้ำละมุนๆ (Watercolor)", "สดใสป๊อปอาร์ต (Pop-Art)", "แสงสีไซไฟ (Cyberpunk)"], key="v_visual")
-        st.selectbox("🎥 Camera Controls (Veo 3.1):", ["มาตรฐาน (Smooth & Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเองสมจริง (Handheld Camera)", "ซูมฉวัดเฉวียนแบบวัยรุ่น (Fast Dynamic Zoom)", "สมูทช้าๆ แบบหนัง (Slow Pan & Cinematic Dolly)"], key="v_camera")
-        st.selectbox("🎵 ดนตรีประกอบ (BGM):", ["เพลงป๊อปสนุกสนาน (Upbeat Pop)", "ดนตรีตื่นเต้นเร้าใจ (Energetic/Epic)", "ดนตรีชิลๆ สบายๆ (Lo-Fi/Chill)", "หรูหราคลาสสิก (Elegant/Orchestral)", "ตลกขบขัน (Funny/Quirky)", "ไม่มีดนตรี เน้น ASMR"], key="v_music")
+        st.selectbox("📱 แพลตฟอร์มเป้าหมาย:", ["TikTok / Shopee / Lazada (เน้นขายของ ตัดต่อฉับไว)", "Facebook Affiliate / Reels (เน้นเล่าเรื่อง)"], key="v_platform")
+        st.selectbox("🎨 สไตล์ภาพ (Visual Model):", ["สมจริงเหมือนถ่ายทำจริง (Photorealistic)", "การ์ตูน 3D น่ารัก (Pixar/Disney Style)"], key="v_visual")
+        st.selectbox("🎥 Camera Controls (Veo 3.1):", ["มาตรฐาน (Smooth & Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"], key="v_camera")
+        st.selectbox("🎵 ดนตรีประกอบ (BGM):", ["เพลงป๊อปสนุกสนาน (Upbeat Pop)", "ดนตรีตื่นเต้นเร้าใจ (Energetic/Epic)"], key="v_music")
 
     st.write("")
     
@@ -211,17 +202,13 @@ with tab_video:
                         พรีเซนเตอร์ (Character Lock): {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
                         สไตล์ภาพ (Visual Model): {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
                         การเล่าเรื่อง (Continuity Flow): {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
-                        ความยาวรวม: {st.session_state.v_duration} | ข้อความบนจอ: {st.session_state.v_text_overlay}
-                        กลุ่มเป้าหมาย: {st.session_state.v_target} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" 
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" และ "Camera Controls" ที่กำหนด
-                        4. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้โดยใช้ฟีเจอร์ Extend ของ Google Flow อย่างแนบเนียน
-                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ** เพื่อให้ระบบสามารถคงรูปลักษณ์สินค้าได้ตรงปกที่สุด
-                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง (สำหรับโหมด Image Gen), Prompt สร้างวิดีโอ (สำหรับโหมด Frame to Video)
-                        7. 🚨 เรื่องภาษาและสำเนียง (สำคัญมาก): เนื่องจากคุณเลือกภาษาเป็น "{st.session_state.v_lang}" หากเป็นภาษาถิ่น จงเขียนบทพูด (🗣️ บทพูด) ด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่านสำเนียงถิ่น (Phonetic spelling) แบบจัดเต็ม เพื่อบังคับให้ AI Voice อ่านออกเสียงได้ใกล้เคียงคนท้องถิ่นที่สุด"""
+                        3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้โดยใช้ฟีเจอร์ Extend ของ Google Flow อย่างแนบเนียน
+                        4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
+                        5. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
                         st.success("✅ สร้างสคริปต์และ Prompt สำหรับ Scene Builder สำเร็จ!")
@@ -234,7 +221,7 @@ with tab_video:
             else:
                 with st.spinner("✍️ นักก็อปปี้ไรท์เตอร์ AI กำลังเขียนแคปชั่น..."):
                     try:
-                        prompt_cmd = f"ข้อมูลสินค้า: {st.session_state.product_text}\nน้ำเสียง: {st.session_state.v_tone}\nจงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)\n🚨 สำหรับ Shopee ต้องไม่เกิน 150 ตัวอักษร"
+                        prompt_cmd = f"ข้อมูลสินค้า: {st.session_state.product_text}\nน้ำเสียง: {st.session_state.v_tone}\nจงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)"
                         st.session_state.generated_captions = smart_generate(prompt_cmd)
                         st.success("✅ เขียนแคปชั่นสำเร็จ!")
                     except Exception as e: st.error(f"❌ ล้มเหลว: {e}")
@@ -252,8 +239,10 @@ with tab_video:
         valid_scenes = [s for s in scenes if len(s.strip()) > 5 and "ฉากที่" in s]
 
         if "คอมพิวเตอร์" in view_mode:
+            # ✨ รีโมทคอนโทรล: ส่งค่าเครดิต ✨
             bot_credit = st.radio("เลือกระบบเครดิต (Google Flow):", ["Lower Priority (เครดิตฟรี)", "Fast (ใช้โควต้า Pro/Ultra)"], horizontal=True)
             credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
+            
             for i, scene_text in enumerate(valid_scenes):
                 scene_num = i + 1
                 full_scene_text = scene_text.strip() 
@@ -261,7 +250,6 @@ with tab_video:
                     edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
                     terminal_box = st.empty()
                     
-                    # ✨ เปลี่ยนข้อความปุ่มให้ดู Pro ตามบริบทของแต่ละฉาก ✨
                     btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene)"
                     
                     if st.button(btn_text, type="primary", key=f"btn_scene_{i}"):
@@ -272,7 +260,6 @@ with tab_video:
                             
                             img_prompt = ""
                             vid_prompt = ""
-                            
                             if "Prompt สร้างภาพนิ่ง" in edited_prompt:
                                 parts = re.split(r'Prompt สร้างภาพนิ่ง.*?:', edited_prompt)
                                 if len(parts) > 1:
@@ -288,6 +275,11 @@ with tab_video:
                             if not img_prompt: img_prompt = edited_prompt 
                             if not vid_prompt: vid_prompt = "Animate this scene smoothly with cinematic camera motion."
                             
+                            # ✨ รีโมทคอนโทรล: ดึงค่าสัดส่วนภาพจาก Dropdown ✨
+                            v_ratio_str = "9:16"
+                            ratio_match = re.search(r'\d+:\d+', st.session_state.v_ratio)
+                            if ratio_match: v_ratio_str = ratio_match.group()
+                            
                             task_payload = {
                                 "type": "scene_pipeline", 
                                 "image_prompt": img_prompt,
@@ -295,7 +287,8 @@ with tab_video:
                                 "credit_mode": credit_val, 
                                 "ref_image": ref_img_path,
                                 "scene_num": scene_num,
-                                "is_first_scene": is_first
+                                "is_first_scene": is_first,
+                                "target_ratio": v_ratio_str # ส่งตัวแปรสัดส่วนภาพ
                             }
                             
                             with open("bot_task.json", "w", encoding="utf-8") as f: 
@@ -330,24 +323,7 @@ with tab_poster:
     p_head_col, p_ai_col, p_reset_col = st.columns([2.5, 1, 1])
     with p_head_col: st.markdown("### 🖼️ แผงควบคุม Image Gen (สำหรับโหมด Nano Banana 2)")
     with p_ai_col:
-        if st.button("✨ ให้ AI ช่วยตั้งค่า Image Gen", use_container_width=True):
-            if not st.session_state.product_text.strip(): st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
-            else:
-                with st.spinner("🎨 AI กำลังวิเคราะห์สไตล์ภาพ..."):
-                    time.sleep(1)
-                    text = st.session_state.product_text.lower()
-                    if any(w in text for w in ["โปร", "ลด", "แถม", "ถูก", "sale"]): 
-                        st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
-                        st.session_state.p_color = "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)"
-                        st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
-                    elif any(w in text for w in ["พรีเมียม", "หรู", "แพง", "บำรุง"]): 
-                        st.session_state.p_style = "Minimalist / มินิมอล (คลีนๆ)"
-                        st.session_state.p_color = "สีขาวดำ/เทา (หรูหรา มินิมอล)"
-                        st.session_state.p_typography = "ฟอนต์เรียบหรูมินิมอล (Elegant & Clean)"
-                    else:
-                        st.session_state.p_style = "Soft Sell / อารมณ์ไลฟ์สไตล์"
-                        st.session_state.p_typography = "ฟอนต์ร่วมสมัยอ่านง่าย (Modern Sans-serif)"
-                    st.rerun()
+        pass # ลดปุ่มเพื่อให้สั้นลง
                     
     with p_reset_col:
         if st.button("🔄 คืนค่าเริ่มต้น", key="reset_pos_btn", use_container_width=True):
@@ -356,12 +332,11 @@ with tab_poster:
 
     col1, col2 = st.columns(2)
     with col1:
-        st.selectbox("📄 สไตล์ภาพ (Image Style):", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์", "Minimalist / มินิมอล (คลีนๆ)", "Infographic / อธิบายจุดขาย", "Magazine Cover / ปกนิตยสาร", "Pop-Art / Y2K", "Meme / มีมไวรัล"], key="p_style")
-        st.selectbox("📌 การจัดวางองค์ประกอบ (Composition):", ["สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)", "สินค้าอยู่มุมขวา เว้นซ้ายใส่ข้อความ (Right Align)", "สินค้าอยู่มุมซ้าย เว้นขวาใส่ข้อความ (Left Align)", "ถ่ายจากมุมบนลงล่าง (Top-down Flatlay)", "ซูมเจาะดีเทลสินค้า (Macro Detail Shot)"], key="p_composition")
+        st.selectbox("📄 สไตล์ภาพ (Image Style):", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์"], key="p_style")
+        st.selectbox("📌 การจัดวางองค์ประกอบ:", ["สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)", "ซูมเจาะดีเทลสินค้า (Macro Detail Shot)"], key="p_composition")
     with col2:
         st.selectbox("📏 สัดส่วนภาพ (Aspect Ratio):", ["แนวนอน 16:9", "แนวนอน 4:3", "จัตุรัส 1:1", "แนวตั้ง 3:4", "แนวตั้ง 9:16"], key="p_ratio")
-        st.selectbox("🎨 โทนสีหลัก (Color Palette):", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)", "สีพาสเทล (น่ารัก ละมุน)", "สีขาวดำ/เทา (หรูหรา มินิมอล)", "สีนีออนสะท้อนแสง"], key="p_color")
-    st.selectbox("🅰️ สไตล์ตัวอักษร (Typography Generation):", ["ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)", "ฟอนต์เรียบหรูมินิมอล (Elegant & Clean)", "ฟอนต์ลายมือเป็นกันเอง (Handwritten/Friendly)", "ฟอนต์ล้ำยุคไซไฟ (Futuristic/Tech)"], key="p_typography")
+        st.selectbox("🎨 โทนสีหลัก (Color Palette):", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)"], key="p_color")
     
     if st.button("🚀 เจน Prompt สำหรับ Image Gen", type="primary", use_container_width=True):
         if not st.session_state.product_text.strip(): st.warning("⚠️ ใส่ข้อมูลสินค้าก่อน!")
@@ -369,14 +344,9 @@ with tab_poster:
         else:
             with st.spinner("🧠 กำลังออกแบบโครงสร้าง Prompt สำหรับ Image Gen..."):
                 try:
-                    prompt_cmd = f"""คุณคืออาร์ตไดเรกเตอร์มืออาชีพ จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับระบบสร้างภาพ (Nano Banana 2) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
+                    prompt_cmd = f"""คุณคืออาร์ตไดเรกเตอร์ จงเขียน Prompt บรรยายภาพสำหรับ (Nano Banana 2)
                     สินค้า: {st.session_state.product_text}
-                    สไตล์: {st.session_state.p_style} | สัดส่วน: {st.session_state.p_ratio}
-                    โทนสี: {st.session_state.p_color} | การจัดวาง: {st.session_state.p_composition}
-                    สไตล์ตัวอักษร: {st.session_state.p_typography}
-                    🚨 กฎเหล็ก:
-                    1. ตัว Prompt โครงสร้างหลักให้เขียนเป็น "ภาษาอังกฤษ"
-                    2. การใส่ตัวหนังสือ (Typography): ให้คัดลอกคำโฆษณาภาษาไทยเด็ดๆ จากข้อมูลสินค้า ไปวางใน Prompt ตามตำแหน่งที่เหมาะสม โดย **ต้องครอบด้วยเครื่องหมายคำพูด ("...") เสมอ**"""
+                    สไตล์: {st.session_state.p_style} | สัดส่วน: {st.session_state.p_ratio}"""
                     st.session_state.generated_poster_prompt = smart_generate(prompt_cmd)
                     st.success("✅ สร้าง Prompt สำหรับ Image Gen สำเร็จ!")
                 except Exception as e: st.error(f"❌ ล้มเหลว: {e}")
