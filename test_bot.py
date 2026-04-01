@@ -7,13 +7,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 
 def is_chrome_ready():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', 9222)) == 0
 
-print("🤖 กำลังปลุก AutoBot หลังบ้าน (Selenium Ultimate Master)...")
+print("🤖 กำลังปลุก AutoBot หลังบ้าน (เวอร์ชันเจาะเกราะ JS Click 100%)...")
 
 task_file = "bot_task.json"
 if not os.path.exists(task_file):
@@ -24,7 +23,6 @@ with open(task_file, "r", encoding="utf-8") as f:
     task_data = json.load(f)
 
 job_type = task_data.get("type", "unknown")
-# ดึงค่าพร้อมกรองอักขระแปลกๆ ทิ้งทันที (ป้องกันบอทแครช)
 job_image_prompt_safe = "".join(c for c in task_data.get("image_prompt", "") if ord(c) <= 0xFFFF)
 job_video_prompt_safe = "".join(c for c in task_data.get("video_prompt", "") if ord(c) <= 0xFFFF)
 job_credit = task_data.get("credit_mode", "Lower Priority")
@@ -49,14 +47,18 @@ try:
 except:
     pass
 
-def real_mouse_click(driver, xpath_list, wait_time=0.5):
+# =======================================================
+# 💥 ฟังก์ชันคลิกทะลุเกราะ (JavaScript Click) - ตัวแก้ปัญหาหลัก
+# =======================================================
+def force_click(driver, xpath_list, wait_time=1.0):
     for xpath in xpath_list:
         try:
-            el = driver.find_element(By.XPATH, xpath)
-            if el.is_displayed():
+            elements = driver.find_elements(By.XPATH, xpath)
+            for el in elements:
+                # ใช้ JS สั่งคลิกโดยตรง ไม่สนว่าจะมีอะไรบังอยู่หรือไม่
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
-                time.sleep(0.5)
-                ActionChains(driver).move_to_element(el).click().perform()
+                time.sleep(0.3)
+                driver.execute_script("arguments[0].click();", el) 
                 time.sleep(wait_time)
                 return True
         except:
@@ -64,51 +66,43 @@ def real_mouse_click(driver, xpath_list, wait_time=0.5):
     return False
 
 def switch_model_mode(target_mode):
-    print(f"   🔄 กำลังคลิกเปิดหน้าต่างสลับโหมด: {target_mode}...")
+    print(f"   🔄 กำลังบังคับเปิดหน้าต่างสลับโหมดเป็น: {target_mode}...")
     
-    # เล็งหาปุ่มที่อยู่ก่อนปุ่มลูกศรส่ง (แม่นยำ 100%)
+    # 1. หากล่องปุ่มสลับโหมด
     mode_btn_xpaths = [
-        "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]/preceding-sibling::*[1]",
-        "//*[contains(text(), 'x1')]/ancestor::*[@role='button' or local-name()='button'][1]"
+        "//button[contains(., 'Nano Banana') or contains(., 'Veo') or contains(., 'x1') or contains(., 'วิดีโอ')]",
+        "//div[contains(@class, 'model-selector')]//button"
     ]
     
-    popup_opened = real_mouse_click(driver, mode_btn_xpaths, wait_time=1.5)
-    
-    # ท่าไม้ตาย (JS) ถ้าคลิกธรรมดาไม่โดน
-    if not popup_opened:
-        try:
-            driver.execute_script("""
-                var btns = document.querySelectorAll('button');
-                for(var i=0; i<btns.length; i++){
-                    if((btns[i].innerText.includes('x1') || btns[i].innerText.includes('Nano') || btns[i].innerText.includes('วิดีโอ')) && !btns[i].innerText.includes('ส่ง')){
-                        btns[i].click();
-                        break;
-                    }
-                }
-            """)
-            time.sleep(1.5)
-            popup_opened = True
-        except:
-            pass
-
-    if popup_opened:
-        if real_mouse_click(driver, [f"//div[@role='tab' or @role='button'][contains(., '{target_mode}')]"], wait_time=1):
-            print(f"   ✅ สลับเป็นโหมด '{target_mode}' สำเร็จ!")
+    if force_click(driver, mode_btn_xpaths, wait_time=1.5):
+        # 2. เล็งแท็บเป้าหมาย
+        tab_xpaths = [f"//div[@role='tab' or @role='button'][contains(., '{target_mode}')]"]
+        if force_click(driver, tab_xpaths, wait_time=1):
+            print(f"   ✅ สลับโหมด '{target_mode}' สำเร็จ!")
             return True
             
-    print(f"   ⚠️ หาปุ่มไม่เจอ บอทจะลุยต่อในโหมดปัจจุบัน")
+    print(f"   ⚠️ บังคับปุ่มไม่สำเร็จ บอทจะลุยต่อในโหมดปัจจุบัน")
     return False
 
 def click_plus_and_select_item(item_index):
-    print(f"   ➕ กำลังกดปุ่ม + และแนบรูป ลำดับที่ {item_index}...")
+    print(f"   ➕ กำลังบังคับกดปุ่ม + และแนบรูป ลำดับที่ {item_index}...")
     plus_btn_xpaths = [
-        "//button[descendant::*[text()='+'] or contains(@aria-label, 'แนบไฟล์')]",
-        "//div[text()='+']/ancestor::button[1]"
+        "//button[contains(@aria-label, 'แนบ') or contains(@aria-label, 'Attach')]",
+        "//button[contains(., '+')]"
     ]
-    if real_mouse_click(driver, plus_btn_xpaths, wait_time=1.5):
-        gallery_item_xpaths = [f"(//div[contains(@class, 'gallery-item') or @role='listitem'])[{item_index}]"]
-        if real_mouse_click(driver, gallery_item_xpaths, wait_time=1):
+    if force_click(driver, plus_btn_xpaths, wait_time=1.5):
+        # เลือกรูปจากแกลลอรี่ (มักจะเป็น listitem ตัวแรกๆ)
+        gallery_item_xpaths = [
+            f"(//div[contains(@class, 'gallery') or @role='listbox']//div[@role='listitem'])[{item_index}]",
+            f"(//div[contains(@class, 'image-container') or @role='button'])[{item_index}]"
+        ]
+        if force_click(driver, gallery_item_xpaths, wait_time=1.5):
+            # คลิกพื้นที่ว่าง 1 ที เผื่อป๊อปอัปไม่ยอมปิดตัวลง
+            driver.execute_script("document.body.click();")
+            time.sleep(0.5)
+            print(f"   ✅ แนบรูปสำเร็จ!")
             return True
+    print(f"   ❌ แนบรูปไม่สำเร็จ!")
     return False
 
 def smart_wait_for_generation(driver, media_type="image", timeout=300):
@@ -122,7 +116,6 @@ def smart_wait_for_generation(driver, media_type="image", timeout=300):
         elapsed_time = int(time.time() - start_time)
         
         if current_count > initial_count:
-            # ป้องกันเรดาร์โดนหลอกถ้ารูปโผล่มาไวกว่า 15 วิ (นั่นคือรูปอัปโหลด)
             if elapsed_time < 15:
                 initial_count = current_count
                 time.sleep(2)
@@ -152,13 +145,12 @@ try:
             print("🚀 สเต็ป 1: Image Gen (Nano Banana 2)")
             print("=========================================")
             
-            real_mouse_click(driver, ["//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]", "//a[contains(@href, '/app')]"], wait_time=2.5)
+            force_click(driver, ["//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]", "//a[contains(@href, '/app')]"], wait_time=2.5)
             
             switch_model_mode("รูปภาพ")
             
             print(f"   ⚙️ ตั้งค่าสัดส่วนภาพ: {job_ratio}")
-            ratio_xpaths = [f"//*[text()='{job_ratio}' or contains(text(), '{job_ratio}')]/ancestor-or-self::*[@role='button']"]
-            real_mouse_click(driver, ratio_xpaths, wait_time=1)
+            force_click(driver, [f"//*[text()='{job_ratio}' or contains(text(), '{job_ratio}')]/ancestor-or-self::*[@role='button']"], wait_time=1)
             
             if job_ref_image and os.path.exists(job_ref_image):
                 print("   📤 กำลังอัปโหลด Reference Image...")
@@ -171,7 +163,6 @@ try:
                 
                 # แนบรูปที่เพิ่งอัปโหลดลงในช่อง Prompt (ลำดับที่ 1)
                 click_plus_and_select_item(1)
-                time.sleep(1.5)
             
             print("   ✍️ พิมพ์ Image Prompt...")
             prompt_input_xpath = "//div[@contenteditable='true']"
@@ -179,8 +170,8 @@ try:
             driver.execute_script("arguments[0].innerText = '';", input_box) 
             input_box.send_keys(job_image_prompt_safe)
             
-            send_btn_xpath = "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]"
-            real_mouse_click(driver, [send_btn_xpath])
+            send_btn_xpath = ["//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]"]
+            force_click(driver, send_btn_xpath)
             
             if not smart_wait_for_generation(driver, "image", 180):
                 print("\n🛑 ยกเลิกสเต็ป 2 เนื่องจากรูปภาพล้มเหลว")
@@ -192,8 +183,7 @@ try:
             
             switch_model_mode("วิดีโอ")
             
-            # เลือกระบบเครดิต
-            real_mouse_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
+            force_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
             # แนบภาพนิ่งที่เพิ่งเจนเสร็จ (ลำดับ 1) เพื่อใช้ตั้งต้นทำวิดีโอ
             click_plus_and_select_item(1) 
@@ -203,7 +193,7 @@ try:
             driver.execute_script("arguments[0].innerText = '';", input_box) 
             input_box.send_keys(job_video_prompt_safe) 
             
-            real_mouse_click(driver, [send_btn_xpath])
+            force_click(driver, send_btn_xpath)
             
             if not smart_wait_for_generation(driver, "video", 300):
                 exit(1)
@@ -218,26 +208,26 @@ try:
             
             print(f"   🔍 หาคลิปล่าสุดเพื่อทำการ Extend...")
             video_xpaths = ["(//video)[last()]", "(//div[@role='button' and descendant::video])[last()]"]
-            real_mouse_click(driver, video_xpaths, wait_time=2.5)
+            force_click(driver, video_xpaths, wait_time=2.5)
 
             print(f"   ▶️ กดปุ่ม Extend...")
             extend_xpaths = ["//button[contains(., 'ขยาย') or contains(., 'Extend')]", "//span[contains(text(), 'ขยาย')]/ancestor::button"]
-            if not real_mouse_click(driver, extend_xpaths, wait_time=1.5):
+            if not force_click(driver, extend_xpaths, wait_time=1.5):
                 print("   ❌ หาปุ่ม Extend ไม่เจอ! คลิปก่อนหน้าอาจยังไม่ 100%")
                 exit(1)
                 
-            real_mouse_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
+            force_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
             print(f"   ✍️ พิมพ์ Video Prompt สำหรับต่อฉาก {job_scene_num}...")
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_boxes = driver.find_elements(By.XPATH, prompt_input_xpath)
             input_box = input_boxes[-1] 
-            ActionChains(driver).move_to_element(input_box).click().perform()
+            driver.execute_script("arguments[0].click();", input_box)
             driver.execute_script("arguments[0].innerText = '';", input_box) 
             input_box.send_keys(job_video_prompt_safe) 
             
-            send_btn_xpath = "(//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']])[last()]"
-            real_mouse_click(driver, [send_btn_xpath])
+            send_btn_xpath = ["(//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']])[last()]"]
+            force_click(driver, send_btn_xpath)
             print(f"   ✅ ส่งคำสั่ง Extend เรียบร้อย!")
             
             if not smart_wait_for_generation(driver, "video", 300):
