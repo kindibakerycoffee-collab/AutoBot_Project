@@ -13,7 +13,7 @@ def is_chrome_ready():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', 9222)) == 0
 
-print("🤖 กำลังปลุก AutoBot หลังบ้าน (Selenium Ultimate Flow + Smart Wait)...")
+print("🤖 กำลังปลุก AutoBot หลังบ้าน (Selenium Ultimate Flow)...")
 
 task_file = "bot_task.json"
 if not os.path.exists(task_file):
@@ -24,10 +24,8 @@ with open(task_file, "r", encoding="utf-8") as f:
     task_data = json.load(f)
 
 job_type = task_data.get("type", "unknown")
-# ✨ ดึง Prompt แยก 2 ประเภทจากหน้าเว็บ ✨
 job_image_prompt = task_data.get("image_prompt", "") 
 job_video_prompt = task_data.get("video_prompt", "") 
-
 job_credit = task_data.get("credit_mode", "Lower Priority")
 job_ref_image = task_data.get("ref_image", "") 
 job_scene_num = task_data.get("scene_num", 1)
@@ -36,7 +34,6 @@ job_is_first = task_data.get("is_first_scene", True)
 def clean_text_for_selenium(text):
     return "".join(c for c in text if ord(c) <= 0xFFFF)
 
-# กรอง Emoji ทิ้งทั้งสอง Prompt
 job_image_prompt_safe = clean_text_for_selenium(job_image_prompt)
 job_video_prompt_safe = clean_text_for_selenium(job_video_prompt)
 
@@ -56,6 +53,9 @@ try:
 except:
     pass
 
+# =======================================================
+# 🖱️ ฟังก์ชันคลิกด้วยเมาส์จำลอง
+# =======================================================
 def real_mouse_click(driver, xpath_list, wait_time=0.5):
     for xpath in xpath_list:
         try:
@@ -70,27 +70,48 @@ def real_mouse_click(driver, xpath_list, wait_time=0.5):
             continue
     return False
 
+# =======================================================
+# 🔄 ฟังก์ชันสลับโหมด (กดปุ่มในช่อง Prompt -> เลือกแท็บ)
+# =======================================================
 def switch_model_mode(target_mode):
     print(f"   🔄 กำลังสลับไปที่โหมด: {target_mode}...")
-    indicator_xpaths = [
-        "//button[descendant::*[contains(text(), 'Nano Banana') or contains(text(), 'วิดีโอ') or contains(text(), 'Veo')]]",
-        "//div[contains(@class, 'model-selector')]" 
+    
+    # 1. หาปุ่มในกล่อง Prompt (วิดีโอ [] x1 หรือ Nano Banana)
+    # อัปเดต XPath ให้เจาะจงปุ่มที่อยู่ในกล่องข้อความ
+    mode_btn_xpaths = [
+        "//button[contains(., 'x1') and (contains(., 'วิดีโอ') or contains(., 'Nano') or contains(., 'Veo'))]",
+        "//div[contains(@class, 'input') or @role='textbox']/following-sibling::*//button[contains(., 'x1')]",
+        "//button[contains(., 'Nano Banana 2') or contains(., 'Veo 3.1')]"
     ]
-    if real_mouse_click(driver, indicator_xpaths, wait_time=1):
+    
+    if real_mouse_click(driver, mode_btn_xpaths, wait_time=1.5):
+        # 2. พอป๊อปอัปเด้งขึ้นมา ให้เลือกแท็บ "รูปภาพ" หรือ "วิดีโอ"
         tab_xpaths = [f"//div[@role='tab' or @role='button'][contains(., '{target_mode}')]"]
         if real_mouse_click(driver, tab_xpaths, wait_time=1):
             return True
+    
+    print(f"   ⚠️ คำเตือน: หาปุ่มสลับโหมด {target_mode} ไม่เจอ บอทอาจจะทำงานในโหมดเดิมต่อ")
     return False
 
+# =======================================================
+# ➕ ฟังก์ชันกดปุ่ม + และเลือกไอเทม
+# =======================================================
 def click_plus_and_select_item(item_index):
-    print(f"   ➕ กำลังกดปุ่ม + เพื่อเพิ่ม Ingredient ลำดับที่ {item_index}...")
-    plus_btn_xpaths = ["//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", "//div[contains(text(), '+')]"]
+    print(f"   ➕ กำลังกดปุ่ม + เพื่อเพิ่มรูปภาพลำดับที่ {item_index}...")
+    plus_btn_xpaths = [
+        "//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", 
+        "//div[contains(text(), '+')]"
+    ]
     if real_mouse_click(driver, plus_btn_xpaths, wait_time=1.5):
+        # รอกล่องแกลลอรี่เด้งขึ้นมา แล้วกดเลือกรูปตามลำดับ
         gallery_item_xpaths = [f"(//div[contains(@class, 'gallery-item') or @role='listitem'])[{item_index}]"]
         if real_mouse_click(driver, gallery_item_xpaths, wait_time=1):
             return True
     return False
 
+# =======================================================
+# 📡 เรดาร์ตรวจจับความสำเร็จ 100% (ป้องกันการสับขาหลอก)
+# =======================================================
 def smart_wait_for_generation(driver, media_type="image", timeout=300):
     print(f"   📡 เรดาร์ทำงาน: กำลังเฝ้ารอระบบเจน {media_type} จนครบ 100%...")
     start_time = time.time()
@@ -99,11 +120,19 @@ def smart_wait_for_generation(driver, media_type="image", timeout=300):
     
     while time.time() - start_time < timeout:
         current_count = len(driver.find_elements(By.XPATH, target_xpath))
+        elapsed_time = int(time.time() - start_time)
+        
         if current_count > initial_count:
-            time.sleep(2)
-            elapsed_time = int(time.time() - start_time)
-            print(f"   ✅ ผลงานเสร็จสมบูรณ์! (ใช้เวลา {elapsed_time} วินาที)")
-            return True
+            # ✨ ป้องกันการสับขาหลอก: ถ้ารูปเพิ่มขึ้นในเวลาน้อยกว่า 15 วิ แปลว่าเป็นรูปอัปโหลด ไม่ใช่รูปเจน ✨
+            if elapsed_time < 15:
+                # อัปเดตฐานข้อมูลว่านี่คือรูปที่โหลดมาใหม่ แล้วรอต่อไป
+                initial_count = current_count
+                time.sleep(2)
+                continue
+            else:
+                time.sleep(3) # ให้เวลารูปโหลดเต็มที่
+                print(f"   ✅ ผลงานเสร็จสมบูรณ์! (ใช้เวลา {elapsed_time} วินาที)")
+                return True
         
         error_xpaths = driver.find_elements(By.XPATH, "//*[contains(text(), 'ลองอีกครั้ง') or contains(text(), 'Try again') or contains(text(), 'Couldn')]")
         if len(error_xpaths) > 0 and error_xpaths[0].is_displayed():
@@ -125,32 +154,35 @@ try:
             print("🚀 สเต็ป 1: Image Gen (สร้างภาพนิ่งตั้งต้น)")
             print("=========================================")
             
+            # 0. ล้างแชทเก่า
             new_chat_xpaths = ["//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]", "//a[contains(@href, '/app')]"]
             real_mouse_click(driver, new_chat_xpaths, wait_time=2.5)
             
+            # 1. กดปุ่มที่อยู่ในช่องเขียน Prompt เพื่อเลือกโหมด รูปภาพ (Nano Banana 2)
             switch_model_mode("รูปภาพ")
             
+            # 2. เพิ่มรูปต้นฉบับผ่านปุ่ม + ในช่อง Prompt
             if job_ref_image and os.path.exists(job_ref_image):
-                print("   📤 อัปโหลด Reference Image...")
+                print("   📤 กำลังอัปโหลดรูปต้นฉบับ (Reference Image)...")
+                # กดปุ่ม + ข้างกล่องข้อความก่อน เพื่อให้ช่อง Input File ทำงานได้สมบูรณ์
+                plus_btn_xpaths = ["//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", "//div[contains(text(), '+')]"]
+                real_mouse_click(driver, plus_btn_xpaths, wait_time=1)
+                
                 try:
                     file_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='file']")))
                     file_input.send_keys(job_ref_image)
                     time.sleep(6) 
-                    
-                    upload_errors = driver.find_elements(By.XPATH, "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'error') or contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'fail') or contains(text(), 'อัปโหลดไม่สำเร็จ')]")
-                    if len(upload_errors) > 0 and upload_errors[0].is_displayed():
-                        print("   🛑 รูปอัปโหลดพัง (Error) เบรกฉุกเฉินทำงาน!")
-                        exit(1)
                 except Exception as e:
                     print(f"   ❌ หาช่องอัปโหลดไม่เจอ! ({e})")
-                    exit(1)
             
+            # 3. พิมพ์ Prompt รูปภาพ
             print("   ✍️ พิมพ์ Image Prompt...")
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
             driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_image_prompt_safe) # 🔹 ใส่เฉพาะ Image Prompt
+            input_box.send_keys(job_image_prompt_safe)
             
+            # กดส่ง
             print("   ⏳ สั่งเจนภาพ...")
             send_btn_xpath = "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]"
             real_mouse_click(driver, [send_btn_xpath])
@@ -163,19 +195,27 @@ try:
             print("🚀 สเต็ป 2: Frame to Video (สร้างวิดีโอฉากแรก)")
             print("=========================================")
             
+            # 4. กดปุ่มเพื่อสลับเป็นโหมด วิดีโอ (Veo 3.1)
             switch_model_mode("วิดีโอ")
+            
+            # ตั้งค่า ส่วนผสม, 9:16, Lower Priority
             real_mouse_click(driver, ["//div[@role='tab' or @role='button'][contains(., 'ส่วนผสม') or contains(., 'Blend')]"], wait_time=1)
             real_mouse_click(driver, ["//*[contains(text(), '9:16')]"], wait_time=1)
             real_mouse_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
-            click_plus_and_select_item(1) # นำภาพนิ่งมาตั้งต้น
-            click_plus_and_select_item(2) # Ingredient Lock สินค้า
+            # 5. กดปุ่ม + เพื่อเลือกรูปที่เพิ่งเจนเสร็จ (ลำดับที่ 1)
+            click_plus_and_select_item(1) 
+            
+            # 6. กดปุ่ม + เพื่อเลือกรูปต้นฉบับมาเป็น Ingredient Lock (ลำดับที่ 2)
+            click_plus_and_select_item(2) 
 
+            # 7. พิมพ์ Video Prompt 
             print("   ✍️ พิมพ์ Video Prompt (Camera Controls)...")
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
             driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_video_prompt_safe) # 🔹 ใส่เฉพาะ Video Prompt เพื่อสั่งกล้องให้ขยับ
+            input_box.send_keys(job_video_prompt_safe) 
             
+            # กดส่ง
             real_mouse_click(driver, [send_btn_xpath])
             print("   ✅ ส่งคำสั่ง Frame to Video แล้ว!")
             
@@ -209,7 +249,7 @@ try:
             input_box = input_boxes[-1] 
             ActionChains(driver).move_to_element(input_box).click().perform()
             driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_video_prompt_safe) # 🔹 สำหรับ Scene 2 เป็นต้นไป ใช้ Video Prompt เพื่อต่อการเคลื่อนไหว
+            input_box.send_keys(job_video_prompt_safe) 
             
             send_btn_xpath = "(//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']])[last()]"
             real_mouse_click(driver, [send_btn_xpath])
