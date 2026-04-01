@@ -55,7 +55,7 @@ if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวต�
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
-# --- ✨ ระบบความจำสำหรับจัดการ API Key ✨ ---
+# --- ระบบความจำสำหรับจัดการ API Key ---
 if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
 if 'key_status' not in st.session_state: 
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
@@ -105,11 +105,9 @@ def smart_generate(prompt_contents):
 if logo_img != "🤖":
     st.sidebar.image(logo_img, width=150)
 
-# --- ✨ แดชบอร์ดมอนิเตอร์ API Key + ปุ่มรีเซ็ต (แบบใหม่ไม่กระทบส่วนอื่น) ✨ ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
 
-# ย้ายปุ่มรีเซ็ตมาทำงานก่อน เพื่อให้แสดงผลสถานะใหม่ได้ทันทีโดยไม่ต้องใช้ st.rerun()
 if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์ทั้งหมด", use_container_width=True):
     st.session_state.current_key_idx = 0
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
@@ -156,7 +154,8 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
                     extracted_info = ""
                     for i, img_file in enumerate(uploaded_files):
                         img = Image.open(img_file)
-                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ"
+                        # ✨ จุดแก้ที่ 1: สั่งให้ AI บรรยายรูปร่างหน้าตาสินค้าด้วย ✨
+                        prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ **และที่สำคัญที่สุด: จงบรรยายรูปร่าง ลักษณะ สี วัสดุ และรูปทรงของตัวสินค้าในภาพอย่างละเอียด (Physical appearance description) เพื่อให้นำไปใช้สร้างรูปต่อได้ตรงปกที่สุด**"
                         result_text = smart_generate([img, prompt]) 
                         extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{result_text}\n\n"
                         if i < len(uploaded_files) - 1:
@@ -167,7 +166,7 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
                     st.error(f"❌ เกิดข้อผิดพลาดจาก AI: {e}")
 
 st.markdown("### 📝 รายละเอียดสินค้าสำหรับแต่งสคริปต์")
-product_input = st.text_area("ข้อความที่สแกนได้:", value=st.session_state.product_text, height=200)
+product_input = st.text_area("ข้อความที่สแกนได้ (สามารถแก้ไขเพิ่มรายละเอียดรูปร่างสินค้าได้ที่นี่):", value=st.session_state.product_text, height=200)
 st.session_state.product_text = product_input 
 st.divider()
 
@@ -266,6 +265,7 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
+                        # ✨ จุดแก้ที่ 2: บังคับให้ Prompt รูปภาพบรรยายหน้าตาสินค้าแบบเป๊ะๆ ✨
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
@@ -278,8 +278,8 @@ with tab_video:
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
                         3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
                         4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
-                        5. 🚨 ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100% ห้ามใช้คำแปลกประหลาดหรือภาษาเพี้ยนเด็ดขาด หากเลือกสไตล์ "เน้นสัญลักษณ์/Emoji" ให้นำไอคอนหรือสัญลักษณ์มาใช้แทนคำพูดให้มากที่สุดเพื่อความกระชับ
-                        6. รูปแบบฉากต้องครบถ้วน: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
+                        5. 🚨 ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100%
+                        6. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ เช่น 'solar light' เด็ดขาด (เช่น ต้องระบุเป็น 'A rectangular black LED solar floodlight panel...') เพื่อให้ภาพตรงปกที่สุด**"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -365,16 +365,30 @@ with tab_poster:
     with col2:
         st.selectbox("📏 สัดส่วนภาพ:", ["แนวนอน 16:9", "แนวนอน 4:3", "จัตุรัส 1:1", "แนวตั้ง 3:4", "แนวตั้ง 9:16"], key="p_ratio")
     st.selectbox("🎨 โทนสีหลัก:", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม", "สีพาสเทล", "สีขาวดำ/เทา", "สีนีออน"], key="p_color")
+    
     if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
         if not st.session_state.product_text.strip(): st.warning("⚠️ ใส่ข้อมูลสินค้าก่อน!")
         elif not api_keys_list: st.error("🛑 ตั้งค่าคีย์ก่อน!")
         else:
             with st.spinner("🧠 ออกแบบโปสเตอร์..."):
                 try:
-                    prompt_cmd = f"เขียน Prompt ภาษาอังกฤษสร้างโปสเตอร์: {st.session_state.product_text} สไตล์ {st.session_state.p_style} สัดส่วน {st.session_state.p_ratio} โทนสี {st.session_state.p_color}"
+                    prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
+                    สินค้า: {st.session_state.product_text}
+                    
+                    🎨 ข้อกำหนดการออกแบบ:
+                    สไตล์: {st.session_state.p_style}
+                    สัดส่วน: {st.session_state.p_ratio}
+                    โทนสี: {st.session_state.p_color}
+                    
+                    🚨 กฎเหล็ก (สำคัญมากเรื่องข้อความภาษาไทย):
+                    1. ตัว Prompt โครงสร้างหลักในการบรรยายฉาก เลย์เอาต์ และอารมณ์ภาพ ให้เขียนเป็น "ภาษาอังกฤษ"
+                    2. 🚨 การใส่ตัวหนังสือ (Typography): ระบบเจนภาพรองรับภาษาไทยสมบูรณ์แบบ ดังนั้น ให้คุณคัดลอกคำโฆษณาภาษาไทยเด็ดๆ จากข้อมูลสินค้า ไปวางใน Prompt ได้เลย โดย **ต้องครอบด้วยเครื่องหมายคำพูด ("...") เสมอ**
+                    3. ตัวอย่างการเขียนสั่งข้อความใน Prompt: `A large glowing red badge with typography text "ซื้อ 1 แถม 1"`, `blue circular icon with text "ไม่มีค่าไฟ"`
+                    """
                     st.session_state.generated_poster_prompt = smart_generate(prompt_cmd)
                     st.success("✅ สร้าง Prompt โปสเตอร์สำเร็จ!")
                 except Exception as e: st.error(f"❌ ล้มเหลว: {e}")
+                
     if st.session_state.generated_poster_prompt:
         st.markdown("---")
         st.code(st.session_state.generated_poster_prompt, language="markdown")
