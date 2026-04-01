@@ -8,7 +8,7 @@ import os
 import re
 
 # ==========================================
-# 🚨 1. ตั้งค่าหน้าเว็บ (ต้องอยู่บนสุดเสมอ)
+# 🚨 1. ตั้งค่าหน้าเว็บ
 # ==========================================
 try:
     logo_img = Image.open("logo.png") 
@@ -21,26 +21,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==========================================
-# 📡 ดึงกองกำลัง API Key จากตู้เซฟ
-# ==========================================
 api_keys_list = []
 if "GEMINI_API_KEYS" in st.secrets:
     api_keys_list = st.secrets["GEMINI_API_KEYS"]
 elif "GEMINI_API_KEY" in st.secrets:
     api_keys_list = [st.secrets["GEMINI_API_KEY"]]
 
-# ==========================================
-# 🧠 0. ตั้งค่าระบบความจำ (Session State) 
-# ==========================================
 if 'product_text' not in st.session_state: st.session_state.product_text = ""
 if 'generated_video_prompt' not in st.session_state: st.session_state.generated_video_prompt = ""
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-# ==========================================
-# ⚙️ ฟังก์ชันสำหรับคืนค่าเริ่มต้น
-# ==========================================
 def reset_video_defaults():
     st.session_state.v_presenter = "หญิงสาว (Young Female)"
     st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
@@ -64,7 +55,6 @@ def reset_poster_defaults():
     st.session_state.p_composition = "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)"
     st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
 
-# เช็กและตั้งค่าเริ่มต้นครั้งแรก
 if 'v_presenter' not in st.session_state: reset_video_defaults()
 if 'p_style' not in st.session_state: reset_poster_defaults()
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
@@ -74,9 +64,6 @@ if 'key_status' not in st.session_state:
     st.session_state.key_status = {i: "⏳ สแตนด์บาย" for i in range(len(api_keys_list))}
     if api_keys_list: st.session_state.key_status[0] = "🟢 กำลังใช้งาน"
 
-# ==========================================
-# 🧠 ฟังก์ชันผู้จัดการคีย์อัจฉริยะ
-# ==========================================
 def smart_generate(prompt_contents):
     if not api_keys_list: raise Exception("ไม่พบ API Key ในระบบเลยครับ กรุณาตั้งค่าก่อน")
     last_error = ""
@@ -100,9 +87,6 @@ def smart_generate(prompt_contents):
             continue
     raise Exception(f"กองกำลัง API Key ติดลิมิตหมดแล้วครับ! กรุณารอประมาณ 1 นาที")
 
-# ==========================================
-# 🎨 UI Header & Sidebar
-# ==========================================
 if logo_img != "🤖": st.sidebar.image(logo_img, width=150)
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
@@ -121,9 +105,6 @@ st.sidebar.markdown("---")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 
-# ==========================================
-# 📸 1. ส่วนดึงข้อความ
-# ==========================================
 with st.expander("➕ อัปโหลดรูปภาพอ้างอิง (Ingredient Lock Data)", expanded=True):
     uploaded_files = st.file_uploader("Drag and drop files here", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
     if uploaded_files:
@@ -156,9 +137,6 @@ product_input = st.text_area("ข้อมูลที่ระบบสกั�
 st.session_state.product_text = product_input 
 st.divider()
 
-# ==========================================
-# 🎛️ 3. เลือกโหมดการทำงานหลัก
-# ==========================================
 tab_video, tab_poster = st.tabs(["🎬 โหมด Scene Builder (Frame to Video)", "🖼️ โหมด Image Gen (สร้างโปสเตอร์)"])
 
 with tab_video:
@@ -221,23 +199,21 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังวางโครงสร้าง Scene Builder..."):
                     try:
-                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow (Veo 3.1 และ Nano) จากข้อมูล:
+                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow จากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
-                        พรีเซนเตอร์ (Character Lock): {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
-                        สไตล์ภาพ (Visual Model): {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
-                        การเล่าเรื่อง (Continuity Flow): {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
+                        พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
+                        สไตล์ภาพ: {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
+                        การเล่าเรื่อง: {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
                         ความยาวรวม: {st.session_state.v_duration} | ข้อความบนจอ: {st.session_state.v_text_overlay}
-                        กลุ่มเป้าหมาย: {st.session_state.v_target} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:"
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" และ "Camera Controls" ที่กำหนด
-                        4. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้โดยใช้ฟีเจอร์ Extend ของ Google Flow อย่างแนบเนียน
-                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ** เพื่อให้ระบบสามารถคงรูปลักษณ์สินค้าได้ตรงปกที่สุด
-                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง (สำหรับโหมด Image Gen), Prompt สร้างวิดีโอ (สำหรับโหมด Text to Video)
-                        7. 🚨 เรื่องภาษาและสำเนียง (สำคัญมาก): เนื่องจากคุณเลือกภาษาเป็น "{st.session_state.v_lang}" หากเป็นภาษาถิ่น จงเขียนบทพูด (🗣️ บทพูด) ด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่านสำเนียงถิ่น (Phonetic spelling) แบบจัดเต็ม เพื่อบังคับให้ AI Voice อ่านออกเสียงได้ใกล้เคียงคนท้องถิ่นที่สุด"""
+                        3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้แนบเนียน
+                        4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "- 🖼️ Prompt สร้างภาพนิ่ง:" และ "- 🎞️ Prompt สร้างวิดีโอ:" ให้เขียนเป็นภาษาอังกฤษล้วน และต้องใส่คำบรรยายลักษณะสินค้าอย่างละเอียด ห้ามใช้คำกว้างๆ
+                        5. โครงสร้างฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ
+                        6. 🚨 เรื่องภาษา: หากเลือกภาษาถิ่น จงเขียนบทพูดด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่าน"""
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
                         st.success("✅ สร้างสคริปต์และ Prompt สำหรับ Scene Builder สำเร็จ!")
@@ -263,14 +239,10 @@ with tab_video:
         st.markdown("---")
         view_mode = st.radio("🖥️ เลือกรูปแบบการทำงาน:", ["💻 ใช้ AutoBot รัน Handoff บนคอมพิวเตอร์", "📱 ก๊อปปี้ไปวางในแอปมือถือเอง"], horizontal=True)
         raw_text = st.session_state.generated_video_prompt
-        if "ฉากที่ 1" in raw_text:
-            header_text, scenes_text = raw_text.split("ฉากที่ 1", 1)
-            if header_text.strip(): st.success(header_text.strip())
-            scenes = re.split(r'(?:\n|^)(?=ฉากที่\s*\d+)', "ฉากที่ 1" + scenes_text)
-        else: 
-            scenes = re.split(r'(?:\n|^)(?=ฉากที่\s*\d+)', raw_text)
-            
-        valid_scenes = [s for s in scenes if len(s.strip()) > 5]
+        
+        # ✨ อัปเกรด Regex ตัดแบ่งฉากให้แม่นยำ แม้ AI จะเขียนตัวหนา (**) มาก็ตาม ✨
+        scenes = re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', raw_text)
+        valid_scenes = [s for s in scenes if len(s.strip()) > 5 and "ฉากที่" in s]
 
         if "คอมพิวเตอร์" in view_mode:
             bot_credit = st.radio("เลือกระบบเครดิต (Google Flow):", ["Lower Priority (เครดิตฟรี)", "Fast (ใช้โควต้า Pro/Ultra)"], horizontal=True)
@@ -282,7 +254,6 @@ with tab_video:
                     edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
                     terminal_box = st.empty()
                     
-                    # ✨ เปลี่ยนข้อความปุ่มให้ดู Pro ตามบริบทของแต่ละฉาก ✨
                     btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene & Ingredient Lock)"
                     
                     if st.button(btn_text, type="primary", key=f"btn_scene_{i}"):
@@ -290,18 +261,39 @@ with tab_video:
                         else:
                             is_first = True if scene_num == 1 else False
                             ref_img_path = st.session_state.uploaded_img_paths[0] 
-                            extracted_img_prompt = edited_prompt
-                            if "🖼️ Prompt สร้างภาพนิ่ง:" in edited_prompt:
-                                extracted_img_prompt = edited_prompt.split("🖼️ Prompt สร้างภาพนิ่ง:")[1].split("-🎞️")[0].strip()
+                            
+                            # ✨ อัปเกรดตัวดึง Prompt: ดึงภาพนิ่งแยกกับวิดีโอแบบ 100% ✨
+                            img_prompt = ""
+                            vid_prompt = ""
+                            
+                            # ดึง Prompt ภาพนิ่ง
+                            if "Prompt สร้างภาพนิ่ง" in edited_prompt:
+                                parts = re.split(r'Prompt สร้างภาพนิ่ง.*?:', edited_prompt)
+                                if len(parts) > 1:
+                                    img_prompt = re.split(r'Prompt สร้างวิดีโอ', parts[1])[0]
+                                    img_prompt = re.sub(r'[-🎞️\*]', '', img_prompt).strip()
+                                    
+                            # ดึง Prompt วิดีโอ
+                            if "Prompt สร้างวิดีโอ" in edited_prompt:
+                                parts = re.split(r'Prompt สร้างวิดีโอ.*?:', edited_prompt)
+                                if len(parts) > 1:
+                                    vid_prompt = parts[1]
+                                    vid_prompt = re.sub(r'[-🖼️\*]', '', vid_prompt).strip()
+                                    
+                            # กรณีฉุกเฉินถ้า AI เขียนมาแปลกๆ 
+                            if not img_prompt: img_prompt = edited_prompt 
+                            if not vid_prompt: vid_prompt = "Animate this scene smoothly with cinematic camera motion."
                             
                             task_payload = {
                                 "type": "scene_pipeline", 
-                                "prompt": extracted_img_prompt, 
+                                "image_prompt": img_prompt, # ส่ง Prompt ภาพนิ่ง
+                                "video_prompt": vid_prompt, # ส่ง Prompt วิดีโอ
                                 "credit_mode": credit_val, 
                                 "ref_image": ref_img_path,
                                 "scene_num": scene_num,
                                 "is_first_scene": is_first
                             }
+                            
                             with open("bot_task.json", "w", encoding="utf-8") as f: 
                                 json.dump(task_payload, f, ensure_ascii=False)
                             
@@ -310,7 +302,6 @@ with tab_video:
                             try:
                                 custom_env = os.environ.copy()
                                 custom_env["PYTHONIOENCODING"] = "utf-8"
-                                
                                 process = subprocess.Popen(
                                     ["python", "-u", "test_bot.py"], 
                                     stdout=subprocess.PIPE, 
