@@ -30,8 +30,6 @@ job_credit = task_data.get("credit_mode", "Lower Priority")
 job_ref_image = task_data.get("ref_image", "") 
 job_scene_num = task_data.get("scene_num", 1)
 job_is_first = task_data.get("is_first_scene", True)
-
-# ✨ รับตัวแปร Remote Control จากหน้าเว็บ ✨
 job_ratio = task_data.get("target_ratio", "9:16")
 
 def clean_text_for_selenium(text):
@@ -70,33 +68,25 @@ def real_mouse_click(driver, xpath_list, wait_time=0.5):
             continue
     return False
 
-# =======================================================
-# 🔄 ฟังก์ชันสลับโหมด: อ้างอิงจากภาพแคปหน้าจอ (เป๊ะ 100%)
-# =======================================================
 def switch_model_mode(target_mode):
-    print(f"   🔄 กำลังสลับไปที่โหมด: {target_mode}...")
-    
-    # เล็งหาปุ่มที่มีคำว่า "x1" ข้างๆ ช่องส่งข้อความ
+    print(f"   🔄 กำลังคลิกเปิดหน้าต่างสลับโหมด: {target_mode}...")
     mode_btn_xpaths = [
-        "//button[contains(., 'x1') and (contains(., 'วิดีโอ') or contains(., 'Nano') or contains(., 'Veo'))]",
-        "//button[contains(., 'x1') and not(contains(@aria-label, 'ส่ง'))]",
-        "(//button[descendant::*[contains(text(), 'x1')]])[last()]"
+        "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]/preceding-sibling::*[1]",
+        "//*[contains(text(), 'x1')]/ancestor::*[@role='button' or local-name()='button'][1]",
+        "//div[contains(@class, 'model-selector')]"
     ]
-    
     if real_mouse_click(driver, mode_btn_xpaths, wait_time=1.5):
-        # กดเลือกแท็บที่เด้งขึ้นมา
         tab_xpaths = [f"//div[@role='tab' or @role='button'][contains(., '{target_mode}')]"]
         if real_mouse_click(driver, tab_xpaths, wait_time=1):
             return True
-            
-    print(f"   ⚠️ หาปุ่มสลับโหมด {target_mode} ไม่เจอ บอทจะลุยต่อในโหมดปัจจุบัน")
     return False
 
 def click_plus_and_select_item(item_index):
     print(f"   ➕ กำลังกดปุ่ม + เพื่อเพิ่ม Ingredient ลำดับที่ {item_index}...")
     plus_btn_xpaths = [
-        "//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", 
-        "//div[contains(text(), '+')]"
+        "//button[descendant::*[text()='+'] or contains(@aria-label, 'แนบไฟล์')]",
+        "//div[text()='+']/ancestor::button[1]",
+        "//div[contains(@class, 'add-attachment')]" # เผื่อหน้าตาปุ่มเปลี่ยน
     ]
     if real_mouse_click(driver, plus_btn_xpaths, wait_time=1.5):
         gallery_item_xpaths = [f"(//div[contains(@class, 'gallery-item') or @role='listitem'])[{item_index}]"]
@@ -136,9 +126,6 @@ def smart_wait_for_generation(driver, media_type="image", timeout=300):
 try:
     if job_type == "scene_pipeline":
         
-        # ==========================================
-        # 🎬 กรณีฉากที่ 1 (Image Gen -> Frame to Video)
-        # ==========================================
         if job_is_first:
             print("=========================================")
             print("🚀 สเต็ป 1: Image Gen (สร้างภาพนิ่งตั้งต้น)")
@@ -149,22 +136,24 @@ try:
             
             switch_model_mode("รูปภาพ")
             
-            # ✨ รีโมทคอนโทรล: กดตั้งค่าสัดส่วนภาพนิ่ง (Ratio) ✨
             print(f"   ⚙️ ตั้งค่าสัดส่วนภาพ: {job_ratio}")
             ratio_xpaths = [f"//*[text()='{job_ratio}' or contains(text(), '{job_ratio}')]/ancestor-or-self::*[@role='button' or tagName()='button' or contains(@class, 'ratio')]"]
             real_mouse_click(driver, ratio_xpaths, wait_time=1)
             
             if job_ref_image and os.path.exists(job_ref_image):
                 print("   📤 กำลังอัปโหลดรูปต้นฉบับ (Reference Image)...")
-                plus_btn_xpaths = ["//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", "//div[contains(text(), '+')]"]
-                real_mouse_click(driver, plus_btn_xpaths, wait_time=1)
-                
                 try:
                     file_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='file']")))
                     file_input.send_keys(job_ref_image)
                     time.sleep(6) 
                 except Exception as e:
                     print(f"   ❌ หาช่องอัปโหลดไม่เจอ! ({e})")
+                
+                # ✨ ส่วนที่แก้ไข: แนบรูปลงช่อง Prompt ก่อนพิมพ์ข้อความ ✨
+                print("   📎 กำลังแนบรูปที่เพิ่งอัปโหลดลงในช่อง Prompt...")
+                # เลือกลำดับที่ 1 จากแกลลอรี่ (เพราะเป็นรูปเดียวที่เพิ่งอัปโหลดเข้าไป)
+                click_plus_and_select_item(1)
+                time.sleep(1.5)
             
             print("   ✍️ พิมพ์ Image Prompt...")
             prompt_input_xpath = "//div[@contenteditable='true']"
@@ -186,10 +175,7 @@ try:
             
             switch_model_mode("วิดีโอ")
             
-            # คลิกคำว่า "ส่วนผสม" ตามภาพ
             real_mouse_click(driver, ["//div[@role='tab' or @role='button'][contains(., 'ส่วนผสม') or contains(., 'Blend')]"], wait_time=1)
-            
-            # ✨ รีโมทคอนโทรล: ตั้งค่าสัดส่วนและโหมดเครดิตวิดีโอ ✨
             real_mouse_click(driver, ratio_xpaths, wait_time=1)
             real_mouse_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
@@ -208,9 +194,6 @@ try:
             if not is_video_success:
                 exit(1)
 
-        # ==========================================
-        # 🎬 กรณีฉากที่ 2 เป็นต้นไป (Extend Scene)
-        # ==========================================
         else:
             print(f"=========================================")
             print(f"🚀 สเต็ป: ขยายฉากที่ {job_scene_num} (Extend Scene)")
