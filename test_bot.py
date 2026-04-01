@@ -30,6 +30,16 @@ job_ref_image = task_data.get("ref_image", "")
 job_scene_num = task_data.get("scene_num", 1)
 job_is_first = task_data.get("is_first_scene", True)
 
+# =======================================================
+# 🛡️ ฟังก์ชันใหม่: เครื่องกรอง Emoji และอักขระพิเศษ
+# =======================================================
+def clean_text_for_selenium(text):
+    """ลบ Emoji และตัวอักษรที่อยู่นอกเหนือมาตรฐาน BMP ที่ทำให้ ChromeDriver แครช"""
+    return "".join(c for c in text if ord(c) <= 0xFFFF)
+
+# กรอง Prompt ให้สะอาดก่อนให้บอทพิมพ์
+job_prompt_safe = clean_text_for_selenium(job_prompt)
+
 if not is_chrome_ready():
     print("❌ ระบบหยุดทำงาน: มองไม่เห็น Chrome ในโหมดนักพัฒนาครับ!")
     exit(1)
@@ -91,37 +101,30 @@ def click_plus_and_select_item(item_index):
     return False
 
 # =======================================================
-# 📡 เรดาร์ตรวจจับความสำเร็จ 100% (Smart Wait) ✨ ใหม่! ✨
+# 📡 เรดาร์ตรวจจับความสำเร็จ 100% (Smart Wait)
 # =======================================================
 def smart_wait_for_generation(driver, media_type="image", timeout=300):
-    """ฟังก์ชันสแกนหาผลลัพธ์ใหม่ ถ้ามาครบ 100% แล้วจะไปต่อทันที"""
     print(f"   📡 เรดาร์ทำงาน: กำลังเฝ้ารอระบบเจน {media_type} จนครบ 100%...")
     start_time = time.time()
     
-    # กำหนดสิ่งที่จะค้นหา (รูป หรือ วิดีโอ)
     target_xpath = "//img" if media_type == "image" else "//video"
-    
-    # นับจำนวนของที่มีอยู่บนจอก่อนเริ่มรอ
     initial_count = len(driver.find_elements(By.XPATH, target_xpath))
     
     while time.time() - start_time < timeout:
-        # นับจำนวนล่าสุด
         current_count = len(driver.find_elements(By.XPATH, target_xpath))
         
-        # ถ้าจำนวนปัจจุบัน "มากกว่า" ตอนเริ่มต้น แสดงว่ามีของใหม่เด้งขึ้นมาแล้ว (ครบ 100%)
         if current_count > initial_count:
-            time.sleep(2) # รอให้ภาพ/คลิปโหลดขึ้นจอนิ่งๆ สัก 2 วินาที
+            time.sleep(2)
             elapsed_time = int(time.time() - start_time)
             print(f"   ✅ ระบบสร้างผลงานเสร็จสมบูรณ์ 100% แล้ว! (ใช้เวลาไปเพียง {elapsed_time} วินาที)")
             return True
         
-        # ถ้าระบบขึ้น Error (มีปุ่มลองใหม่)
         error_xpaths = driver.find_elements(By.XPATH, "//*[contains(text(), 'ลองอีกครั้ง') or contains(text(), 'Try again')]")
         if len(error_xpaths) > 0 and error_xpaths[0].is_displayed():
             print("   ❌ ระบบ Google Flow ขัดข้อง หรือคีย์ติดลิมิต! กรุณาเช็กหน้าจอ")
             return False
             
-        time.sleep(2) # สแกนเช็กทุกๆ 2 วินาที
+        time.sleep(2)
         
     print(f"   ❌ รอนานเกิน {timeout} วินาที เรดาร์ขอหยุดทำงานเผื่อระบบค้างครับ!")
     return False
@@ -135,7 +138,7 @@ try:
         # ==========================================
         if job_is_first:
             print("=========================================")
-            print("🚀 สเต็ป 1: เริ่มต้นสร้างภาพนิ่ง (Nano Banana 2)")
+            print("🚀 สเต็ป 1: เริ่มต้นสร้างภาพนิ่ง (Image Gen)")
             print("=========================================")
             
             new_chat_xpaths = ["//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]", "//a[contains(@href, '/app')]"]
@@ -156,17 +159,17 @@ try:
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
             driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_prompt)
+            # ✨ ใช้ตัวแปรที่กรอง Emoji แล้ว ✨
+            input_box.send_keys(job_prompt_safe)
             
             print("   ⏳ ส่งคำสั่งเจนภาพนิ่ง...")
             send_btn_xpath = "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]"
             real_mouse_click(driver, [send_btn_xpath])
             
-            # ✨ เรียกใช้เรดาร์รอจนรูปเจนเสร็จ 100% แบบอัจฉริยะ (ให้เวลาสูงสุด 3 นาที) ✨
             smart_wait_for_generation(driver, media_type="image", timeout=180)
             
             print("\n=========================================")
-            print("🚀 สเต็ป 2: นำภาพนิ่งมาสร้างวิดีโอฉากแรก (Veo 3.1)")
+            print("🚀 สเต็ป 2: นำภาพนิ่งมาสร้างวิดีโอฉากแรก (Frame to Video)")
             print("=========================================")
             
             switch_model_mode("วิดีโอ")
@@ -188,7 +191,6 @@ try:
             real_mouse_click(driver, [send_btn_xpath])
             print("   ✅ ส่งคำสั่งสร้างคลิปฉากที่ 1 สำเร็จ!")
             
-            # ✨ เรียกใช้เรดาร์รอวิดีโอเจนเสร็จ 100% แบบอัจฉริยะ (ให้เวลาสูงสุด 5 นาที) ✨
             smart_wait_for_generation(driver, media_type="video", timeout=300)
 
         # ==========================================
@@ -217,13 +219,13 @@ try:
             input_box = input_boxes[-1] 
             ActionChains(driver).move_to_element(input_box).click().perform()
             driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_prompt) 
+            # ✨ ใช้ตัวแปรที่กรอง Emoji แล้ว ✨
+            input_box.send_keys(job_prompt_safe) 
             
             send_btn_xpath = "(//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']])[last()]"
             real_mouse_click(driver, [send_btn_xpath])
             print(f"   ✅ ส่งคำสั่งต่อฉากที่ {job_scene_num} เรียบร้อย!")
             
-            # ✨ เรียกใช้เรดาร์รอวิดีโอต่อขยายเจนเสร็จ 100% ✨
             smart_wait_for_generation(driver, media_type="video", timeout=300)
 
     if os.path.exists(task_file):
