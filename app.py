@@ -16,7 +16,7 @@ except FileNotFoundError:
     logo_img = "🤖" 
 
 st.set_page_config(
-    page_title="AutoBot Director | NextGen Ai STORE",
+    page_title="AutoBot Director | Google Flow Edition",
     page_icon=logo_img,
     layout="wide"
 )
@@ -105,8 +105,11 @@ st.sidebar.markdown("---")
 
 st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (AutoBot_Project)</h1>", unsafe_allow_html=True)
 
-with st.expander("➕ อัปโหลดรูปภาพอ้างอิง (Ingredient Lock Data)", expanded=True):
-    uploaded_files = st.file_uploader("Drag and drop files here", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+# ==========================================
+# 📸 1. ส่วนดึงข้อความ & Ingredient Lock
+# ==========================================
+with st.expander("➕ อัปโหลด Reference Image (ตั้งค่า Ingredient Lock)", expanded=True):
+    uploaded_files = st.file_uploader("ลากรูปภาพสินค้ามาวางที่นี่ (รองรับ PNG, JPG)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
     if uploaded_files:
         st.session_state.uploaded_img_paths = []
         if not os.path.exists("temp_refs"): os.makedirs("temp_refs")
@@ -115,7 +118,7 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
             with open(file_path, "wb") as f: f.write(img_file.getbuffer())
             st.session_state.uploaded_img_paths.append(file_path)
 
-    if st.button("🔍 ดึงข้อความและจุดขายจากรูปภาพ", type="secondary", use_container_width=True):
+    if st.button("🔍 สกัดข้อมูลและตั้งค่า Ingredient Lock", type="secondary", use_container_width=True):
         if not uploaded_files: st.warning("⚠️ กรุณาอัปโหลดรูปภาพก่อนครับ")
         elif not api_keys_list: st.error("🛑 กรุณาตั้งค่า API Key ก่อนครับ")
         else:
@@ -132,12 +135,15 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
                     st.success("✅ สกัดข้อมูลและบันทึกรูปต้นฉบับสำหรับการทำ Ingredient Lock สำเร็จ!")
                 except Exception as e: st.error(f"❌ เกิดข้อผิดพลาดจาก AI: {e}")
 
-st.markdown("### 📝 รายละเอียดสินค้าสำหรับแต่งสคริปต์ (Data for Scene Builder)")
+st.markdown("### 📝 ข้อมูลตั้งต้นสำหรับ Scene Builder (Ingredient Data)")
 product_input = st.text_area("ข้อมูลที่ระบบสกัดได้:", value=st.session_state.product_text, height=200)
 st.session_state.product_text = product_input 
 st.divider()
 
-tab_video, tab_poster = st.tabs(["🎬 โหมด Scene Builder (Frame to Video)", "🖼️ โหมด Image Gen (สร้างโปสเตอร์)"])
+# ==========================================
+# 🎛️ 3. เลือกโหมดการทำงานหลัก
+# ==========================================
+tab_video, tab_poster = st.tabs(["🎬 โหมด Scene Builder (Veo 3.1)", "🖼️ โหมด Image Gen (Nano Banana 2)"])
 
 with tab_video:
     head_col, ai_col, reset_col = st.columns([2.5, 1, 1])
@@ -172,19 +178,19 @@ with tab_video:
     with col1:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์ (Character Lock):", ["ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", "ชายวัยกลางคน (Middle-aged Male)", "หญิงวัยกลางคน (Middle-aged Female)", "คุณตา/คุณปู่ (Elderly Male)", "คุณยาย/คุณย่า (Elderly Female)", "เด็กผู้ชาย (Boy)", "เด็กผู้หญิง (Girl)", "ไม่ระบุเพศ / LGBTQ+", "มาสคอตสัตว์ (Animal Mascot)", "หุ่นยนต์ AI (AI Robot)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
-        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
+        st.selectbox("🎯 กลุ่มเป้าหมาย (Target Audience):", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
         st.selectbox("📱 สัดส่วนวิดีโอ (Aspect Ratio):", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
         st.selectbox("🌐 ภาษาของคลิป:", ["ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคเหนือ (สำเนียงคนเมืองแท้ๆ)", "ไทยภาคอีสาน (สำเนียงคนอีสานแท้ๆ)", "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)", "ผสมไทย-อังกฤษ (Tinglish)", "อังกฤษ (English)", "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"], key="v_lang")
         
     with col2:
         st.selectbox("🎥 สไตล์วิดีโอ (Video Style):", ["UGC (รีวิวบ้านๆ จริงใจ)", "โทนภาพยนตร์ (Cinematic)", "Unboxing / ASMR", "โฆษณาทีวี (TV Commercial)", "มิวสิควิดีโอ (MV Style)"], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง (Continuity Flow):", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
-        st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
+        st.selectbox("👉 ปิดการขาย (Call to Action):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
         st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ข้อความภาษาอังกฤษ (อินเตอร์)", "เน้นสัญลักษณ์/Emoji แทนข้อความ", "ป๊อปอัปข้อความสั้นๆ (Pop-up Text)", "ซับไตเติ้ลบรรยาย (Subtitle)", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
         
     with col3:
-        st.selectbox("📱 แพลตฟอร์มปลายทาง:", ["TikTok / Shopee / Lazada (เน้นขายของ ตัดต่อฉับไว)", "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)", "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)", "ทั่วไป (ใช้ได้ทุกที่)"], key="v_platform")
+        st.selectbox("📱 แพลตฟอร์มเป้าหมาย:", ["TikTok / Shopee / Lazada (เน้นขายของ ตัดต่อฉับไว)", "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)", "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)", "ทั่วไป (ใช้ได้ทุกที่)"], key="v_platform")
         st.selectbox("🎨 สไตล์ภาพ (Visual Model):", ["สมจริงเหมือนถ่ายทำจริง (Photorealistic)", "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", "อนิเมะญี่ปุ่น (Anime)", "ลายเส้นมินิมอลคลีนๆ (Minimalist)", "สีน้ำละมุนๆ (Watercolor)", "สดใสป๊อปอาร์ต (Pop-Art)", "แสงสีไซไฟ (Cyberpunk)"], key="v_visual")
         st.selectbox("🎥 Camera Controls (Veo 3.1):", ["มาตรฐาน (Smooth & Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเองสมจริง (Handheld Camera)", "ซูมฉวัดเฉวียนแบบวัยรุ่น (Fast Dynamic Zoom)", "สมูทช้าๆ แบบหนัง (Slow Pan & Cinematic Dolly)"], key="v_camera")
         st.selectbox("🎵 ดนตรีประกอบ (BGM):", ["เพลงป๊อปสนุกสนาน (Upbeat Pop)", "ดนตรีตื่นเต้นเร้าใจ (Energetic/Epic)", "ดนตรีชิลๆ สบายๆ (Lo-Fi/Chill)", "หรูหราคลาสสิก (Elegant/Orchestral)", "ตลกขบขัน (Funny/Quirky)", "ไม่มีดนตรี เน้น ASMR"], key="v_music")
@@ -199,21 +205,23 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังวางโครงสร้าง Scene Builder..."):
                     try:
-                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow จากข้อมูล:
+                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow (Veo 3.1 และ Nano Banana 2) จากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
-                        พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
-                        สไตล์ภาพ: {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
-                        การเล่าเรื่อง: {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
+                        พรีเซนเตอร์ (Character Lock): {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
+                        สไตล์ภาพ (Visual Model): {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
+                        การเล่าเรื่อง (Continuity Flow): {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
                         ความยาวรวม: {st.session_state.v_duration} | ข้อความบนจอ: {st.session_state.v_text_overlay}
+                        กลุ่มเป้าหมาย: {st.session_state.v_target} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:"
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้แนบเนียน
-                        4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "- 🖼️ Prompt สร้างภาพนิ่ง:" และ "- 🎞️ Prompt สร้างวิดีโอ:" ให้เขียนเป็นภาษาอังกฤษล้วน และต้องใส่คำบรรยายลักษณะสินค้าอย่างละเอียด ห้ามใช้คำกว้างๆ
-                        5. โครงสร้างฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ
-                        6. 🚨 เรื่องภาษา: หากเลือกภาษาถิ่น จงเขียนบทพูดด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่าน"""
+                        3. จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" และ "Camera Controls" ที่กำหนด
+                        4. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้โดยใช้ฟีเจอร์ Extend ของ Google Flow อย่างแนบเนียน
+                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ** เพื่อให้ระบบสามารถคงรูปลักษณ์สินค้าได้ตรงปกที่สุด
+                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง (สำหรับโหมด Image Gen), Prompt สร้างวิดีโอ (สำหรับโหมด Frame to Video)
+                        7. 🚨 เรื่องภาษาและสำเนียง (สำคัญมาก): เนื่องจากคุณเลือกภาษาเป็น "{st.session_state.v_lang}" หากเป็นภาษาถิ่น จงเขียนบทพูด (🗣️ บทพูด) ด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่านสำเนียงถิ่น (Phonetic spelling) แบบจัดเต็ม เพื่อบังคับให้ AI Voice อ่านออกเสียงได้ใกล้เคียงคนท้องถิ่นที่สุด"""
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
                         st.success("✅ สร้างสคริปต์และ Prompt สำหรับ Scene Builder สำเร็จ!")
@@ -240,7 +248,6 @@ with tab_video:
         view_mode = st.radio("🖥️ เลือกรูปแบบการทำงาน:", ["💻 ใช้ AutoBot รัน Handoff บนคอมพิวเตอร์", "📱 ก๊อปปี้ไปวางในแอปมือถือเอง"], horizontal=True)
         raw_text = st.session_state.generated_video_prompt
         
-        # ✨ อัปเกรด Regex ตัดแบ่งฉากให้แม่นยำ แม้ AI จะเขียนตัวหนา (**) มาก็ตาม ✨
         scenes = re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', raw_text)
         valid_scenes = [s for s in scenes if len(s.strip()) > 5 and "ฉากที่" in s]
 
@@ -254,7 +261,8 @@ with tab_video:
                     edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
                     terminal_box = st.empty()
                     
-                    btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene & Ingredient Lock)"
+                    # ✨ เปลี่ยนข้อความปุ่มให้ดู Pro ตามบริบทของแต่ละฉาก ✨
+                    btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene)"
                     
                     if st.button(btn_text, type="primary", key=f"btn_scene_{i}"):
                         if not st.session_state.uploaded_img_paths: st.error("🛑 โปรดอัปโหลด Reference Image ก่อนรัน Handoff!")
@@ -262,32 +270,28 @@ with tab_video:
                             is_first = True if scene_num == 1 else False
                             ref_img_path = st.session_state.uploaded_img_paths[0] 
                             
-                            # ✨ อัปเกรดตัวดึง Prompt: ดึงภาพนิ่งแยกกับวิดีโอแบบ 100% ✨
                             img_prompt = ""
                             vid_prompt = ""
                             
-                            # ดึง Prompt ภาพนิ่ง
                             if "Prompt สร้างภาพนิ่ง" in edited_prompt:
                                 parts = re.split(r'Prompt สร้างภาพนิ่ง.*?:', edited_prompt)
                                 if len(parts) > 1:
                                     img_prompt = re.split(r'Prompt สร้างวิดีโอ', parts[1])[0]
                                     img_prompt = re.sub(r'[-🎞️\*]', '', img_prompt).strip()
                                     
-                            # ดึง Prompt วิดีโอ
                             if "Prompt สร้างวิดีโอ" in edited_prompt:
                                 parts = re.split(r'Prompt สร้างวิดีโอ.*?:', edited_prompt)
                                 if len(parts) > 1:
                                     vid_prompt = parts[1]
                                     vid_prompt = re.sub(r'[-🖼️\*]', '', vid_prompt).strip()
                                     
-                            # กรณีฉุกเฉินถ้า AI เขียนมาแปลกๆ 
                             if not img_prompt: img_prompt = edited_prompt 
                             if not vid_prompt: vid_prompt = "Animate this scene smoothly with cinematic camera motion."
                             
                             task_payload = {
                                 "type": "scene_pipeline", 
-                                "image_prompt": img_prompt, # ส่ง Prompt ภาพนิ่ง
-                                "video_prompt": vid_prompt, # ส่ง Prompt วิดีโอ
+                                "image_prompt": img_prompt,
+                                "video_prompt": vid_prompt,
                                 "credit_mode": credit_val, 
                                 "ref_image": ref_img_path,
                                 "scene_num": scene_num,
@@ -324,7 +328,7 @@ with tab_video:
 
 with tab_poster:
     p_head_col, p_ai_col, p_reset_col = st.columns([2.5, 1, 1])
-    with p_head_col: st.markdown("### 🖼️ แผงควบคุม Image Gen (สำหรับโปสเตอร์โฆษณา)")
+    with p_head_col: st.markdown("### 🖼️ แผงควบคุม Image Gen (สำหรับโหมด Nano Banana 2)")
     with p_ai_col:
         if st.button("✨ ให้ AI ช่วยตั้งค่า Image Gen", use_container_width=True):
             if not st.session_state.product_text.strip(): st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
@@ -365,7 +369,7 @@ with tab_poster:
         else:
             with st.spinner("🧠 กำลังออกแบบโครงสร้าง Prompt สำหรับ Image Gen..."):
                 try:
-                    prompt_cmd = f"""คุณคืออาร์ตไดเรกเตอร์มืออาชีพ จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับระบบสร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
+                    prompt_cmd = f"""คุณคืออาร์ตไดเรกเตอร์มืออาชีพ จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับระบบสร้างภาพ (Nano Banana 2) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
                     สินค้า: {st.session_state.product_text}
                     สไตล์: {st.session_state.p_style} | สัดส่วน: {st.session_state.p_ratio}
                     โทนสี: {st.session_state.p_color} | การจัดวาง: {st.session_state.p_composition}
