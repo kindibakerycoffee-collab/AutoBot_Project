@@ -13,7 +13,7 @@ def is_chrome_ready():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', 9222)) == 0
 
-print("🤖 กำลังปลุก AutoBot หลังบ้าน (Selenium Ultimate Remote Control)...")
+print("🤖 กำลังปลุก AutoBot หลังบ้าน (Selenium Ultimate Fix)...")
 
 task_file = "bot_task.json"
 if not os.path.exists(task_file):
@@ -68,25 +68,58 @@ def real_mouse_click(driver, xpath_list, wait_time=0.5):
             continue
     return False
 
+# =======================================================
+# 🔄 ฟังก์ชันสลับโหมด (เวอร์ชันเสริมท่าไม้ตาย JS)
+# =======================================================
 def switch_model_mode(target_mode):
-    print(f"   🔄 กำลังคลิกเปิดหน้าต่างสลับโหมด: {target_mode}...")
+    print(f"   🔄 กำลังพยายามเปิดหน้าต่างสลับโหมด: {target_mode}...")
+    
+    # ท่าที่ 1: เล็งปุ่มแบบมาตรฐาน (ที่เคยเวิร์ก)
     mode_btn_xpaths = [
-        "//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]/preceding-sibling::*[1]",
-        "//*[contains(text(), 'x1')]/ancestor::*[@role='button' or local-name()='button'][1]",
-        "//div[contains(@class, 'model-selector')]"
+        "//button[contains(., 'x1') and (contains(., 'วิดีโอ') or contains(., 'Nano') or contains(., 'Veo'))]",
+        "//button[contains(., 'x1') and not(contains(@aria-label, 'ส่ง'))]",
+        "(//button[descendant::*[contains(text(), 'x1')]])[last()]"
     ]
-    if real_mouse_click(driver, mode_btn_xpaths, wait_time=1.5):
+    
+    popup_opened = real_mouse_click(driver, mode_btn_xpaths, wait_time=1.5)
+    
+    # ท่าไม้ตาย (JS Injection): ถ้าท่ามาตรฐานพัง ให้ยิงโค้ดฝังทะลุหน้าเว็บ
+    if not popup_opened:
+        print("   ⚠️ ท่ามาตรฐานพลาด! กำลังใช้ ท่าไม้ตาย (JavaScript Injection)...")
+        try:
+            driver.execute_script("""
+                var btns = document.querySelectorAll('button');
+                for(var i=0; i<btns.length; i++){
+                    if((btns[i].innerText.includes('x1') || btns[i].innerText.includes('Nano') || btns[i].innerText.includes('วิดีโอ')) && !btns[i].innerText.includes('ส่ง')){
+                        btns[i].click();
+                        break;
+                    }
+                }
+            """)
+            time.sleep(1.5)
+            popup_opened = True
+        except:
+            pass
+
+    if popup_opened:
+        # กดเลือกแท็บที่เด้งขึ้นมา
         tab_xpaths = [f"//div[@role='tab' or @role='button'][contains(., '{target_mode}')]"]
         if real_mouse_click(driver, tab_xpaths, wait_time=1):
+            print(f"   ✅ สลับเป็นโหมด '{target_mode}' สำเร็จ!")
             return True
+            
+    print(f"   ❌ ล้มเหลว: หาปุ่มสลับโหมดไม่เจอจริงๆ บอทจะฝืนลุยต่อ")
     return False
 
+# =======================================================
+# ➕ ฟังก์ชันกดปุ่ม + และเลือกไอเทม
+# =======================================================
 def click_plus_and_select_item(item_index):
-    print(f"   ➕ กำลังกดปุ่ม + เพื่อเพิ่ม Ingredient ลำดับที่ {item_index}...")
+    print(f"   ➕ กำลังกดปุ่ม + เพื่อเพิ่มรูปภาพ ลำดับที่ {item_index}...")
     plus_btn_xpaths = [
-        "//button[descendant::*[text()='+'] or contains(@aria-label, 'แนบไฟล์')]",
+        "//button[@aria-label='แนบไฟล์' or contains(@aria-label, 'Attach') or descendant::*[text()='+']]", 
         "//div[text()='+']/ancestor::button[1]",
-        "//div[contains(@class, 'add-attachment')]" # เผื่อหน้าตาปุ่มเปลี่ยน
+        "//div[contains(text(), '+')]"
     ]
     if real_mouse_click(driver, plus_btn_xpaths, wait_time=1.5):
         gallery_item_xpaths = [f"(//div[contains(@class, 'gallery-item') or @role='listitem'])[{item_index}]"]
@@ -126,6 +159,9 @@ def smart_wait_for_generation(driver, media_type="image", timeout=300):
 try:
     if job_type == "scene_pipeline":
         
+        # ==========================================
+        # 🎬 กรณีฉากที่ 1 (Image Gen -> Frame to Video)
+        # ==========================================
         if job_is_first:
             print("=========================================")
             print("🚀 สเต็ป 1: Image Gen (สร้างภาพนิ่งตั้งต้น)")
@@ -134,8 +170,10 @@ try:
             new_chat_xpaths = ["//span[contains(text(), 'New chat') or contains(text(), 'แชทใหม่')]", "//a[contains(@href, '/app')]"]
             real_mouse_click(driver, new_chat_xpaths, wait_time=2.5)
             
+            # เปิดโหมด Nano Banana 2
             switch_model_mode("รูปภาพ")
             
+            # กดเปลี่ยนสัดส่วนรูปภาพ
             print(f"   ⚙️ ตั้งค่าสัดส่วนภาพ: {job_ratio}")
             ratio_xpaths = [f"//*[text()='{job_ratio}' or contains(text(), '{job_ratio}')]/ancestor-or-self::*[@role='button' or tagName()='button' or contains(@class, 'ratio')]"]
             real_mouse_click(driver, ratio_xpaths, wait_time=1)
@@ -149,9 +187,8 @@ try:
                 except Exception as e:
                     print(f"   ❌ หาช่องอัปโหลดไม่เจอ! ({e})")
                 
-                # ✨ ส่วนที่แก้ไข: แนบรูปลงช่อง Prompt ก่อนพิมพ์ข้อความ ✨
-                print("   📎 กำลังแนบรูปที่เพิ่งอัปโหลดลงในช่อง Prompt...")
-                # เลือกลำดับที่ 1 จากแกลลอรี่ (เพราะเป็นรูปเดียวที่เพิ่งอัปโหลดเข้าไป)
+                # ✨ แนบรูปที่เพิ่งอัปโหลดลงในช่อง Prompt (โหมด Nano Banana 2 ต้องการสิ่งนี้) ✨
+                print("   📎 กำลังแนบรูปลงในช่อง Prompt...")
                 click_plus_and_select_item(1)
                 time.sleep(1.5)
             
@@ -167,18 +204,21 @@ try:
             
             is_image_success = smart_wait_for_generation(driver, media_type="image", timeout=180)
             if not is_image_success:
+                print("\n🛑 เบรกฉุกเฉิน! ยกเลิกการทำวิดีโอเนื่องจากรูปภาพพัง")
                 exit(1)
             
             print("\n=========================================")
             print("🚀 สเต็ป 2: Frame to Video (สร้างวิดีโอฉากแรก)")
             print("=========================================")
             
+            # สลับกลับมาโหมดวิดีโอ
             switch_model_mode("วิดีโอ")
             
             real_mouse_click(driver, ["//div[@role='tab' or @role='button'][contains(., 'ส่วนผสม') or contains(., 'Blend')]"], wait_time=1)
             real_mouse_click(driver, ratio_xpaths, wait_time=1)
             real_mouse_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
+            # แนบภาพนิ่งที่เจนเสร็จ (ลำดับ 1) และ Ingredient Lock (ลำดับ 2)
             click_plus_and_select_item(1) 
             click_plus_and_select_item(2) 
 
@@ -194,6 +234,9 @@ try:
             if not is_video_success:
                 exit(1)
 
+        # ==========================================
+        # 🎬 กรณีฉากที่ 2 เป็นต้นไป (Extend Scene)
+        # ==========================================
         else:
             print(f"=========================================")
             print(f"🚀 สเต็ป: ขยายฉากที่ {job_scene_num} (Extend Scene)")
