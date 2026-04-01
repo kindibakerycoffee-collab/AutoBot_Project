@@ -50,6 +50,9 @@ if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจร
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 
+# ✨ เพิ่ม Session State สำหรับแพลตฟอร์ม ✨
+if 'v_platform' not in st.session_state: st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
+
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
@@ -154,7 +157,6 @@ with st.expander("➕ อัปโหลดรูปภาพอ้างอิ�
                     extracted_info = ""
                     for i, img_file in enumerate(uploaded_files):
                         img = Image.open(img_file)
-                        # ✨ จุดแก้ที่ 1: สั่งให้ AI บรรยายรูปร่างหน้าตาสินค้าด้วย ✨
                         prompt = "ดึงข้อความทั้งหมดที่เห็นในภาพนี้ออกมาให้ละเอียดที่สุด พร้อมสรุปจุดเด่นและโปรโมชันที่น่าสนใจ **และที่สำคัญที่สุด: จงบรรยายรูปร่าง ลักษณะ สี วัสดุ และรูปทรงของตัวสินค้าในภาพอย่างละเอียด (Physical appearance description) เพื่อให้นำไปใช้สร้างรูปต่อได้ตรงปกที่สุด**"
                         result_text = smart_generate([img, prompt]) 
                         extracted_info += f"**ข้อมูลจากรูป {img_file.name}:**\n{result_text}\n\n"
@@ -191,6 +193,7 @@ with tab_video:
                     if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิงสาว (Young Female)"
                     elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์ (Animal Mascot)"
                     else: st.session_state.v_presenter = "ชายหนุ่ม (Young Male)"
+                    
                     if any(w in text for w in ["พรีเมียม", "หรู", "แพง", "อสังหา"]): 
                         st.session_state.v_style = "โทนภาพยนตร์ (Cinematic)"
                         st.session_state.v_tone = "หรูหรา / พรีเมียม"
@@ -212,43 +215,37 @@ with tab_video:
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
         st.selectbox("📱 สัดส่วนวิดีโอ:", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
         st.selectbox("🌐 ภาษาของคลิป:", [
-            "ไทยภาคกลาง (มาตรฐาน)", 
-            "ไทยภาคเหนือ (คำเมือง)", 
-            "ไทยภาคอีสาน", 
-            "ไทยภาคใต้", 
-            "ผสมไทย-อังกฤษ (Tinglish)",
-            "อังกฤษ (English)", 
-            "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"
+            "ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคเหนือ (คำเมือง)", "ไทยภาคอีสาน", "ไทยภาคใต้", 
+            "ผสมไทย-อังกฤษ (Tinglish)", "อังกฤษ (English)", "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"
         ], key="v_lang")
         
     with col2:
         st.selectbox("🎥 สไตล์วิดีโอ:", [
-            "UGC (รีวิวบ้านๆ จริงใจ)", 
-            "โทนภาพยนตร์ (Cinematic)", 
-            "Unboxing / ASMR",
-            "โฆษณาทีวี (TV Commercial)",
-            "มิวสิควิดีโอ (MV Style)"
+            "UGC (รีวิวบ้านๆ จริงใจ)", "โทนภาพยนตร์ (Cinematic)", "Unboxing / ASMR",
+            "โฆษณาทีวี (TV Commercial)", "มิวสิควิดีโอ (MV Style)"
         ], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
         st.selectbox("💬 สไตล์ข้อความบนจอ:", [
-            "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", 
-            "ข้อความภาษาอังกฤษ (อินเตอร์)", 
-            "เน้นสัญลักษณ์/Emoji แทนข้อความ",
-            "ป๊อปอัปข้อความสั้นๆ (Pop-up Text)",
-            "ซับไตเติ้ลบรรยาย (Subtitle)",
-            "ไม่มีข้อความบนจอ"
+            "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ข้อความภาษาอังกฤษ (อินเตอร์)", 
+            "เน้นสัญลักษณ์/Emoji แทนข้อความ", "ป๊อปอัปข้อความสั้นๆ (Pop-up Text)",
+            "ซับไตเติ้ลบรรยาย (Subtitle)", "ไม่มีข้อความบนจอ"
         ], key="v_text_overlay")
         
     with col3:
+        # ✨ เพิ่มตัวเลือกแพลตฟอร์มปลายทาง ✨
+        st.selectbox("📱 แพลตฟอร์มปลายทาง:", [
+            "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)", 
+            "Shopee / Lazada (เน้นขายของ โชว์โปรโมชั่น ตะกร้า)", 
+            "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)",
+            "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)",
+            "ทั่วไป (ใช้ได้ทุกที่)"
+        ], key="v_platform")
+        
         st.selectbox("🎨 สไตล์ภาพ (Visual):", [
-            "สมจริงเหมือนถ่ายทำจริง (Photorealistic)", 
-            "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", 
-            "อนิเมะญี่ปุ่น (Anime)",
-            "ลายเส้นมินิมอลคลีนๆ (Minimalist)",
-            "สีน้ำละมุนๆ (Watercolor)",
-            "สดใสป๊อปอาร์ต (Pop-Art)",
-            "แสงสีไซไฟ (Cyberpunk)"
+            "สมจริงเหมือนถ่ายทำจริง (Photorealistic)", "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", 
+            "อนิเมะญี่ปุ่น (Anime)", "ลายเส้นมินิมอลคลีนๆ (Minimalist)",
+            "สีน้ำละมุนๆ (Watercolor)", "สดใสป๊อปอาร์ต (Pop-Art)", "แสงสีไซไฟ (Cyberpunk)"
         ], key="v_visual")
         st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
         st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
@@ -265,21 +262,23 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
-                        # ✨ จุดแก้ที่ 2: บังคับให้ Prompt รูปภาพบรรยายหน้าตาสินค้าแบบเป๊ะๆ ✨
+                        # ✨ อัปเดต Prompt ให้ AI คิดสคริปต์ตามแพลตฟอร์ม ✨
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
+                        แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
                         สไตล์: {st.session_state.v_style} | การเล่าเรื่อง: {st.session_state.v_story} | ความยาวรวม: {st.session_state.v_duration}
                         งานภาพ: {st.session_state.v_visual} | กลุ่มเป้าหมาย: {st.session_state.v_target} 
                         ข้อความบนจอ: {st.session_state.v_text_overlay} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับ:" แล้ววิเคราะห์สั้นๆ
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ ว่าสคริปต์นี้ถูกออกแบบมาเพื่อแพลตฟอร์ม {st.session_state.v_platform} อย่างไร
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
-                        4. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
-                        5. 🚨 ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100%
-                        6. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ เช่น 'solar light' เด็ดขาด (เช่น ต้องระบุเป็น 'A rectangular black LED solar floodlight panel...') เพื่อให้ภาพตรงปกที่สุด**"""
+                        3. 🚨 จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" อย่างเคร่งครัด (เช่น TikTok ต้องฮุกไวใน 3 วิแรก, Shopee เน้นโชว์โปรโมชั่น/ตะกร้า, Facebook เน้นปัญหาและชี้เป้าลิงก์)
+                        4. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
+                        5. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
+                        6. ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100% 
+                        7. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -357,6 +356,9 @@ with tab_video:
             st.info("📱 กดปุ่ม Copy ที่มุมขวากล่องข้อความด้านล่าง เพื่อนำไปใช้ในมือถือ")
             st.code(st.session_state.generated_video_prompt, language="markdown")
 
+# ==========================================
+# 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
+# ==========================================
 with tab_poster:
     st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
     col1, col2 = st.columns(2)
