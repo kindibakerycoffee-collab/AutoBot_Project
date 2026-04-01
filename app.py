@@ -42,14 +42,14 @@ if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_p
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "หญิงสาว (Young Female)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
-if 'v_lang' not in st.session_state: st.session_state.v_lang = "ไทยภาคกลาง (มาตรฐาน)"
+if 'v_lang' not in st.session_state: st.session_state.v_lang = "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)"
 if 'v_style' not in st.session_state: st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
 if 'v_story' not in st.session_state: st.session_state.v_story = "PAS (ขยี้ปัญหาแล้วเสนอทางแก้)"
 if 'v_duration' not in st.session_state: st.session_state.v_duration = "มาตรฐานกำลังดี (30 วินาที)"
 if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)"
 if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
-if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)" # ✨ กลับมาแล้ว!
-if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง" # ✨ กลับมาแล้ว!
+if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
+if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
 if 'v_platform' not in st.session_state: st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
 if 'v_camera' not in st.session_state: st.session_state.v_camera = "มาตรฐาน (Smooth & Steady)"
 if 'v_music' not in st.session_state: st.session_state.v_music = "เพลงป๊อปสนุกสนาน (Upbeat Pop)"
@@ -208,7 +208,6 @@ with tab_video:
                         st.session_state.v_camera = "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"
                     st.rerun()
 
-    # ✨ จัดเรียงคอลัมน์ใหม่ให้สมดุลและครบ 14 หัวข้อ ✨
     col1, col2, col3 = st.columns(3)
     with col1:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", [
@@ -220,11 +219,18 @@ with tab_video:
             "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"
         ], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
-        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target") # ดึงกลับมา
+        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
         st.selectbox("📱 สัดส่วนวิดีโอ:", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
+        
+        # ✨ เพิ่มคำอธิบายภาษาให้ชัดเจนขึ้น ✨
         st.selectbox("🌐 ภาษาของคลิป:", [
-            "ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคเหนือ (คำเมือง)", "ไทยภาคอีสาน", "ไทยภาคใต้", 
-            "ผสมไทย-อังกฤษ (Tinglish)", "อังกฤษ (English)", "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"
+            "ไทยภาคกลาง (มาตรฐาน)", 
+            "ไทยภาคเหนือ (สำเนียงคนเมืองแท้ๆ)", 
+            "ไทยภาคอีสาน (สำเนียงคนอีสานแท้ๆ)", 
+            "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)", 
+            "ผสมไทย-อังกฤษ (Tinglish)", 
+            "อังกฤษ (English)", 
+            "ไม่มีเสียงพูด (เน้นดนตรี/เอฟเฟกต์)"
         ], key="v_lang")
         
     with col2:
@@ -233,7 +239,7 @@ with tab_video:
             "โฆษณาทีวี (TV Commercial)", "มิวสิควิดีโอ (MV Style)"
         ], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
-        st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta") # ดึงกลับมา
+        st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
         st.selectbox("💬 สไตล์ข้อความบนจอ:", [
             "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ข้อความภาษาอังกฤษ (อินเตอร์)", 
@@ -274,6 +280,7 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
+                        # ✨ จุดแก้ที่สำคัญ: เพิ่มกฎเหล็กข้อ 7 บังคับสะกดคำภาษาถิ่น ✨
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
@@ -288,8 +295,9 @@ with tab_video:
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
                         3. จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" และ "การเคลื่อนกล้อง" ที่กำหนด
                         4. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
-                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
-                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
+                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
+                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ
+                        7. 🚨 เรื่องภาษาและสำเนียง (สำคัญมาก): เนื่องจากคุณเลือกภาษาเป็น "{st.session_state.v_lang}" หากเป็นภาษาถิ่น (ใต้, เหนือ, อีสาน) จงเขียนบทพูด (🗣️ บทพูด) ด้วยคำศัพท์ท้องถิ่นแท้ๆ และสะกดคำตามเสียงอ่านสำเนียงถิ่น (Phonetic spelling) แบบจัดเต็ม เพื่อบังคับให้ AI Voice อ่านออกเสียงได้ใกล้เคียงคนท้องถิ่นที่สุด (เช่น ใต้: หรอยจังฮู้, พร้าว, หลบเริน, พันพรือ)"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -308,7 +316,6 @@ with tab_video:
                     try:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
-                        ปิดการขายด้วย: {st.session_state.v_cta}
                         ภาษาหลักที่ใช้: {st.session_state.v_lang}
                         จงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
                         🚨 สำหรับแคปชั่น Shopee ต้องไม่เกิน 150 ตัวอักษร"""
