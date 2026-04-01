@@ -48,10 +48,9 @@ if 'v_story' not in st.session_state: st.session_state.v_story = "PAS (ขยี
 if 'v_duration' not in st.session_state: st.session_state.v_duration = "มาตรฐานกำลังดี (30 วินาที)"
 if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)"
 if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
-if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
-if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
+if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)" # ✨ กลับมาแล้ว!
+if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง" # ✨ กลับมาแล้ว!
 if 'v_platform' not in st.session_state: st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
-# ✨ ค่าเริ่มต้นวิดีโอ (Pro Settings) ✨
 if 'v_camera' not in st.session_state: st.session_state.v_camera = "มาตรฐาน (Smooth & Steady)"
 if 'v_music' not in st.session_state: st.session_state.v_music = "เพลงป๊อปสนุกสนาน (Upbeat Pop)"
 
@@ -59,7 +58,6 @@ if 'v_music' not in st.session_state: st.session_state.v_music = "เพลง�
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
-# ✨ ค่าเริ่มต้นโปสเตอร์ (Pro Settings) ✨
 if 'p_composition' not in st.session_state: st.session_state.p_composition = "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)"
 if 'p_typography' not in st.session_state: st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
@@ -210,6 +208,7 @@ with tab_video:
                         st.session_state.v_camera = "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"
                     st.rerun()
 
+    # ✨ จัดเรียงคอลัมน์ใหม่ให้สมดุลและครบ 14 หัวข้อ ✨
     col1, col2, col3 = st.columns(3)
     with col1:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์:", [
@@ -221,6 +220,7 @@ with tab_video:
             "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"
         ], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "ผู้เชี่ยวชาญ / น่าเชื่อถือ", "หรูหรา / พรีเมียม", "กวนๆ / ขี้เล่น"], key="v_tone")
+        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target") # ดึงกลับมา
         st.selectbox("📱 สัดส่วนวิดีโอ:", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)"], key="v_ratio")
         st.selectbox("🌐 ภาษาของคลิป:", [
             "ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคเหนือ (คำเมือง)", "ไทยภาคอีสาน", "ไทยภาคใต้", 
@@ -233,6 +233,7 @@ with tab_video:
             "โฆษณาทีวี (TV Commercial)", "มิวสิควิดีโอ (MV Style)"
         ], key="v_style")
         st.selectbox("📖 การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "FOMO (กระตุ้นความกลัวพลาดโปร)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
+        st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta") # ดึงกลับมา
         st.selectbox("⏳ ความยาวคลิปรวม:", ["สั้นกระชับฮุกคนดู (15 วินาที)", "มาตรฐานกำลังดี (30 วินาที)", "เล่าเรื่องจัดเต็ม (60 วินาที)"], key="v_duration")
         st.selectbox("💬 สไตล์ข้อความบนจอ:", [
             "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ข้อความภาษาอังกฤษ (อินเตอร์)", 
@@ -250,8 +251,6 @@ with tab_video:
             "อนิเมะญี่ปุ่น (Anime)", "ลายเส้นมินิมอลคลีนๆ (Minimalist)",
             "สีน้ำละมุนๆ (Watercolor)", "สดใสป๊อปอาร์ต (Pop-Art)", "แสงสีไซไฟ (Cyberpunk)"
         ], key="v_visual")
-        
-        # ✨ เพิ่มฟังก์ชัน Pro Settings วิดีโอ ✨
         st.selectbox("🎥 การเคลื่อนกล้อง (Camera):", [
             "มาตรฐาน (Smooth & Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", 
             "ถือกล้องถ่ายเองสมจริง (Handheld Camera)", "ซูมฉวัดเฉวียนแบบวัยรุ่น (Fast Dynamic Zoom)",
@@ -282,6 +281,7 @@ with tab_video:
                         สไตล์ภาพ: {st.session_state.v_visual} | การเคลื่อนกล้อง: {st.session_state.v_camera}
                         การเล่าเรื่อง: {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
                         ความยาวรวม: {st.session_state.v_duration} | ข้อความบนจอ: {st.session_state.v_text_overlay}
+                        กลุ่มเป้าหมาย: {st.session_state.v_target} | ปิดการขาย: {st.session_state.v_cta}
                         
                         🚨 กฎเหล็ก:
                         1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ
@@ -308,6 +308,7 @@ with tab_video:
                     try:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
+                        ปิดการขายด้วย: {st.session_state.v_cta}
                         ภาษาหลักที่ใช้: {st.session_state.v_lang}
                         จงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
                         🚨 สำหรับแคปชั่น Shopee ต้องไม่เกิน 150 ตัวอักษร"""
@@ -370,7 +371,6 @@ with tab_video:
 # 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
 # ==========================================
 with tab_poster:
-    # ✨ เพิ่มปุ่ม AI ช่วยคิดสำหรับโปสเตอร์ ✨
     p_head_col, p_ai_col = st.columns([4, 1])
     with p_head_col:
         st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
@@ -398,7 +398,6 @@ with tab_poster:
     col1, col2 = st.columns(2)
     with col1:
         st.selectbox("📄 สไตล์โปสเตอร์:", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์", "Minimalist / มินิมอล (คลีนๆ)", "Infographic / อธิบายจุดขาย", "Magazine Cover / ปกนิตยสาร", "Pop-Art / Y2K", "Meme / มีมไวรัล"], key="p_style")
-        # ✨ เพิ่มฟังก์ชัน Pro Settings โปสเตอร์ ✨
         st.selectbox("📌 การจัดวางองค์ประกอบ (Composition):", [
             "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)", "สินค้าอยู่มุมขวา เว้นซ้ายใส่ข้อความ (Right Align)", 
             "สินค้าอยู่มุมซ้าย เว้นขวาใส่ข้อความ (Left Align)", "ถ่ายจากมุมบนลงล่าง (Top-down Flatlay)",
