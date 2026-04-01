@@ -38,6 +38,7 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
+# ค่าเริ่มต้นวิดีโอ
 if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "หญิงสาว (Young Female)"
 if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
 if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
@@ -49,13 +50,18 @@ if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "
 if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
 if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
 if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
-
-# ✨ เพิ่ม Session State สำหรับแพลตฟอร์ม ✨
 if 'v_platform' not in st.session_state: st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
+# ✨ ค่าเริ่มต้นวิดีโอ (Pro Settings) ✨
+if 'v_camera' not in st.session_state: st.session_state.v_camera = "มาตรฐาน (Smooth & Steady)"
+if 'v_music' not in st.session_state: st.session_state.v_music = "เพลงป๊อปสนุกสนาน (Upbeat Pop)"
 
+# ค่าเริ่มต้นโปสเตอร์
 if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
 if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
 if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
+# ✨ ค่าเริ่มต้นโปสเตอร์ (Pro Settings) ✨
+if 'p_composition' not in st.session_state: st.session_state.p_composition = "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)"
+if 'p_typography' not in st.session_state: st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
 # --- ระบบความจำสำหรับจัดการ API Key ---
@@ -197,9 +203,11 @@ with tab_video:
                     if any(w in text for w in ["พรีเมียม", "หรู", "แพง", "อสังหา"]): 
                         st.session_state.v_style = "โทนภาพยนตร์ (Cinematic)"
                         st.session_state.v_tone = "หรูหรา / พรีเมียม"
+                        st.session_state.v_camera = "สมูทช้าๆ แบบหนัง (Slow Pan & Cinematic Dolly)"
                     else:
                         st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
                         st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
+                        st.session_state.v_camera = "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"
                     st.rerun()
 
     col1, col2, col3 = st.columns(3)
@@ -233,22 +241,27 @@ with tab_video:
         ], key="v_text_overlay")
         
     with col3:
-        # ✨ เพิ่มตัวเลือกแพลตฟอร์มปลายทาง ✨
         st.selectbox("📱 แพลตฟอร์มปลายทาง:", [
-            "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)", 
-            "Shopee / Lazada (เน้นขายของ โชว์โปรโมชั่น ตะกร้า)", 
-            "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)",
-            "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)",
-            "ทั่วไป (ใช้ได้ทุกที่)"
+            "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)", "Shopee / Lazada (เน้นขายของ โชว์โปรโมชั่น ตะกร้า)", 
+            "Facebook Affiliate / Reels (เน้นเล่าเรื่อง แก้ปัญหา แปะลิงก์)", "YouTube Shorts (เน้นเอนเตอร์เทน ภาพสวย)", "ทั่วไป (ใช้ได้ทุกที่)"
         ], key="v_platform")
-        
         st.selectbox("🎨 สไตล์ภาพ (Visual):", [
             "สมจริงเหมือนถ่ายทำจริง (Photorealistic)", "การ์ตูน 3D น่ารัก (Pixar/Disney Style)", 
             "อนิเมะญี่ปุ่น (Anime)", "ลายเส้นมินิมอลคลีนๆ (Minimalist)",
             "สีน้ำละมุนๆ (Watercolor)", "สดใสป๊อปอาร์ต (Pop-Art)", "แสงสีไซไฟ (Cyberpunk)"
         ], key="v_visual")
-        st.selectbox("🎯 กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "พนักงานออฟฟิศ", "แม่บ้าน / คนมีครอบครัว", "ผู้สูงอายุ"], key="v_target")
-        st.selectbox("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "คลิกลิงก์หน้าโปรไฟล์", "เก็บคูปองส่วนลด"], key="v_cta")
+        
+        # ✨ เพิ่มฟังก์ชัน Pro Settings วิดีโอ ✨
+        st.selectbox("🎥 การเคลื่อนกล้อง (Camera):", [
+            "มาตรฐาน (Smooth & Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", 
+            "ถือกล้องถ่ายเองสมจริง (Handheld Camera)", "ซูมฉวัดเฉวียนแบบวัยรุ่น (Fast Dynamic Zoom)",
+            "สมูทช้าๆ แบบหนัง (Slow Pan & Cinematic Dolly)"
+        ], key="v_camera")
+        st.selectbox("🎵 ดนตรีประกอบ (BGM):", [
+            "เพลงป๊อปสนุกสนาน (Upbeat Pop)", "ดนตรีตื่นเต้นเร้าใจ (Energetic/Epic)", 
+            "ดนตรีชิลๆ สบายๆ (Lo-Fi/Chill)", "หรูหราคลาสสิก (Elegant/Orchestral)",
+            "ตลกขบขัน (Funny/Quirky)", "ไม่มีดนตรี เน้น ASMR"
+        ], key="v_music")
 
     st.write("")
     
@@ -262,23 +275,21 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังเขียนสคริปต์..."):
                     try:
-                        # ✨ อัปเดต Prompt ให้ AI คิดสคริปต์ตามแพลตฟอร์ม ✨
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt สร้างภาพและวิดีโอจากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
-                        สไตล์: {st.session_state.v_style} | การเล่าเรื่อง: {st.session_state.v_story} | ความยาวรวม: {st.session_state.v_duration}
-                        งานภาพ: {st.session_state.v_visual} | กลุ่มเป้าหมาย: {st.session_state.v_target} 
-                        ข้อความบนจอ: {st.session_state.v_text_overlay} | ปิดการขาย: {st.session_state.v_cta}
+                        สไตล์ภาพ: {st.session_state.v_visual} | การเคลื่อนกล้อง: {st.session_state.v_camera}
+                        การเล่าเรื่อง: {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
+                        ความยาวรวม: {st.session_state.v_duration} | ข้อความบนจอ: {st.session_state.v_text_overlay}
                         
                         🚨 กฎเหล็ก:
-                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ ว่าสคริปต์นี้ถูกออกแบบมาเพื่อแพลตฟอร์ม {st.session_state.v_platform} อย่างไร
+                        1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" แล้ววิเคราะห์สั้นๆ
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. 🚨 จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" อย่างเคร่งครัด (เช่น TikTok ต้องฮุกไวใน 3 วิแรก, Shopee เน้นโชว์โปรโมชั่น/ตะกร้า, Facebook เน้นปัญหาและชี้เป้าลิงก์)
+                        3. จังหวะและการเล่าเรื่องต้องอิงตาม "แพลตฟอร์มเป้าหมาย" และ "การเคลื่อนกล้อง" ที่กำหนด
                         4. ความต่อเนื่อง (Seamless Flow): ภาพแต่ละฉากต้องเล่าเรื่องต่อกันอย่างสมูท
-                        5. จังหวะเวลา (Pacing): จำนวนฉากต้องพอดีกับความยาวรวม {st.session_state.v_duration}
-                        6. ความถูกต้องของข้อความบนจอ: ต้องสะกดถูกต้อง 100% 
-                        7. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**"""
+                        5. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายรูปร่างหน้าตาและสีของสินค้าจากข้อมูลข้างต้นลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
+                        6. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -297,7 +308,6 @@ with tab_video:
                     try:
                         prompt_cmd = f"""ข้อมูลสินค้า: {st.session_state.product_text}
                         น้ำเสียงแบรนด์: {st.session_state.v_tone}
-                        ปิดการขายด้วย: {st.session_state.v_cta}
                         ภาษาหลักที่ใช้: {st.session_state.v_lang}
                         จงเขียนแคปชั่นแยก 3 แพลตฟอร์ม (Facebook, TikTok, Shopee)
                         🚨 สำหรับแคปชั่น Shopee ต้องไม่เกิน 150 ตัวอักษร"""
@@ -360,13 +370,49 @@ with tab_video:
 # 🖼️ 3. โหมดสร้างโปสเตอร์โฆษณา (Poster Mode)
 # ==========================================
 with tab_poster:
-    st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
+    # ✨ เพิ่มปุ่ม AI ช่วยคิดสำหรับโปสเตอร์ ✨
+    p_head_col, p_ai_col = st.columns([4, 1])
+    with p_head_col:
+        st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
+    with p_ai_col:
+        if st.button("✨ ให้ AI ช่วยตั้งค่าโปสเตอร์", use_container_width=True):
+            if not st.session_state.product_text.strip():
+                st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
+            else:
+                with st.spinner("🎨 AI กำลังวิเคราะห์สไตล์โปสเตอร์..."):
+                    time.sleep(1)
+                    text = st.session_state.product_text.lower()
+                    if any(w in text for w in ["โปร", "ลด", "แถม", "ถูก", "sale"]): 
+                        st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
+                        st.session_state.p_color = "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)"
+                        st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
+                    elif any(w in text for w in ["พรีเมียม", "หรู", "แพง", "บำรุง"]): 
+                        st.session_state.p_style = "Minimalist / มินิมอล (คลีนๆ)"
+                        st.session_state.p_color = "สีขาวดำ/เทา (หรูหรา มินิมอล)"
+                        st.session_state.p_typography = "ฟอนต์เรียบหรูมินิมอล (Elegant & Clean)"
+                    else:
+                        st.session_state.p_style = "Soft Sell / อารมณ์ไลฟ์สไตล์"
+                        st.session_state.p_typography = "ฟอนต์ร่วมสมัยอ่านง่าย (Modern Sans-serif)"
+                    st.rerun()
+
     col1, col2 = st.columns(2)
     with col1:
-        st.selectbox("📄 สไตล์โปสเตอร์:", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์", "Minimalist / มินิมอล", "Infographic / อธิบายจุดขาย", "Magazine Cover", "Pop-Art / Y2K", "Meme / มีมไวรัล"], key="p_style")
+        st.selectbox("📄 สไตล์โปสเตอร์:", ["Hard Sale / โปรแรง (ตะโกนขาย)", "Soft Sell / อารมณ์ไลฟ์สไตล์", "Minimalist / มินิมอล (คลีนๆ)", "Infographic / อธิบายจุดขาย", "Magazine Cover / ปกนิตยสาร", "Pop-Art / Y2K", "Meme / มีมไวรัล"], key="p_style")
+        # ✨ เพิ่มฟังก์ชัน Pro Settings โปสเตอร์ ✨
+        st.selectbox("📌 การจัดวางองค์ประกอบ (Composition):", [
+            "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)", "สินค้าอยู่มุมขวา เว้นซ้ายใส่ข้อความ (Right Align)", 
+            "สินค้าอยู่มุมซ้าย เว้นขวาใส่ข้อความ (Left Align)", "ถ่ายจากมุมบนลงล่าง (Top-down Flatlay)",
+            "ซูมเจาะดีเทลสินค้า (Macro Detail Shot)"
+        ], key="p_composition")
+        
     with col2:
         st.selectbox("📏 สัดส่วนภาพ:", ["แนวนอน 16:9", "แนวนอน 4:3", "จัตุรัส 1:1", "แนวตั้ง 3:4", "แนวตั้ง 9:16"], key="p_ratio")
-    st.selectbox("🎨 โทนสีหลัก:", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม", "สีพาสเทล", "สีขาวดำ/เทา", "สีนีออน"], key="p_color")
+        st.selectbox("🎨 โทนสีหลัก:", ["สีแบรนด์ตามรูปสินค้า", "สีแดง/เหลือง/ส้ม (ร้อนแรง กระตุ้น)", "สีพาสเทล (น่ารัก ละมุน)", "สีขาวดำ/เทา (หรูหรา มินิมอล)", "สีนีออนสะท้อนแสง"], key="p_color")
+
+    st.selectbox("🅰️ สไตล์ตัวอักษร (Typography Mood):", [
+        "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)", "ฟอนต์เรียบหรูมินิมอล (Elegant & Clean)", 
+        "ฟอนต์ลายมือเป็นกันเอง (Handwritten/Friendly)", "ฟอนต์ล้ำยุคไซไฟ (Futuristic/Tech)"
+    ], key="p_typography")
     
     if st.button("🚀 เจน Prompt โปสเตอร์", type="primary", use_container_width=True):
         if not st.session_state.product_text.strip(): st.warning("⚠️ ใส่ข้อมูลสินค้าก่อน!")
@@ -374,18 +420,18 @@ with tab_poster:
         else:
             with st.spinner("🧠 ออกแบบโปสเตอร์..."):
                 try:
-                    prompt_cmd = f"""คุณคือผู้เชี่ยวชาญด้านการออกแบบกราฟิกและโฆษณา จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับ AI สร้างภาพ (Image Generation API) เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
+                    prompt_cmd = f"""คุณคืออาร์ตไดเรกเตอร์มืออาชีพ จงเขียน Prompt บรรยายภาพเพื่อใช้สำหรับ AI สร้างภาพ เพื่อสร้างโปสเตอร์โฆษณาที่ดึงดูดที่สุด โดยใช้ข้อมูลดังนี้:
                     สินค้า: {st.session_state.product_text}
                     
                     🎨 ข้อกำหนดการออกแบบ:
-                    สไตล์: {st.session_state.p_style}
-                    สัดส่วน: {st.session_state.p_ratio}
-                    โทนสี: {st.session_state.p_color}
+                    สไตล์: {st.session_state.p_style} | สัดส่วน: {st.session_state.p_ratio}
+                    โทนสี: {st.session_state.p_color} | การจัดวาง: {st.session_state.p_composition}
+                    สไตล์ตัวอักษร: {st.session_state.p_typography}
                     
                     🚨 กฎเหล็ก (สำคัญมากเรื่องข้อความภาษาไทย):
-                    1. ตัว Prompt โครงสร้างหลักในการบรรยายฉาก เลย์เอาต์ และอารมณ์ภาพ ให้เขียนเป็น "ภาษาอังกฤษ"
-                    2. 🚨 การใส่ตัวหนังสือ (Typography): ระบบเจนภาพรองรับภาษาไทยสมบูรณ์แบบ ดังนั้น ให้คุณคัดลอกคำโฆษณาภาษาไทยเด็ดๆ จากข้อมูลสินค้า ไปวางใน Prompt ได้เลย โดย **ต้องครอบด้วยเครื่องหมายคำพูด ("...") เสมอ**
-                    3. ตัวอย่างการเขียนสั่งข้อความใน Prompt: `A large glowing red badge with typography text "ซื้อ 1 แถม 1"`, `blue circular icon with text "ไม่มีค่าไฟ"`
+                    1. ตัว Prompt โครงสร้างหลักให้เขียนเป็น "ภาษาอังกฤษ"
+                    2. 🚨 การใส่ตัวหนังสือ (Typography): ให้คัดลอกคำโฆษณาภาษาไทยเด็ดๆ จากข้อมูลสินค้า ไปวางใน Prompt ตามตำแหน่งที่เหมาะสม โดย **ต้องครอบด้วยเครื่องหมายคำพูด ("...") เสมอ**
+                    3. ตัวอย่างการเขียนสั่งข้อความ: `A central product surrounded by {st.session_state.p_typography} text saying "โปรโมชั่นพิเศษ"`, `blue circular icon with text "ไม่มีค่าไฟ"`
                     """
                     st.session_state.generated_poster_prompt = smart_generate(prompt_cmd)
                     st.success("✅ สร้าง Prompt โปสเตอร์สำเร็จ!")
