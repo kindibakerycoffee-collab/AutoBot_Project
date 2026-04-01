@@ -80,6 +80,23 @@ def magic_setup(mode_desc, options_dict, context_info=""):
     except Exception:
         st.error("⚠️ AI สุ่มการตั้งค่าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง")
 
+# ✨ ฟังก์ชันสร้างแคปชั่น 3 แพลตฟอร์ม (ใช้ได้ทุกโหมด)
+def generate_captions(script_content):
+    if not script_content.strip():
+        st.warning("⚠️ กรุณาสร้าง 'สคริปต์วิดีโอ' ก่อนครับ AI จะได้ดึงเนื้อหามาเขียนแคปชั่นให้ตรงกัน")
+        return
+    with st.spinner("✍️ AI กำลังปั่นแคปชั่นป้ายยาสุดปังให้ 3 แพลตฟอร์ม..."):
+        prompt = f"""จงเขียนแคปชั่นโซเชียลมีเดียจากเนื้อหาสคริปต์วิดีโอนี้:
+        {script_content}
+        
+        ให้เขียนแยกเป็น 3 แพลตฟอร์มดังนี้:
+        1. 🎵 TikTok: เน้นสั้น กระชับ ฮุกตั้งแต่ประโยคแรก ภาษาวัยรุ่น พร้อมแฮชแท็กฮิต 5-8 อัน
+        2. 📘 Facebook: เน้นเล่าเรื่อง (Storytelling) ดูน่าเชื่อถือ อ่านเพลิน พร้อม Call-to-Action ชัดเจน
+        3. 🛒 Shopee/Lazada (หรือ IG): เน้นโปรโมชั่น สเปคชัดเจน ปิดการขายไว กระตุ้นให้กดตะกร้าทันที"""
+        res = safe_generate(prompt)
+        st.success("✅ ได้แคปชั่นพร้อมโพสต์แล้วครับ!")
+        st.code(res, language="markdown")
+
 # ==========================================
 # 🗂️ 2. เมนูนำทาง (Sidebar)
 # ==========================================
@@ -102,12 +119,13 @@ if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์", use_c
     st.rerun()
 
 # =========================================================================================
-# 🎬 1. โหมดโฆษณาสินค้า (Ad Director) - อัปเกรด 14 กล่องวิดีโอ + 4 กล่องโปสเตอร์! ✨
+# 🎬 1. โหมดโฆษณาสินค้า (Ad Director)
 # =========================================================================================
 if app_mode == "🎬 โหมดโฆษณาสินค้า (Ad Director)":
     st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (Pro Edition)</h1>", unsafe_allow_html=True)
     if 'ad_product_text' not in st.session_state: st.session_state.ad_product_text = ""
     if 'ad_actor_text' not in st.session_state: st.session_state.ad_actor_text = ""
+    if 'ad_video_prompt' not in st.session_state: st.session_state.ad_video_prompt = ""
 
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -130,66 +148,65 @@ if app_mode == "🎬 โหมดโฆษณาสินค้า (Ad Director)
         opts = {
             "ad_tone": ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"],
             "ad_target": ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "วัยทำงาน / ผู้ใหญ่"],
-            "ad_lang": ["ไทยภาคกลาง", "อังกฤษ (English)"],
+            "ad_lang": ["ไทยภาคกลาง", "ภาษาใต้แท้", "ภาษาอีสาน", "ภาษาเหนือ", "อังกฤษ (English)"],
             "ad_dur": ["30 วินาที", "15 วินาที"],
-            "ad_mood": ["สนุกสนานร่าเริง (Joyful)", "ลึกลับน่าค้นหา (Mysterious)", "อบอุ่นละมุน (Warm & Cozy)"],
+            "ad_mood": ["สนุกสนานร่าเริง", "ลึกลับน่าค้นหา", "อบอุ่นละมุน"],
             "ad_style": ["UGC (รีวิวบ้านๆ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"],
             "ad_story": ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่อง)"],
             "ad_cta": ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "กดลิงก์หน้าโปรไฟล์"],
             "ad_edit": ["ตัดสลับรวดเร็ว (Fast Cuts)", "สมูทนุ่มนวล (Smooth Transitions)"],
-            "ad_light": ["สว่างสดใส (Bright & Airy)", "ดาร์กโทน (Dark & Moody)", "แสงนีออน (Neon Vibes)"],
+            "ad_light": ["สว่างสดใส", "ดาร์กโทน", "แสงนีออน (Neon)"],
             "ad_plat": ["TikTok / Shopee", "Facebook Reels", "YouTube"],
             "ad_vis": ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar/Disney)"],
-            "ad_cam": ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเอง (Handheld)"],
+            "ad_cam": ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ", "ถือกล้องถ่ายเอง (Handheld)"],
             "ad_music": ["เพลงป๊อปสนุกสนาน", "ดนตรีตื่นเต้นเร้าใจ", "ล้ำสมัย (Electronic)"]
         }
         with st.spinner("🧠 AI กำลังคำนวณสูตรโฆษณาที่ปังที่สุด..."): magic_setup("โฆษณาสินค้า", opts, st.session_state.ad_product_text)
 
-    # วางกล่องทั้ง 14 กล่อง
     c1, c2, c3 = st.columns(3)
     with c1: 
         render_custom_select("🗣️ 1. น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"], "ad_tone")
         render_custom_select("🎯 2. กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "วัยทำงาน / ผู้ใหญ่"], "ad_target")
-        render_custom_select("🌐 3. ภาษาคลิป:", ["ไทยภาคกลาง", "อังกฤษ (English)"], "ad_lang")
+        render_custom_select("🌐 3. ภาษาคลิป:", ["ไทยภาคกลาง", "ภาษาใต้แท้", "ภาษาอีสาน", "ภาษาเหนือ", "อังกฤษ (English)"], "ad_lang")
         render_custom_select("⏳ 4. ความยาวคลิป:", ["30 วินาที", "15 วินาที"], "ad_dur")
-        render_custom_select("🎭 5. อารมณ์คลิป (Mood):", ["สนุกสนานร่าเริง (Joyful)", "ลึกลับน่าค้นหา (Mysterious)", "อบอุ่นละมุน (Warm & Cozy)"], "ad_mood")
+        render_custom_select("🎭 5. อารมณ์คลิป:", ["สนุกสนานร่าเริง", "ลึกลับน่าค้นหา", "อบอุ่นละมุน"], "ad_mood")
     with c2: 
         render_custom_select("🎥 6. สไตล์วิดีโอ:", ["UGC (รีวิวบ้านๆ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"], "ad_style")
         render_custom_select("📖 7. การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่อง)"], "ad_story")
-        render_custom_select("👉 8. ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "กดลิงก์หน้าโปรไฟล์"], "ad_cta")
+        render_custom_select("👉 8. ปิดการขาย:", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "กดลิงก์หน้าโปรไฟล์"], "ad_cta")
         render_custom_select("✂️ 9. จังหวะตัดต่อ:", ["ตัดสลับรวดเร็ว (Fast Cuts)", "สมูทนุ่มนวล (Smooth Transitions)"], "ad_edit")
-        render_custom_select("💡 10. แสงและสี:", ["สว่างสดใส (Bright & Airy)", "ดาร์กโทน (Dark & Moody)", "แสงนีออน (Neon Vibes)"], "ad_light")
+        render_custom_select("💡 10. แสงและสี:", ["สว่างสดใส", "ดาร์กโทน", "แสงนีออน (Neon)"], "ad_light")
     with c3: 
         render_custom_select("📱 11. แพลตฟอร์ม:", ["TikTok / Shopee", "Facebook Reels", "YouTube"], "ad_plat")
         render_custom_select("🎨 12. สไตล์ภาพ:", ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar/Disney)"], "ad_vis")
-        render_custom_select("🎥 13. มุมกล้อง:", ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเอง (Handheld)"], "ad_cam")
+        render_custom_select("🎥 13. มุมกล้อง:", ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ", "ถือกล้องถ่ายเอง (Handheld)"], "ad_cam")
         render_custom_select("🎵 14. ดนตรีประกอบ:", ["เพลงป๊อปสนุกสนาน", "ดนตรีตื่นเต้นเร้าใจ", "ล้ำสมัย (Electronic)"], "ad_music")
 
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างวิดีโอโฆษณา", "🖼️ สร้างแบนเนอร์/โปสเตอร์โฆษณา"])
+    # ✨ ระบบ 3 แท็บ (วิดีโอ, โปสเตอร์, แคปชั่น)
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างวิดีโอ", "🖼️ 2. สร้างโปสเตอร์", "✍️ 3. แคปชั่น 3 แพลตฟอร์ม"])
     with tab_vid:
         if st.button("🚀 สั่ง AI เขียนสคริปต์วิดีโอ", type="primary", use_container_width=True):
-            prompt = f"""เขียนสคริปต์วิดีโอโฆษณายาว {st.session_state.get('ad_dur')} ลงแพลตฟอร์ม {st.session_state.get('ad_plat')}. 
-            สินค้า: {st.session_state.ad_product_text} | พรีเซนเตอร์: {st.session_state.ad_actor_text}. 
-            การเล่าเรื่อง: {st.session_state.get('ad_story')} | อารมณ์: {st.session_state.get('ad_mood')} | น้ำเสียง: {st.session_state.get('ad_tone')} | กลุ่มเป้าหมาย: {st.session_state.get('ad_target')}. 
-            ภาพและสไตล์: {st.session_state.get('ad_style')}, แสง {st.session_state.get('ad_light')}, มุมกล้อง {st.session_state.get('ad_cam')}, การตัดต่อ {st.session_state.get('ad_edit')}, สไตล์อาร์ต {st.session_state.get('ad_vis')}. 
-            เพลง: {st.session_state.get('ad_music')}. จบด้วย: {st.session_state.get('ad_cta')}. 
-            แยก Prompt ภาพนิ่งและวิดีโอเป็นภาษาอังกฤษ"""
-            st.code(safe_generate(prompt), language="markdown")
+            prompt = f"เขียนสคริปต์โฆษณา {st.session_state.get('ad_dur')} ลง {st.session_state.get('ad_plat')}. สินค้า: {st.session_state.ad_product_text} พรีเซนเตอร์: {st.session_state.ad_actor_text}. อารมณ์ {st.session_state.get('ad_mood')} เล่าเรื่อง {st.session_state.get('ad_story')} ภาษาพูด {st.session_state.get('ad_lang')}. สไตล์ภาพ {st.session_state.get('ad_vis')} กล้อง {st.session_state.get('ad_cam')} ดนตรี {st.session_state.get('ad_music')}. แยก Prompt นิ่ง/วิดีโอเป็นอังกฤษ ฝังเสียงพูด"
+            st.session_state.ad_video_prompt = safe_generate(prompt)
+        if st.session_state.ad_video_prompt: st.code(st.session_state.ad_video_prompt, language="markdown")
             
     with tab_poster:
-        # กล่องสร้างโปสเตอร์ 4 กล่อง
         st.markdown("**🎨 ตั้งค่าหน้าปก / โปสเตอร์ (4 Options)**")
         col_p1, col_p2 = st.columns(2)
         with col_p1: 
-            p_ratio = st.selectbox("📏 1. สัดส่วนภาพ:", ["9:16 (Story/TikTok)", "1:1 (IG/FB Square)", "16:9 (ปก YouTube)"], key="ad_pratio")
-            p_color = st.selectbox("🌈 3. โทนสีหลัก (Color Palette):", ["สีสันสดใสจัดจ้าน (Vibrant)", "พาสเทลละมุน (Soft Pastel)", "ดาร์กโหมดพรีเมียม (Premium Dark)", "คลีนๆ ขาวดำ (Clean Minimalist)"], key="ad_pcolor")
+            p_ratio = st.selectbox("📏 1. สัดส่วนภาพ:", ["9:16", "1:1", "16:9"], key="ad_pratio")
+            p_color = st.selectbox("🌈 3. โทนสีหลัก:", ["สดใสจัดจ้าน", "พาสเทลละมุน", "ดาร์กโหมดพรีเมียม", "คลีนๆ ขาวดำ"], key="ad_pcolor")
         with col_p2: 
-            p_style = st.selectbox("📄 2. สไตล์โปสเตอร์:", ["Hard Sale (ตัวหนังสือใหญ่ โปรแรง)", "Soft Sell (เน้นไลฟ์สไตล์สวยๆ)", "Minimal (มินิมอล เรียบหรู)"], key="ad_pstyle")
-            p_text = st.text_input("💬 4. ข้อความพาดหัว (Headline):", value="ลดราคาสุดพิเศษ!", key="ad_ptext")
+            p_style = st.selectbox("📄 2. สไตล์โปสเตอร์:", ["Hard Sale (โปรแรง)", "Soft Sell (ไลฟ์สไตล์)", "Minimal (มินิมอล)"], key="ad_pstyle")
+            p_text = st.text_input("💬 4. ข้อความพาดหัว:", value="ลดราคาสุดพิเศษ!", key="ad_ptext")
             
         if st.button("🎨 สั่ง AI เขียน Prompt โปสเตอร์", type="primary", use_container_width=True):
-            prompt = f"เขียน Prompt ภาษาอังกฤษทำโปสเตอร์โฆษณา/Cover Art. สินค้า: {st.session_state.ad_product_text}. พรีเซนเตอร์: {st.session_state.ad_actor_text}. สไตล์โปสเตอร์: {p_style}. โทนสีหลัก: {p_color}. สไตล์อาร์ต: {st.session_state.get('ad_vis')}. ข้อความบนภาพ: '{p_text}'. สัดส่วน: {p_ratio}."
+            prompt = f"เขียน Prompt ภาษาอังกฤษทำโปสเตอร์โฆษณา. สินค้า: {st.session_state.ad_product_text}. พรีเซนเตอร์: {st.session_state.ad_actor_text}. สไตล์: {p_style}. โทนสี: {p_color}. ข้อความ: '{p_text}'. สัดส่วน: {p_ratio}."
             st.code(safe_generate(prompt), language="markdown")
+            
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นป้ายยา (3 แพลตฟอร์ม)", key="cap_btn_ad", type="primary", use_container_width=True):
+            generate_captions(st.session_state.ad_video_prompt or st.session_state.ad_product_text)
 
 # =========================================================================================
 # 🐾 2. โหมดคลิปไวรัลสัตว์เลี้ยง (Viral Pet)
@@ -197,6 +214,7 @@ if app_mode == "🎬 โหมดโฆษณาสินค้า (Ad Director)
 elif app_mode == "🐾 โหมดคลิปไวรัลสัตว์เลี้ยง (Viral Pet)":
     st.markdown("<h1>🐾 สตูดิโอปั้นสัตว์เลี้ยงไวรัล</h1>", unsafe_allow_html=True)
     if 'pet_context_text' not in st.session_state: st.session_state.pet_context_text = ""
+    if 'pet_video_prompt' not in st.session_state: st.session_state.pet_video_prompt = ""
 
     with st.expander("📸 1. อัปโหลดรูปสัตว์เลี้ยง (Character Lock)"):
         up_pet = st.file_uploader("ลากรูปมาวาง", type=['png', 'jpg', 'jpeg'], key="pet_up")
@@ -225,24 +243,30 @@ elif app_mode == "🐾 โหมดคลิปไวรัลสัตว์เ
     with c3: 
         render_custom_select("🏡 สถานที่:", ["ในห้องน้ำสาธารณะ", "ห้องนั่งเล่น", "แคร่ไม้ไผ่กลางทุ่งนา"], "pet_setting")
     
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างคลิปสัตว์เลี้ยง", "🖼️ สร้างภาพปกคลิป"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างวิดีโอ", "🖼️ 2. สร้างภาพปกคลิป", "✍️ 3. แคปชั่น 3 แพลตฟอร์ม"])
     with tab_vid:
         if st.button("🚀 สั่ง AI เขียนสคริปต์วิดีโอ", type="primary", use_container_width=True):
-            prompt = f"เขียนสคริปต์วิดีโอมีมสัตว์เลี้ยงพฤติกรรมเหมือนคน (Anthropomorphic). หน้าตา: {st.session_state.pet_context_text}. ชุด: {st.session_state.get('pet_costume')}. แอคชั่น: {st.session_state.get('pet_action')} กับพร็อพ {st.session_state.get('pet_props')}. สถานที่: {st.session_state.get('pet_setting')}. แยก Prompt ภาพนิ่ง/วิดีโอเป็นอังกฤษ และฝัง Audio cue สำหรับ: {st.session_state.get('pet_dialogue')}"
-            st.code(safe_generate(prompt), language="markdown")
+            prompt = f"เขียนสคริปต์วิดีโอมีมสัตว์เลี้ยงพฤติกรรมเหมือนคน (Anthropomorphic). หน้าตา: {st.session_state.pet_context_text}. ชุด: {st.session_state.get('pet_costume')}. แอคชั่น: {st.session_state.get('pet_action')} กับพร็อพ {st.session_state.get('pet_props')}. สถานที่: {st.session_state.get('pet_setting')}. แยก Prompt ภาพนิ่ง/วิดีโอเป็นอังกฤษ ฝัง Audio cue"
+            st.session_state.pet_video_prompt = safe_generate(prompt)
+        if st.session_state.pet_video_prompt: st.code(st.session_state.pet_video_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["9:16", "1:1", "16:9"], key="pet_pratio")
         with col_p2: p_text = st.text_input("💬 ข้อความฮุก:", value="สเต็ปเทพ!", key="pet_ptext")
         if st.button("🎨 สั่ง AI เขียน Prompt หน้าปก", type="primary", use_container_width=True):
-            prompt = f"เขียน Prompt ภาษาอังกฤษทำปกคลิปสัตว์เลี้ยง: {st.session_state.pet_context_text} กำลัง {st.session_state.get('pet_action')}. มีข้อความ '{p_text}'. สัดส่วน {p_ratio}"
+            prompt = f"เขียน Prompt อังกฤษทำปกคลิปสัตว์เลี้ยง: {st.session_state.pet_context_text} กำลัง {st.session_state.get('pet_action')}. มีข้อความ '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นป้ายยา (3 แพลตฟอร์ม)", key="cap_btn_pet", type="primary", use_container_width=True):
+            generate_captions(st.session_state.pet_video_prompt or st.session_state.pet_context_text)
 
 # =========================================================================================
 # 🎭 3. โหมดคาแรคเตอร์สายฮา (Comedy Meme)
 # =========================================================================================
 elif app_mode == "🎭 โหมดคาแรคเตอร์สายฮา (Comedy Meme)":
     st.markdown("<h1>🎭 สตูดิโอปั้นมีมไทบ้าน</h1>", unsafe_allow_html=True)
+    if 'meme_video_prompt' not in st.session_state: st.session_state.meme_video_prompt = ""
+
     if st.button("✨ ให้ AI สุ่มคาแรคเตอร์ฮาๆ (Magic Setup)", type="secondary", use_container_width=True):
         opts = {
             "meme_feature": ["ผมฟูชี้ฟู", "หน้าเหี่ยวย่นฟันหลอ", "มัดจุกบนหัว"],
@@ -259,18 +283,22 @@ elif app_mode == "🎭 โหมดคาแรคเตอร์สายฮา
         render_custom_select("🏡 ฉากหลัง:", ["แคร่ไม้ไผ่หน้าเถียงนา", "วงเหล้าหน้าร้านชำ"], "meme_setting")
         render_custom_select("🎙️ บทพูด:", ["คุยโวเรื่องถูกหวย", "ทวงหนี้เพื่อน", "นินทาเมีย"], "meme_dialogue")
     
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างคลิปมีม", "🖼️ สร้างโปสเตอร์มีมตลก"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างคลิปมีม", "🖼️ 2. สร้างโปสเตอร์มีมตลก", "✍️ 3. แคปชั่น 3 แพลตฟอร์ม"])
     with tab_vid:
         if st.button("🚀 สั่ง AI เขียนสคริปต์คลิปมีม", type="primary", use_container_width=True):
             prompt = f"เขียนสคริปต์คลิปล้อเลียน (Caricature). ลักษณะ: {st.session_state.get('meme_feature')} พร็อพ: {st.session_state.get('meme_props')} ฉาก: {st.session_state.get('meme_setting')}. แยก Prompt ภาพนิ่ง/วิดีโอเป็นอังกฤษ และฝัง Audio Cue สำหรับบทพูด: {st.session_state.get('meme_dialogue')}"
-            st.code(safe_generate(prompt), language="markdown")
+            st.session_state.meme_video_prompt = safe_generate(prompt)
+        if st.session_state.meme_video_prompt: st.code(st.session_state.meme_video_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["1:1", "9:16", "16:9"], key="meme_pratio")
         with col_p2: p_text = st.text_input("💬 คำคมสายเมา:", value="เงินไม่มี บารมีไม่เกิด", key="meme_ptext")
         if st.button("🎨 สั่ง AI เขียน Prompt มีมภาพนิ่ง", type="primary", use_container_width=True):
-            prompt = f"เขียน Prompt ภาษาอังกฤษทำภาพมีม Caricature: {st.session_state.get('meme_feature')} ฉาก {st.session_state.get('meme_setting')}. มีข้อความ '{p_text}'. สัดส่วน {p_ratio}"
+            prompt = f"เขียน Prompt อังกฤษทำภาพมีม Caricature: {st.session_state.get('meme_feature')} ฉาก {st.session_state.get('meme_setting')}. มีข้อความ '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นป้ายยา (3 แพลตฟอร์ม)", key="cap_btn_meme", type="primary", use_container_width=True):
+            generate_captions(st.session_state.meme_video_prompt)
 
 # =========================================================================================
 # 🎤 4. โหมดวิทยากร AI (AI Spokesperson) 
@@ -279,6 +307,7 @@ elif app_mode == "🎤 โหมดวิทยากร AI (AI Spokesperson)":
     st.markdown("<h1>🎤 สตูดิโอวิทยากร AI</h1>", unsafe_allow_html=True)
     if 'spoke_actor_text' not in st.session_state: st.session_state.spoke_actor_text = ""
     if 'spoke_raw_text' not in st.session_state: st.session_state.spoke_raw_text = ""
+    if 'spoke_video_prompt' not in st.session_state: st.session_state.spoke_video_prompt = ""
 
     with st.expander("👤 1. อัปโหลดรูปตัวเอง (Character Lock)", expanded=True):
         up_spoke = st.file_uploader("ลากรูปมาวาง", type=['png', 'jpg', 'jpeg'], key="spoke_up")
@@ -302,11 +331,12 @@ elif app_mode == "🎤 โหมดวิทยากร AI (AI Spokesperson)":
     with c1: render_custom_select("🏡 สถานที่:", ["สตูดิโอพอดแคสต์มีไมค์", "เวทีสัมมนาใหญ่"], "spoke_setting")
     with c2: render_custom_select("🗣️ อารมณ์:", ["สร้างแรงบันดาลใจ", "ให้ความรู้จริงจัง"], "spoke_tone")
 
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างคลิปให้ความรู้", "🖼️ สร้างหน้าปกคลิป"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างคลิปให้ความรู้", "🖼️ 2. สร้างหน้าปกคลิป", "✍️ 3. แคปชั่น 3 แพลตฟอร์ม"])
     with tab_vid:
         if st.button("🚀 สั่ง AI ปั้นสคริปต์วิทยากร", type="primary", use_container_width=True):
             prompt = f"เขียน Prompt สร้างวิดีโอ. หน้าตา: {st.session_state.spoke_actor_text}. สถานที่: {st.session_state.get('spoke_setting')}. อารมณ์: {st.session_state.get('spoke_tone')}. บทพูด: '{st.session_state.spoke_raw_text}'. แยก Prompt ภาพนิ่ง/วิดีโอเป็นอังกฤษ ฝัง Audio cue"
-            st.code(safe_generate(prompt), language="markdown")
+            st.session_state.spoke_video_prompt = safe_generate(prompt)
+        if st.session_state.spoke_video_prompt: st.code(st.session_state.spoke_video_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["16:9", "1:1", "9:16"], key="spoke_pratio")
@@ -314,14 +344,18 @@ elif app_mode == "🎤 โหมดวิทยากร AI (AI Spokesperson)":
         if st.button("🎨 สั่ง AI เขียน Prompt หน้าปก", type="primary", use_container_width=True):
             prompt = f"เขียน Prompt อังกฤษทำปกคลิป. วิทยากร: {st.session_state.spoke_actor_text} ฉาก {st.session_state.get('spoke_setting')}. มีอักษร '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นป้ายยา (3 แพลตฟอร์ม)", key="cap_btn_spoke", type="primary", use_container_width=True):
+            generate_captions(st.session_state.spoke_raw_text)
 
 # =========================================================================================
-# 🍰 5. โหมดรีวิวร้านตัวเอง (Local Vlogger)
+# 🍰 5. โหมดรีวิวร้านตัวเอง (Local Vlogger) - แก้ไข Bug ขาวสะอาดตรงกันแล้ว! ✨
 # =========================================================================================
-elif app_mode == "🍰 โหมดรีวิวร้านตัวเอง (Local Vlogger Review)":
+elif app_mode == "🍰 โหมดรีวิวร้านตัวเอง (Local Vlogger)":
     st.markdown("<h1>🍰 สตูดิโอเจ้าของร้านรีวิวเอง</h1>", unsafe_allow_html=True)
     if 'vlog_product_text' not in st.session_state: st.session_state.vlog_product_text = ""
     if 'vlog_actor_text' not in st.session_state: st.session_state.vlog_actor_text = ""
+    if 'vlog_video_prompt' not in st.session_state: st.session_state.vlog_video_prompt = ""
 
     col_v1, col_v2 = st.columns(2)
     with col_v1:
@@ -347,13 +381,14 @@ elif app_mode == "🍰 โหมดรีวิวร้านตัวเอง
 
     c1, c2 = st.columns(2)
     with c1: render_custom_select("🏡 สถานที่:", ["คาเฟ่มินิมอล", "หน้าร้านสตรีทฟู้ด", "ห้องครัว"], "vlog_setting")
-    with c2: render_custom_select("🗣️ ภาษาถิ่น:", ["ภาษาใต้", "ภาษาอีสาน", "ภาษาไทยกลาง"], "vlog_dialect")
+    with c2: render_custom_select("🗣️ ภาษาถิ่น:", ["ภาษาใต้", "ภาษาอีสาน", "ภาษาไทยกลาง", "ภาษาเหนือ"], "vlog_dialect")
     
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างคลิปป้ายยา", "🖼️ สร้างรูปโปรโมทร้าน"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างคลิปป้ายยา", "🖼️ 2. สร้างรูปโปรโมทร้าน", "✍️ 3. แคปชั่น 3 แพลตฟอร์ม"])
     with tab_vid:
         if st.button("🚀 สั่ง AI ปั้นสคริปต์รีวิวร้าน", type="primary", use_container_width=True):
             prompt = f"เขียนสคริปต์รีวิว อาหาร: {st.session_state.vlog_product_text}. คนรีวิว: {st.session_state.vlog_actor_text}. สถานที่: {st.session_state.get('vlog_setting')}. ภาษา: {st.session_state.get('vlog_dialect')}. แยก Prompt ภาพนิ่ง/วิดีโออังกฤษ ฝัง Audio Cue ลิปซิงค์"
-            st.code(safe_generate(prompt), language="markdown")
+            st.session_state.vlog_video_prompt = safe_generate(prompt)
+        if st.session_state.vlog_video_prompt: st.code(st.session_state.vlog_video_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนรูป:", ["4:3", "9:16", "1:1"], key="vlog_pratio")
@@ -361,13 +396,17 @@ elif app_mode == "🍰 โหมดรีวิวร้านตัวเอง
         if st.button("🎨 สั่ง AI เขียน Prompt ทำแบนเนอร์", type="primary", use_container_width=True):
             prompt = f"เขียน Prompt อังกฤษทำแบนเนอร์อาหาร: {st.session_state.vlog_product_text}. รีวิวโดย: {st.session_state.vlog_actor_text} บรรยากาศ {st.session_state.get('vlog_setting')}. มีอักษร '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นป้ายยา (3 แพลตฟอร์ม)", key="cap_btn_vlog", type="primary", use_container_width=True):
+            generate_captions(st.session_state.vlog_video_prompt or st.session_state.vlog_product_text)
 
 # =========================================================================================
-# 🪩 6. โหมดดีเจและปาร์ตี้ (DJ & Party)
+# 🪩 6. โหมดดีเจและปาร์ตี้ (DJ & Party) - แก้ไข Bug ขาวสะอาดตรงกันแล้ว! ✨
 # =========================================================================================
-elif app_mode == "🪩 โหมดดีเจและปาร์ตี้ (DJ & Party Vibe)":
+elif app_mode == "🪩 โหมดดีเจและปาร์ตี้ (DJ & Party)":
     st.markdown("<h1>🪩 สตูดิโอปาร์ตี้ (DJ & Music Video)</h1>", unsafe_allow_html=True)
     if 'dj_actor_text' not in st.session_state: st.session_state.dj_actor_text = ""
+    if 'dj_video_prompt' not in st.session_state: st.session_state.dj_video_prompt = ""
 
     with st.expander("👤 1. อัปโหลดรูปดีเจ (Character Lock)", expanded=True):
         up_dj = st.file_uploader("ลากรูปหน้าดีเจมาวาง", type=['png', 'jpg', 'jpeg'], key="dj_up")
@@ -389,7 +428,7 @@ elif app_mode == "🪩 โหมดดีเจและปาร์ตี้ (D
     with c2: render_custom_select("🕺 แอคชั่น:", ["สแครชแผ่นและโยกหัวแรงๆ", "ชูมือขึ้นฟ้าบิ๊วคนดู", "จับไมค์ตะโกน"], "dj_action")
     with c3: render_custom_select("💡 แสงสี:", ["ไฟเลเซอร์พุ่งตัดสลับ", "ไฟดิสโก้หลากสี", "แสงฟุ้งๆ ควันพุ่ง"], "dj_light")
 
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างคลิปดีเจ", "🖼️ สร้างโปสเตอร์ผับ/อีเวนต์"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 1. สร้างคลิปดีเจ", "🖼️ 2. สร้างโปสเตอร์ผับ/อีเวนต์", "✍️ 3. แคปชั่นโปรโมทร้าน"])
     with tab_vid:
         audio_choice = st.radio("เลือกวิธีใส่เพลง:", ["🔊 AI สร้างเพลงประกอบให้เลย (Native Audio)", "🔇 ไม่เอาเสียง (ไปใส่เพลงใน CapCut)"])
         if "🔊" in audio_choice: render_custom_select("🎵 แนวเพลง:", ["EDM สายตื๊ด", "สามช่า", "Hip-Hop"], "dj_genre")
@@ -397,7 +436,8 @@ elif app_mode == "🪩 โหมดดีเจและปาร์ตี้ (D
         if st.button("🚀 สั่ง AI ปั้นสคริปต์ปาร์ตี้", type="primary", use_container_width=True):
             audio_inst = f"ใส่ Audio Cue: High-energy {st.session_state.get('dj_genre')}" if "🔊" in audio_choice else "ไม่ต้องใส่ Audio แต่เน้นขยับเร็ว (Fast-paced)"
             prompt = f"เขียน Prompt สร้างวิดีโอ. ศิลปิน: {st.session_state.dj_actor_text}. แสงสี: {st.session_state.get('dj_light')}. แอคชั่น: {st.session_state.get('dj_action')}. ฉาก: {st.session_state.get('dj_setting')}. แยก Prompt ภาพนิ่ง/วิดีโออังกฤษ. {audio_inst}"
-            st.code(safe_generate(prompt), language="markdown")
+            st.session_state.dj_video_prompt = safe_generate(prompt)
+        if st.session_state.dj_video_prompt: st.code(st.session_state.dj_video_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["4:3", "9:16", "1:1"], key="dj_pratio")
@@ -405,13 +445,17 @@ elif app_mode == "🪩 โหมดดีเจและปาร์ตี้ (D
         if st.button("🎨 สั่ง AI เขียน Prompt Flyer", type="primary", use_container_width=True):
             prompt = f"เขียน Prompt อังกฤษทำ Party Flyer. ศิลปิน: {st.session_state.dj_actor_text} ฉาก {st.session_state.get('dj_setting')} แสง {st.session_state.get('dj_light')}. มีอักษร Neon คำว่า '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นโปรโมทร้าน (3 แพลตฟอร์ม)", key="cap_btn_dj", type="primary", use_container_width=True):
+            generate_captions(st.session_state.dj_video_prompt or "โปรโมทปาร์ตี้ดีเจสุดมันส์ คืนนี้เจอกัน")
 
 # =========================================================================================
 # 🎵 7. โหมดมิวสิควิดีโอ (Music Video Studio)
 # =========================================================================================
 elif app_mode == "🎵 โหมดมิวสิควิดีโอ (Music Video Studio)":
-    st.markdown("<h1>🎵 สตูดิโอสร้างเพลงและ MV (Audio+Visual Sync)</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>🎵 สตูดิโอสร้างเพลงและ MV</h1>", unsafe_allow_html=True)
     if 'mv_lyrics_text' not in st.session_state: st.session_state.mv_lyrics_text = ""
+    if 'mv_full_prompt' not in st.session_state: st.session_state.mv_full_prompt = ""
     mv_topic = st.text_input("📌 หัวข้อเพลง/เรื่องราว:", placeholder="เช่น ความรักในเมืองใหญ่...")
 
     if st.button("✨ ให้ AI คิดแนวเพลงและภาพให้ทั้งหมด (Magic Setup)", type="secondary", use_container_width=True):
@@ -421,9 +465,9 @@ elif app_mode == "🎵 โหมดมิวสิควิดีโอ (Music V
             "mv_vocal": ["เสียงผู้ชาย", "เสียงผู้หญิง", "ดูโอ้"],
             "mv_tempo": ["ปานกลาง", "ช้าซึ้ง", "เร็วสนุกสนาน"],
             "mv_inst": ["กีตาร์โปร่ง", "เปียโน", "ซินธิไซเซอร์", "พิณ/แคน"],
-            "mv_style": ["ภาพยนตร์ดราม่า (Cinematic)", "อนิเมะสวยงาม (Anime)", "ย้อนยุค (Retro)", "Cyberpunk"],
+            "mv_style": ["ภาพยนตร์ดราม่า", "อนิเมะสวยงาม", "ย้อนยุค", "Cyberpunk"],
             "mv_cam": ["สโลว์โมชั่นนิ่งๆ", "ตัดสลับรวดเร็ว", "โดรนมุมสูง"],
-            "mv_light": ["สีทองอบอุ่น (Golden Hour)", "แสงสีนีออน (Neon)", "ขาวดำหรูหรา (B&W)"]
+            "mv_light": ["สีทองอบอุ่น", "แสงสีนีออน", "ขาวดำหรูหรา"]
         }
         with st.spinner("🧠 AI กำลังคำนวณแนวเพลงและภาพที่เหมาะสมที่สุด..."): magic_setup("MV เพลงฮิต", opts, mv_topic)
 
@@ -445,15 +489,19 @@ elif app_mode == "🎵 โหมดมิวสิควิดีโอ (Music V
         st.session_state.mv_lyrics_text = safe_generate(f"แต่งเนื้อเพลง หัวข้อ: {mv_topic} แนว: {st.session_state.get('mv_genre')} ภาษา: {st.session_state.get('mv_lang')} เสียงร้อง: {st.session_state.get('mv_vocal')}")
     st.session_state.mv_lyrics_text = st.text_area("📝 เนื้อเพลง:", value=st.session_state.mv_lyrics_text, height=120)
 
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างมิวสิควิดีโอ (Lyria + Veo)", "🖼️ สร้างหน้าปกซิงเกิล (Single Cover)"])
+    tab_vid, tab_poster, tab_cap = st.tabs(["🎬 2. สร้างมิวสิควิดีโอ", "🖼️ 3. สร้างหน้าปกซิงเกิล", "✍️ 4. แคปชั่นโปรโมทเพลง"])
     with tab_vid:
-        if st.button("🚀 2. สั่ง AI เขียนสคริปต์ MV และเสียง", type="primary", use_container_width=True):
+        if st.button("🚀 สั่ง AI เขียนสคริปต์ MV และเสียง", type="primary", use_container_width=True):
             prompt = f"เขียนสคริปต์แยก 2 ส่วน: 1. Audio (สไตล์ {st.session_state.get('mv_genre')}, ดนตรี {st.session_state.get('mv_inst')}, จังหวะ {st.session_state.get('mv_tempo')}) เนื้อเพลง: {st.session_state.mv_lyrics_text}. 2. Video (ภาพสไตล์ {st.session_state.get('mv_style')}, กล้อง {st.session_state.get('mv_cam')}, แสง {st.session_state.get('mv_light')}). ให้เป็นภาษาอังกฤษล้วน"
-            st.code(safe_generate(prompt), language="markdown")
+            st.session_state.mv_full_prompt = safe_generate(prompt)
+        if st.session_state.mv_full_prompt: st.code(st.session_state.mv_full_prompt, language="markdown")
     with tab_poster:
         col_p1, col_p2 = st.columns(2)
         with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["1:1 (ปก Album/Spotify)", "16:9", "9:16"], key="mv_pratio")
         with col_p2: p_text = st.text_input("💬 ชื่อเพลงบนปก:", value="New Single", key="mv_ptext")
         if st.button("🎨 สั่ง AI เขียน Prompt หน้าปก", type="primary", use_container_width=True):
-            prompt = f"เขียน Prompt ภาษาอังกฤษทำภาพปกอัลบั้ม (Album Cover). สไตล์: {st.session_state.get('mv_style')}. เรื่องราวเกี่ยวกับ {mv_topic}. มีตัวอักษรสวยงามเขียนว่า '{p_text}'. สัดส่วน {p_ratio}"
+            prompt = f"เขียน Prompt ภาษาอังกฤษทำภาพปกอัลบั้ม. สไตล์: {st.session_state.get('mv_style')}. เรื่องราว {mv_topic}. มีตัวอักษรสวยงามเขียนว่า '{p_text}'. สัดส่วน {p_ratio}"
             st.code(safe_generate(prompt), language="markdown")
+    with tab_cap:
+        if st.button("✍️ สั่ง AI คิดแคปชั่นโปรโมทเพลง (3 แพลตฟอร์ม)", key="cap_btn_mv", type="primary", use_container_width=True):
+            generate_captions(st.session_state.mv_lyrics_text or mv_topic)
