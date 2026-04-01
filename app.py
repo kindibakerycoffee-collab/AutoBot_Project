@@ -38,26 +38,35 @@ if 'generated_video_prompt' not in st.session_state: st.session_state.generated_
 if 'generated_captions' not in st.session_state: st.session_state.generated_captions = ""
 if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_paths = []
 
-if 'v_presenter' not in st.session_state: st.session_state.v_presenter = "หญิงสาว (Young Female)"
-if 'v_tone' not in st.session_state: st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
-if 'v_ratio' not in st.session_state: st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
-if 'v_lang' not in st.session_state: st.session_state.v_lang = "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)"
-if 'v_style' not in st.session_state: st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
-if 'v_story' not in st.session_state: st.session_state.v_story = "PAS (ขยี้ปัญหาแล้วเสนอทางแก้)"
-if 'v_duration' not in st.session_state: st.session_state.v_duration = "มาตรฐานกำลังดี (30 วินาที)"
-if 'v_text_overlay' not in st.session_state: st.session_state.v_text_overlay = "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)"
-if 'v_visual' not in st.session_state: st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
-if 'v_target' not in st.session_state: st.session_state.v_target = "ทั่วไป (Mass)"
-if 'v_cta' not in st.session_state: st.session_state.v_cta = "กดตะกร้าสีเหลือง"
-if 'v_platform' not in st.session_state: st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
-if 'v_camera' not in st.session_state: st.session_state.v_camera = "มาตรฐาน (Smooth & Steady)"
-if 'v_music' not in st.session_state: st.session_state.v_music = "เพลงป๊อปสนุกสนาน (Upbeat Pop)"
+# ==========================================
+# ⚙️ ฟังก์ชันสำหรับคืนค่าเริ่มต้น
+# ==========================================
+def reset_video_defaults():
+    st.session_state.v_presenter = "หญิงสาว (Young Female)"
+    st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
+    st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
+    st.session_state.v_lang = "ไทยภาคกลาง (มาตรฐาน)"
+    st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
+    st.session_state.v_story = "PAS (ขยี้ปัญหาแล้วเสนอทางแก้)"
+    st.session_state.v_duration = "มาตรฐานกำลังดี (30 วินาที)"
+    st.session_state.v_text_overlay = "ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)"
+    st.session_state.v_visual = "สมจริงเหมือนถ่ายทำจริง (Photorealistic)"
+    st.session_state.v_target = "ทั่วไป (Mass)"
+    st.session_state.v_cta = "กดตะกร้าสีเหลือง"
+    st.session_state.v_platform = "TikTok (เน้นไวรัล ฮุกไวใน 3 วิ)"
+    st.session_state.v_camera = "มาตรฐาน (Smooth & Steady)"
+    st.session_state.v_music = "เพลงป๊อปสนุกสนาน (Upbeat Pop)"
 
-if 'p_style' not in st.session_state: st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
-if 'p_ratio' not in st.session_state: st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
-if 'p_color' not in st.session_state: st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า (อิงจากภาพอ้างอิง)"
-if 'p_composition' not in st.session_state: st.session_state.p_composition = "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)"
-if 'p_typography' not in st.session_state: st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
+def reset_poster_defaults():
+    st.session_state.p_style = "Hard Sale / โปรแรง (ตะโกนขาย)"
+    st.session_state.p_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
+    st.session_state.p_color = "สีแบรนด์ตามรูปสินค้า"
+    st.session_state.p_composition = "สินค้าอยู่ตรงกลางเด่นๆ (Center Focus)"
+    st.session_state.p_typography = "ฟอนต์ตัวหนาตะโกนขาย (Bold & Impactful)"
+
+# เช็กและตั้งค่าเริ่มต้นครั้งแรก
+if 'v_presenter' not in st.session_state: reset_video_defaults()
+if 'p_style' not in st.session_state: reset_poster_defaults()
 if 'generated_poster_prompt' not in st.session_state: st.session_state.generated_poster_prompt = ""
 
 if 'current_key_idx' not in st.session_state: st.session_state.current_key_idx = 0
@@ -153,8 +162,10 @@ st.divider()
 tab_video, tab_poster = st.tabs(["🎬 โหมดสร้างคลิปวิดีโอ (Pipeline)", "🖼️ โหมดสร้างโปสเตอร์โฆษณา"])
 
 with tab_video:
-    head_col, ai_col = st.columns([4, 1])
+    # ✨ อัปเดตเลย์เอาต์: เพิ่มปุ่มคืนค่าเริ่มต้น ✨
+    head_col, ai_col, reset_col = st.columns([2.5, 1, 1])
     with head_col: st.markdown("#### 🎬 แผงควบคุมวิดีโอ (Video Settings)")
+    
     with ai_col:
         if st.button("✨ ให้ AI ช่วยตั้งค่าวิดีโอ", use_container_width=True):
             if not st.session_state.product_text.strip(): st.warning("⚠️ กรุณาใส่รายละเอียดสินค้าก่อนครับ")
@@ -174,6 +185,11 @@ with tab_video:
                         st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
                         st.session_state.v_camera = "ถือกล้องถ่ายเองสมจริง (Handheld Camera)"
                     st.rerun()
+                    
+    with reset_col:
+        if st.button("🔄 คืนค่าเริ่มต้น", key="reset_vid_btn", use_container_width=True):
+            reset_video_defaults()
+            st.rerun()
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -289,7 +305,6 @@ with tab_video:
                             log_text = f"> เริ่มรันบอทฉาก {scene_num}...\n"
                             terminal_box.code(log_text, language="bash")
                             try:
-                                # ✨ จุดแก้บั๊ก: เพิ่ม env ให้บังคับส่งท่อ UTF-8 และใส่ errors="replace" ✨
                                 custom_env = os.environ.copy()
                                 custom_env["PYTHONIOENCODING"] = "utf-8"
                                 
@@ -299,7 +314,7 @@ with tab_video:
                                     stderr=subprocess.STDOUT, 
                                     text=True, 
                                     encoding="utf-8",
-                                    errors="replace", # ป้องกันระบบแครชถ้าอ่านอักษรไทยไม่ได้
+                                    errors="replace",
                                     env=custom_env
                                 )
                                 for line in process.stdout: 
@@ -314,7 +329,8 @@ with tab_video:
             st.code(st.session_state.generated_video_prompt, language="markdown")
 
 with tab_poster:
-    p_head_col, p_ai_col = st.columns([4, 1])
+    # ✨ อัปเดตเลย์เอาต์: เพิ่มปุ่มคืนค่าเริ่มต้น ✨
+    p_head_col, p_ai_col, p_reset_col = st.columns([2.5, 1, 1])
     with p_head_col: st.markdown("### 🖼️ แผงควบคุมโปสเตอร์ (Poster Settings)")
     with p_ai_col:
         if st.button("✨ ให้ AI ช่วยตั้งค่าโปสเตอร์", use_container_width=True):
@@ -335,6 +351,11 @@ with tab_poster:
                         st.session_state.p_style = "Soft Sell / อารมณ์ไลฟ์สไตล์"
                         st.session_state.p_typography = "ฟอนต์ร่วมสมัยอ่านง่าย (Modern Sans-serif)"
                     st.rerun()
+                    
+    with p_reset_col:
+        if st.button("🔄 คืนค่าเริ่มต้น", key="reset_pos_btn", use_container_width=True):
+            reset_poster_defaults()
+            st.rerun()
 
     col1, col2 = st.columns(2)
     with col1:
