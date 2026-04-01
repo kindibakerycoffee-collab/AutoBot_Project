@@ -133,9 +133,7 @@ with st.expander("➕ อัปโหลด Reference Image (ตั้งค่�
                     st.success("✅ สกัดข้อมูลและบันทึกรูปต้นฉบับสำหรับการทำ Ingredient Lock สำเร็จ!")
                 except Exception as e: st.error(f"❌ เกิดข้อผิดพลาดจาก AI: {e}")
 
-st.markdown("### 📝 ข้อมูลตั้งต้นสำหรับ Scene Builder (Ingredient Data)")
-product_input = st.text_area("ข้อมูลที่ระบบสกัดได้:", value=st.session_state.product_text, height=200)
-st.session_state.product_text = product_input 
+st.session_state.product_text = st.text_area("📝 ข้อมูลตั้งต้นสำหรับ Scene Builder (Ingredient Data):", value=st.session_state.product_text, height=200)
 st.divider()
 
 # ==========================================
@@ -153,10 +151,6 @@ with tab_video:
             else:
                 with st.spinner("🧠 AI กำลังคำนวณพารามิเตอร์..."):
                     time.sleep(1) 
-                    text = st.session_state.product_text.lower()
-                    if any(w in text for w in ["หญิง", "สวย", "สกินแคร์", "ลิป", "กระโปรง"]): st.session_state.v_presenter = "หญิงสาว (Young Female)"
-                    elif any(w in text for w in ["น่ารัก", "สัตว์", "หมา", "แมว"]): st.session_state.v_presenter = "มาสคอตสัตว์ (Animal Mascot)"
-                    else: st.session_state.v_presenter = "ชายหนุ่ม (Young Male)"
                     st.rerun()
                     
     with reset_col:
@@ -193,7 +187,7 @@ with tab_video:
             else:
                 with st.spinner("🎬 ผู้กำกับ AI กำลังวางโครงสร้าง Scene Builder..."):
                     try:
-                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow (Veo 3.1 และ Nano Banana 2) จากข้อมูล:
+                        prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow จากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
                         พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
@@ -203,7 +197,7 @@ with tab_video:
                         1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" 
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
                         3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้แนบเนียน
-                        4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
+                        4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้าลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
                         5. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         result_text = smart_generate(prompt_cmd)
                         st.session_state.generated_video_prompt = result_text
@@ -234,100 +228,96 @@ with tab_video:
         scenes = re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', raw_text)
         valid_scenes = [s for s in scenes if len(s.strip()) > 5 and "ฉากที่" in s]
 
+        # =========================================================
+        # 🌟 ระบบสร้างฟังก์ชันป๊อปอัป Dialog (Review Board) 🌟
+        # =========================================================
+        @st.dialog("⚙️ ทบทวน Prompt & ตั้งค่า Handoff")
+        def handoff_popup(scene_num, raw_prompt_text, ref_img_path, is_first):
+            st.markdown(f"### 🎬 ควบคุมการถ่ายทำ: Scene {scene_num}")
+            
+            # ระบบสกัดข้อความอัตโนมัติ (Auto-Extractor) ป้องกันบั๊กสลับกล่อง
+            img_match = re.search(r'Prompt สร้างภาพนิ่ง.*?:(.*?)(?=\*\*Prompt|\- 🎞️|\n\n|$)', raw_prompt_text, re.DOTALL | re.IGNORECASE)
+            vid_match = re.search(r'Prompt สร้างวิดีโอ.*?:(.*?)(?=\*\*Prompt|\- 🖼️|\n\n|$)', raw_prompt_text, re.DOTALL | re.IGNORECASE)
+            
+            img_p_extracted = img_match.group(1).strip() if img_match else ""
+            vid_p_extracted = vid_match.group(1).strip() if vid_match else ""
+
+            if not img_p_extracted: img_p_extracted = raw_prompt_text
+            if not vid_p_extracted: vid_p_extracted = "Animate this scene smoothly with cinematic camera motion."
+
+            # แยก UI ตามประเภทของฉาก
+            if is_first:
+                st.info("💡 **สถานะ: ฉากตั้งต้น (First Scene)** - บอทจะสร้างรูปนิ่งก่อน แล้วค่อยสร้างวิดีโอจากรูปนั้น")
+                final_img_prompt = st.text_area("🖼️ 1. Prompt สำหรับ Image Gen (Nano Banana 2):", value=img_p_extracted, height=120)
+                final_vid_prompt = st.text_area("🎞️ 2. Prompt สำหรับ Video Gen (Veo 3.1):", value=vid_p_extracted, height=120)
+            else:
+                st.success(f"💡 **สถานะ: ฉากขยาย (Extend Scene {scene_num})** - บอทจะร้อยเรื่องราวต่อจากคลิปที่แล้ว")
+                final_img_prompt = "" 
+                final_vid_prompt = st.text_area(f"🎞️ Prompt สำหรับขยายคลิป (Extend on Veo 3.1):", value=vid_p_extracted, height=150)
+
+            st.markdown("---")
+            st.markdown("##### ⚙️ ตั้งค่าระบบ (Google Flow)")
+            gf_col1, gf_col2 = st.columns(2)
+            with gf_col1:
+                scene_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["9:16", "16:9", "1:1", "4:3", "3:4"], index=0)
+            with gf_col2:
+                scene_credit = st.selectbox("⚡ ความเร็ว/เครดิต:", ["Veo 3.1 - Fast [Lower Priority]", "Veo 3.1 - Fast"], index=0)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            terminal_box = st.empty() 
+            
+            btn_label = "🚀 ยืนยันและสร้างฉากตั้งต้น" if is_first else f"🚀 ยืนยันและขยายคลิป (Extend Scene)"
+            
+            if st.button(btn_label, type="primary", use_container_width=True):
+                credit_val = "Lower Priority" if "Lower Priority" in scene_credit else "Fast"
+                
+                task_payload = {
+                    "type": "scene_pipeline", 
+                    "image_prompt": final_img_prompt.strip(),
+                    "video_prompt": final_vid_prompt.strip(),
+                    "credit_mode": credit_val, 
+                    "ref_image": ref_img_path,
+                    "scene_num": scene_num,
+                    "is_first_scene": is_first,
+                    "target_ratio": scene_ratio 
+                }
+                
+                with open("bot_task.json", "w", encoding="utf-8") as f: json.dump(task_payload, f, ensure_ascii=False)
+                
+                log_text = f"> 📡 ส่งคำสั่งพร้อม Prompt ให้บอท Scene {scene_num}...\n"
+                terminal_box.code(log_text, language="bash")
+                
+                try:
+                    custom_env = os.environ.copy()
+                    custom_env["PYTHONIOENCODING"] = "utf-8"
+                    process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=custom_env)
+                    for line in process.stdout: 
+                        log_text += line
+                        terminal_box.code(log_text, language="bash")
+                    process.wait() 
+                    if process.returncode == 0: 
+                        st.success(f"✅ บอททำงานเสร็จสมบูรณ์! เช็กผลลัพธ์ในหน้าต่าง Flow ได้เลย")
+                        time.sleep(3)
+                        st.rerun() 
+                    else: st.error("❌ Handoff ขัดข้อง!")
+                except Exception as e: st.error(f"❌ เรียกบอทล้มเหลว: {e}")
+
+        # =========================================================
+
         if "คอมพิวเตอร์" in view_mode:
             for i, scene_text in enumerate(valid_scenes):
                 scene_num = i + 1
                 full_scene_text = scene_text.strip() 
                 with st.expander(f"🎬 Scene {scene_num} (ฉากที่ {scene_num})", expanded=True):
-                    edited_prompt = st.text_area(f"สคริปต์และ Prompt", value=full_scene_text, height=300, key=f"text_{i}")
+                    st.markdown(full_scene_text) # โชว์สคริปต์แบบอ่านง่ายๆ
                     
-                    # =========================================================
-                    # ✨ ส่วนที่อัปเกรด: แผงจำลองการตั้งค่า Google Flow (จำลองป๊อปอัป) ✨
-                    # =========================================================
-                    st.markdown("##### ⚙️ Google Flow Settings (ตั้งค่าก่อนรัน Handoff)")
-                    gf_col1, gf_col2 = st.columns(2)
-                    with gf_col1:
-                        # จำลองปุ่มเลือกสัดส่วนภาพ
-                        scene_ratio = st.selectbox(
-                            "📏 สัดส่วน (Aspect Ratio):", 
-                            ["9:16", "16:9", "1:1", "4:3", "3:4"], 
-                            index=0, 
-                            key=f"ratio_{i}"
-                        )
-                    with gf_col2:
-                        # จำลองปุ่มเลือกระบบเครดิตและความเร็ว
-                        scene_credit = st.selectbox(
-                            "⚡ ความเร็ว/เครดิต (Priority):", 
-                            ["Veo 3.1 - Fast [Lower Priority]", "Veo 3.1 - Fast"], 
-                            index=0, 
-                            key=f"credit_{i}"
-                        )
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    terminal_box = st.empty()
-                    btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene)"
-                    
-                    if st.button(btn_text, type="primary", key=f"btn_scene_{i}"):
-                        if not st.session_state.uploaded_img_paths: st.error("🛑 โปรดอัปโหลด Reference Image ก่อนรัน Handoff!")
+                    if st.button(f"⚙️ ตรวจสอบ Prompt & รัน Handoff ฉาก {scene_num}", key=f"popup_btn_{i}"):
+                        if not st.session_state.uploaded_img_paths:
+                            st.error("🛑 โปรดอัปโหลด Reference Image ด้านบนก่อนครับ!")
                         else:
                             is_first = True if scene_num == 1 else False
                             ref_img_path = st.session_state.uploaded_img_paths[0] 
-                            
-                            img_prompt = ""
-                            vid_prompt = ""
-                            if "Prompt สร้างภาพนิ่ง" in edited_prompt:
-                                parts = re.split(r'Prompt สร้างภาพนิ่ง.*?:', edited_prompt)
-                                if len(parts) > 1:
-                                    img_prompt = re.split(r'Prompt สร้างวิดีโอ', parts[1])[0]
-                                    img_prompt = re.sub(r'[-🎞️\*]', '', img_prompt).strip()
-                                    
-                            if "Prompt สร้างวิดีโอ" in edited_prompt:
-                                parts = re.split(r'Prompt สร้างวิดีโอ.*?:', edited_prompt)
-                                if len(parts) > 1:
-                                    vid_prompt = parts[1]
-                                    vid_prompt = re.sub(r'[-🖼️\*]', '', vid_prompt).strip()
-                                    
-                            if not img_prompt: img_prompt = edited_prompt 
-                            if not vid_prompt: vid_prompt = "Animate this scene smoothly with cinematic camera motion."
-                            
-                            # ดึงค่าความเร็วเครดิต (Fast หรือ Lower Priority)
-                            credit_val = "Lower Priority" if "Lower Priority" in scene_credit else "Fast"
-                            
-                            task_payload = {
-                                "type": "scene_pipeline", 
-                                "image_prompt": img_prompt,
-                                "video_prompt": vid_prompt,
-                                "credit_mode": credit_val, 
-                                "ref_image": ref_img_path,
-                                "scene_num": scene_num,
-                                "is_first_scene": is_first,
-                                "target_ratio": scene_ratio # ส่งสัดส่วนภาพที่เลือกในกล่องนี้ไปให้บอท
-                            }
-                            
-                            with open("bot_task.json", "w", encoding="utf-8") as f: 
-                                json.dump(task_payload, f, ensure_ascii=False)
-                            
-                            log_text = f"> กำลังเปิดช่องทาง Handoff ไปยัง Google Flow สำหรับ Scene {scene_num}...\n"
-                            terminal_box.code(log_text, language="bash")
-                            try:
-                                custom_env = os.environ.copy()
-                                custom_env["PYTHONIOENCODING"] = "utf-8"
-                                process = subprocess.Popen(
-                                    ["python", "-u", "test_bot.py"], 
-                                    stdout=subprocess.PIPE, 
-                                    stderr=subprocess.STDOUT, 
-                                    text=True, 
-                                    encoding="utf-8",
-                                    errors="replace",
-                                    env=custom_env
-                                )
-                                for line in process.stdout: 
-                                    log_text += line
-                                    terminal_box.code(log_text, language="bash")
-                                process.wait() 
-                                if process.returncode == 0: st.success(f"✅ บอททำงานกระบวนการ Handoff เสร็จสมบูรณ์!")
-                                else: st.error("❌ กระบวนการ Handoff ขัดข้อง ดูรายละเอียดใน Terminal")
-                            except Exception as e: st.error(f"❌ เรียกบอทล้มเหลว: {e}")
+                            handoff_popup(scene_num, full_scene_text, ref_img_path, is_first)
         else:
             st.info("📱 กดปุ่ม Copy ที่มุมขวากล่องข้อความด้านล่าง เพื่อนำไปวางในแอปมือถือ")
             st.code(st.session_state.generated_video_prompt, language="markdown")
@@ -335,9 +325,7 @@ with tab_video:
 with tab_poster:
     p_head_col, p_ai_col, p_reset_col = st.columns([2.5, 1, 1])
     with p_head_col: st.markdown("### 🖼️ แผงควบคุม Image Gen (สำหรับโหมด Nano Banana 2)")
-    with p_ai_col:
-        pass 
-                    
+    with p_ai_col: pass 
     with p_reset_col:
         if st.button("🔄 คืนค่าเริ่มต้น", key="reset_pos_btn", use_container_width=True):
             reset_poster_defaults()
