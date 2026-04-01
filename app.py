@@ -102,10 +102,10 @@ if st.sidebar.button("🔄 รีเซ็ตสถานะคีย์", use_c
     st.rerun()
 
 # =========================================================================================
-# 🎬 1. โหมดโฆษณาสินค้า (Ad Director)
+# 🎬 1. โหมดโฆษณาสินค้า (Ad Director) - อัปเกรด 14 กล่องวิดีโอ + 4 กล่องโปสเตอร์! ✨
 # =========================================================================================
 if app_mode == "🎬 โหมดโฆษณาสินค้า (Ad Director)":
-    st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>😀 ระบบผู้กำกับโฆษณา AI (Pro Edition)</h1>", unsafe_allow_html=True)
     if 'ad_product_text' not in st.session_state: st.session_state.ad_product_text = ""
     if 'ad_actor_text' not in st.session_state: st.session_state.ad_actor_text = ""
 
@@ -123,31 +123,72 @@ if app_mode == "🎬 โหมดโฆษณาสินค้า (Ad Director)
                 st.session_state.ad_actor_text = safe_generate([Image.open(up_actor), "บรรยายใบหน้า ทรงผม เสื้อผ้า อย่างละเอียด"])
         st.session_state.ad_actor_text = st.text_area("📝 ข้อมูลพรีเซนเตอร์:", value=st.session_state.ad_actor_text, height=60)
 
-    st.markdown("### 🎬 3. ตั้งค่าการถ่ายทำ")
+    st.divider()
+    st.markdown("### 🎬 3. ตั้งค่าการถ่ายทำ (14 Options)")
+    
     if st.button("✨ ให้ AI ช่วยคิดการตั้งค่าทั้งหมด (Magic Setup)", type="secondary", use_container_width=True):
         opts = {
             "ad_tone": ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"],
+            "ad_target": ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "วัยทำงาน / ผู้ใหญ่"],
+            "ad_lang": ["ไทยภาคกลาง", "อังกฤษ (English)"],
+            "ad_dur": ["30 วินาที", "15 วินาที"],
+            "ad_mood": ["สนุกสนานร่าเริง (Joyful)", "ลึกลับน่าค้นหา (Mysterious)", "อบอุ่นละมุน (Warm & Cozy)"],
             "ad_style": ["UGC (รีวิวบ้านๆ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"],
-            "ad_cta": ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ"]
+            "ad_story": ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่อง)"],
+            "ad_cta": ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "กดลิงก์หน้าโปรไฟล์"],
+            "ad_edit": ["ตัดสลับรวดเร็ว (Fast Cuts)", "สมูทนุ่มนวล (Smooth Transitions)"],
+            "ad_light": ["สว่างสดใส (Bright & Airy)", "ดาร์กโทน (Dark & Moody)", "แสงนีออน (Neon Vibes)"],
+            "ad_plat": ["TikTok / Shopee", "Facebook Reels", "YouTube"],
+            "ad_vis": ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar/Disney)"],
+            "ad_cam": ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเอง (Handheld)"],
+            "ad_music": ["เพลงป๊อปสนุกสนาน", "ดนตรีตื่นเต้นเร้าใจ", "ล้ำสมัย (Electronic)"]
         }
-        with st.spinner("🧠 AI กำลังคิดการตั้งค่า..."): magic_setup("โฆษณาสินค้า", opts, st.session_state.ad_product_text)
+        with st.spinner("🧠 AI กำลังคำนวณสูตรโฆษณาที่ปังที่สุด..."): magic_setup("โฆษณาสินค้า", opts, st.session_state.ad_product_text)
 
+    # วางกล่องทั้ง 14 กล่อง
     c1, c2, c3 = st.columns(3)
-    with c1: render_custom_select("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"], "ad_tone")
-    with c2: render_custom_select("🎥 สไตล์วิดีโอ:", ["UGC (รีวิวบ้านๆ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"], "ad_style")
-    with c3: render_custom_select("👉 ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ"], "ad_cta")
+    with c1: 
+        render_custom_select("🗣️ 1. น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"], "ad_tone")
+        render_custom_select("🎯 2. กลุ่มเป้าหมาย:", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z", "วัยทำงาน / ผู้ใหญ่"], "ad_target")
+        render_custom_select("🌐 3. ภาษาคลิป:", ["ไทยภาคกลาง", "อังกฤษ (English)"], "ad_lang")
+        render_custom_select("⏳ 4. ความยาวคลิป:", ["30 วินาที", "15 วินาที"], "ad_dur")
+        render_custom_select("🎭 5. อารมณ์คลิป (Mood):", ["สนุกสนานร่าเริง (Joyful)", "ลึกลับน่าค้นหา (Mysterious)", "อบอุ่นละมุน (Warm & Cozy)"], "ad_mood")
+    with c2: 
+        render_custom_select("🎥 6. สไตล์วิดีโอ:", ["UGC (รีวิวบ้านๆ)", "โทนภาพยนตร์ (Cinematic)", "โฆษณาทีวี (TV Commercial)"], "ad_style")
+        render_custom_select("📖 7. การเล่าเรื่อง:", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่อง)"], "ad_story")
+        render_custom_select("👉 8. ปิดการขาย (CTA):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ", "กดลิงก์หน้าโปรไฟล์"], "ad_cta")
+        render_custom_select("✂️ 9. จังหวะตัดต่อ:", ["ตัดสลับรวดเร็ว (Fast Cuts)", "สมูทนุ่มนวล (Smooth Transitions)"], "ad_edit")
+        render_custom_select("💡 10. แสงและสี:", ["สว่างสดใส (Bright & Airy)", "ดาร์กโทน (Dark & Moody)", "แสงนีออน (Neon Vibes)"], "ad_light")
+    with c3: 
+        render_custom_select("📱 11. แพลตฟอร์ม:", ["TikTok / Shopee", "Facebook Reels", "YouTube"], "ad_plat")
+        render_custom_select("🎨 12. สไตล์ภาพ:", ["สมจริง (Photorealistic)", "การ์ตูน 3D (Pixar/Disney)"], "ad_vis")
+        render_custom_select("🎥 13. มุมกล้อง:", ["มาตรฐาน (Steady)", "ซูมเข้าช้าๆ (Slow Zoom in)", "ถือกล้องถ่ายเอง (Handheld)"], "ad_cam")
+        render_custom_select("🎵 14. ดนตรีประกอบ:", ["เพลงป๊อปสนุกสนาน", "ดนตรีตื่นเต้นเร้าใจ", "ล้ำสมัย (Electronic)"], "ad_music")
 
-    tab_vid, tab_poster = st.tabs(["🎬 สร้างวิดีโอโฆษณา", "🖼️ สร้างแบนเนอร์โฆษณา"])
+    tab_vid, tab_poster = st.tabs(["🎬 สร้างวิดีโอโฆษณา", "🖼️ สร้างแบนเนอร์/โปสเตอร์โฆษณา"])
     with tab_vid:
         if st.button("🚀 สั่ง AI เขียนสคริปต์วิดีโอ", type="primary", use_container_width=True):
-            prompt = f"เขียนสคริปต์วิดีโอโฆษณา สินค้า: {st.session_state.ad_product_text} พรีเซนเตอร์: {st.session_state.ad_actor_text} สไตล์: {st.session_state.get('ad_style')} น้ำเสียง: {st.session_state.get('ad_tone')}. แยก Prompt ภาพนิ่งและวิดีโอเป็นอังกฤษ"
+            prompt = f"""เขียนสคริปต์วิดีโอโฆษณายาว {st.session_state.get('ad_dur')} ลงแพลตฟอร์ม {st.session_state.get('ad_plat')}. 
+            สินค้า: {st.session_state.ad_product_text} | พรีเซนเตอร์: {st.session_state.ad_actor_text}. 
+            การเล่าเรื่อง: {st.session_state.get('ad_story')} | อารมณ์: {st.session_state.get('ad_mood')} | น้ำเสียง: {st.session_state.get('ad_tone')} | กลุ่มเป้าหมาย: {st.session_state.get('ad_target')}. 
+            ภาพและสไตล์: {st.session_state.get('ad_style')}, แสง {st.session_state.get('ad_light')}, มุมกล้อง {st.session_state.get('ad_cam')}, การตัดต่อ {st.session_state.get('ad_edit')}, สไตล์อาร์ต {st.session_state.get('ad_vis')}. 
+            เพลง: {st.session_state.get('ad_music')}. จบด้วย: {st.session_state.get('ad_cta')}. 
+            แยก Prompt ภาพนิ่งและวิดีโอเป็นภาษาอังกฤษ"""
             st.code(safe_generate(prompt), language="markdown")
+            
     with tab_poster:
+        # กล่องสร้างโปสเตอร์ 4 กล่อง
+        st.markdown("**🎨 ตั้งค่าหน้าปก / โปสเตอร์ (4 Options)**")
         col_p1, col_p2 = st.columns(2)
-        with col_p1: p_ratio = st.selectbox("📏 สัดส่วนภาพ:", ["9:16", "1:1", "16:9"], key="ad_pratio")
-        with col_p2: p_style = st.selectbox("📄 สไตล์โปสเตอร์:", ["Hard Sale", "Soft Sell"], key="ad_pstyle")
+        with col_p1: 
+            p_ratio = st.selectbox("📏 1. สัดส่วนภาพ:", ["9:16 (Story/TikTok)", "1:1 (IG/FB Square)", "16:9 (ปก YouTube)"], key="ad_pratio")
+            p_color = st.selectbox("🌈 3. โทนสีหลัก (Color Palette):", ["สีสันสดใสจัดจ้าน (Vibrant)", "พาสเทลละมุน (Soft Pastel)", "ดาร์กโหมดพรีเมียม (Premium Dark)", "คลีนๆ ขาวดำ (Clean Minimalist)"], key="ad_pcolor")
+        with col_p2: 
+            p_style = st.selectbox("📄 2. สไตล์โปสเตอร์:", ["Hard Sale (ตัวหนังสือใหญ่ โปรแรง)", "Soft Sell (เน้นไลฟ์สไตล์สวยๆ)", "Minimal (มินิมอล เรียบหรู)"], key="ad_pstyle")
+            p_text = st.text_input("💬 4. ข้อความพาดหัว (Headline):", value="ลดราคาสุดพิเศษ!", key="ad_ptext")
+            
         if st.button("🎨 สั่ง AI เขียน Prompt โปสเตอร์", type="primary", use_container_width=True):
-            prompt = f"เขียน Prompt ภาษาอังกฤษทำโปสเตอร์โฆษณา. สินค้า: {st.session_state.ad_product_text}. พรีเซนเตอร์: {st.session_state.ad_actor_text}. สไตล์: {p_style}. สัดส่วน: {p_ratio}."
+            prompt = f"เขียน Prompt ภาษาอังกฤษทำโปสเตอร์โฆษณา/Cover Art. สินค้า: {st.session_state.ad_product_text}. พรีเซนเตอร์: {st.session_state.ad_actor_text}. สไตล์โปสเตอร์: {p_style}. โทนสีหลัก: {p_color}. สไตล์อาร์ต: {st.session_state.get('ad_vis')}. ข้อความบนภาพ: '{p_text}'. สัดส่วน: {p_ratio}."
             st.code(safe_generate(prompt), language="markdown")
 
 # =========================================================================================
