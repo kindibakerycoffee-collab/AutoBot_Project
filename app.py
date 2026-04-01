@@ -269,7 +269,6 @@ with tab_video:
                     if st.button(f"🚀 สั่งบอทลุยฉาก {scene_num}", type="primary", key=f"btn_scene_{i}"):
                         if not st.session_state.uploaded_img_paths: st.error("🛑 อัปโหลดรูปภาพก่อน!")
                         else:
-                            # ✨ จุดอัปเดต: ส่งข้อมูลฉากที่ 1 หรือฉากต่อขยายให้บอททราบ ✨
                             is_first = True if scene_num == 1 else False
                             ref_img_path = st.session_state.uploaded_img_paths[0] 
                             extracted_img_prompt = edited_prompt
@@ -290,8 +289,22 @@ with tab_video:
                             log_text = f"> เริ่มรันบอทฉาก {scene_num}...\n"
                             terminal_box.code(log_text, language="bash")
                             try:
-                                process = subprocess.Popen(["python", "-u", "test_bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
-                                for line in process.stdout: log_text += line; terminal_box.code(log_text, language="bash")
+                                # ✨ จุดแก้บั๊ก: เพิ่ม env ให้บังคับส่งท่อ UTF-8 และใส่ errors="replace" ✨
+                                custom_env = os.environ.copy()
+                                custom_env["PYTHONIOENCODING"] = "utf-8"
+                                
+                                process = subprocess.Popen(
+                                    ["python", "-u", "test_bot.py"], 
+                                    stdout=subprocess.PIPE, 
+                                    stderr=subprocess.STDOUT, 
+                                    text=True, 
+                                    encoding="utf-8",
+                                    errors="replace", # ป้องกันระบบแครชถ้าอ่านอักษรไทยไม่ได้
+                                    env=custom_env
+                                )
+                                for line in process.stdout: 
+                                    log_text += line
+                                    terminal_box.code(log_text, language="bash")
                                 process.wait() 
                                 if process.returncode == 0: st.success(f"✅ บอททำงานสำเร็จ!")
                                 else: st.error("❌ บอทขัดข้อง ดูใน Terminal")
