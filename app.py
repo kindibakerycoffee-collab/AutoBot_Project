@@ -35,7 +35,6 @@ if 'uploaded_img_paths' not in st.session_state: st.session_state.uploaded_img_p
 def reset_video_defaults():
     st.session_state.v_presenter = "หญิงสาว (Young Female)"
     st.session_state.v_tone = "เพื่อนป้ายยา (เป็นกันเอง)"
-    st.session_state.v_ratio = "แนวตั้ง 9:16 (Story / Reels / TikTok)"
     st.session_state.v_lang = "ไทยภาคกลาง (มาตรฐาน)"
     st.session_state.v_style = "UGC (รีวิวบ้านๆ จริงใจ)"
     st.session_state.v_story = "PAS (ขยี้ปัญหาแล้วเสนอทางแก้)"
@@ -146,7 +145,7 @@ tab_video, tab_poster = st.tabs(["🎬 โหมด Scene Builder (Veo 3.1)", "�
 
 with tab_video:
     head_col, ai_col, reset_col = st.columns([2.5, 1, 1])
-    with head_col: st.markdown("#### 🎬 Video Setup (สำหรับระบบ Veo 3.1)")
+    with head_col: st.markdown("#### 🎬 Video Setup (ตั้งค่าสคริปต์ผู้กำกับ)")
     
     with ai_col:
         if st.button("✨ ให้ AI ช่วยตั้งค่าวิดีโอ", use_container_width=True):
@@ -170,7 +169,6 @@ with tab_video:
         st.selectbox("👤 ผู้พูด/พรีเซนเตอร์ (Character Lock):", ["ชายหนุ่ม (Young Male)", "หญิงสาว (Young Female)", "ไม่มีพรีเซนเตอร์ (เน้นสินค้า)"], key="v_presenter")
         st.selectbox("🗣️ น้ำเสียง:", ["เพื่อนป้ายยา (เป็นกันเอง)", "ตื่นเต้น / ขายเก่ง", "หรูหรา / พรีเมียม"], key="v_tone")
         st.selectbox("🎯 กลุ่มเป้าหมาย (Target Audience):", ["ทั่วไป (Mass)", "วัยรุ่น Gen Z"], key="v_target")
-        st.selectbox("📱 สัดส่วนวิดีโอ (Aspect Ratio):", ["แนวตั้ง 9:16 (Story / Reels / TikTok)", "แนวนอน 16:9 (YouTube / TV)", "จัตุรัส 1:1", "แนวนอน 4:3", "แนวตั้ง 3:4"], key="v_ratio")
         st.selectbox("🌐 ภาษาของคลิป:", ["ไทยภาคกลาง (มาตรฐาน)", "ไทยภาคใต้ (สำเนียงคนใต้แท้ๆ)", "อังกฤษ (English)"], key="v_lang")
         
     with col2:
@@ -178,7 +176,6 @@ with tab_video:
         st.selectbox("📖 การเล่าเรื่อง (Continuity Flow):", ["PAS (ขยี้ปัญหาแล้วเสนอทางแก้)", "Storytelling (เล่าเรื่องชวนติดตาม)"], key="v_story")
         st.selectbox("👉 ปิดการขาย (Call to Action):", ["กดตะกร้าสีเหลือง", "ทักแชทสั่งซื้อ"], key="v_cta")
         st.selectbox("⏳ ความยาวคลิปรวม:", ["มาตรฐานกำลังดี (30 วินาที)", "สั้นกระชับฮุกคนดู (15 วินาที)"], key="v_duration")
-        st.selectbox("💬 สไตล์ข้อความบนจอ:", ["ข้อความภาษาไทย (ตัวใหญ่กระแทกตา)", "ไม่มีข้อความบนจอ"], key="v_text_overlay")
         
     with col3:
         st.selectbox("📱 แพลตฟอร์มเป้าหมาย:", ["TikTok / Shopee / Lazada (เน้นขายของ ตัดต่อฉับไว)", "Facebook Affiliate / Reels (เน้นเล่าเรื่อง)"], key="v_platform")
@@ -199,14 +196,13 @@ with tab_video:
                         prompt_cmd = f"""คุณคือผู้กำกับโฆษณามืออาชีพ จงเขียนสคริปต์และ Prompt เพื่อป้อนเข้าสู่ระบบ Google Flow (Veo 3.1 และ Nano Banana 2) จากข้อมูล:
                         สินค้า: {st.session_state.product_text}
                         แพลตฟอร์มเป้าหมาย: {st.session_state.v_platform}
-                        พรีเซนเตอร์ (Character Lock): {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
-                        สไตล์ภาพ (Visual Model): {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
-                        การเล่าเรื่อง (Continuity Flow): {st.session_state.v_story} | ดนตรีประกอบ: {st.session_state.v_music}
+                        พรีเซนเตอร์: {st.session_state.v_presenter} | น้ำเสียง: {st.session_state.v_tone} | ภาษา: {st.session_state.v_lang}
+                        สไตล์ภาพ: {st.session_state.v_visual} | Camera Controls: {st.session_state.v_camera}
                         
                         🚨 กฎเหล็ก:
                         1. บรรทัดแรกสุด ให้ขึ้นต้นด้วยคำว่า "💡 สคริปต์นี้เหมาะสำหรับแพลตฟอร์ม:" 
                         2. บรรทัดถัดมา ให้เริ่มเข้าสคริปต์ด้วยคำว่า "ฉากที่ 1" ทันที
-                        3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้โดยใช้ฟีเจอร์ Extend ของ Google Flow อย่างแนบเนียน
+                        3. ความต่อเนื่องของฉาก (Extend Consistency): ภาพแต่ละฉากต้องเชื่อมต่อกันได้แนบเนียน
                         4. 🚨 รูปแบบฉากต้องครบถ้วน โดยเฉพาะบรรทัด "-🖼️ Prompt สร้างภาพนิ่ง:" ให้เขียนเป็นภาษาอังกฤษล้วน และ **ต้องใส่คำบรรยายลักษณะสินค้า (Ingredient Lock Data) ลงไปใน Prompt อย่างละเอียดทุกฉาก ห้ามใช้คำกว้างๆ**
                         5. โครงสร้างแต่ละฉาก: ฉากที่, ความยาว, มุมกล้อง, ภาพที่เห็น, ข้อความบนจอ, เสียง, บทพูด, Prompt สร้างภาพนิ่ง, Prompt สร้างวิดีโอ"""
                         result_text = smart_generate(prompt_cmd)
@@ -239,17 +235,36 @@ with tab_video:
         valid_scenes = [s for s in scenes if len(s.strip()) > 5 and "ฉากที่" in s]
 
         if "คอมพิวเตอร์" in view_mode:
-            # ✨ รีโมทคอนโทรล: ส่งค่าเครดิต ✨
-            bot_credit = st.radio("เลือกระบบเครดิต (Google Flow):", ["Lower Priority (เครดิตฟรี)", "Fast (ใช้โควต้า Pro/Ultra)"], horizontal=True)
-            credit_val = "Lower Priority" if "ฟรี" in bot_credit else "Fast"
-            
             for i, scene_text in enumerate(valid_scenes):
                 scene_num = i + 1
                 full_scene_text = scene_text.strip() 
                 with st.expander(f"🎬 Scene {scene_num} (ฉากที่ {scene_num})", expanded=True):
-                    edited_prompt = st.text_area(f"สคริปต์ฉากที่ {scene_num}", value=full_scene_text, height=350, key=f"text_{i}")
-                    terminal_box = st.empty()
+                    edited_prompt = st.text_area(f"สคริปต์และ Prompt", value=full_scene_text, height=300, key=f"text_{i}")
                     
+                    # =========================================================
+                    # ✨ ส่วนที่อัปเกรด: แผงจำลองการตั้งค่า Google Flow (จำลองป๊อปอัป) ✨
+                    # =========================================================
+                    st.markdown("##### ⚙️ Google Flow Settings (ตั้งค่าก่อนรัน Handoff)")
+                    gf_col1, gf_col2 = st.columns(2)
+                    with gf_col1:
+                        # จำลองปุ่มเลือกสัดส่วนภาพ
+                        scene_ratio = st.selectbox(
+                            "📏 สัดส่วน (Aspect Ratio):", 
+                            ["9:16", "16:9", "1:1", "4:3", "3:4"], 
+                            index=0, 
+                            key=f"ratio_{i}"
+                        )
+                    with gf_col2:
+                        # จำลองปุ่มเลือกระบบเครดิตและความเร็ว
+                        scene_credit = st.selectbox(
+                            "⚡ ความเร็ว/เครดิต (Priority):", 
+                            ["Veo 3.1 - Fast [Lower Priority]", "Veo 3.1 - Fast"], 
+                            index=0, 
+                            key=f"credit_{i}"
+                        )
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    terminal_box = st.empty()
                     btn_text = f"🚀 รัน Handoff: สร้างฉากตั้งต้น (Image Gen ➔ Frame to Video)" if scene_num == 1 else f"🚀 รัน Handoff: ขยายฉาก {scene_num} (Extend Scene)"
                     
                     if st.button(btn_text, type="primary", key=f"btn_scene_{i}"):
@@ -275,10 +290,8 @@ with tab_video:
                             if not img_prompt: img_prompt = edited_prompt 
                             if not vid_prompt: vid_prompt = "Animate this scene smoothly with cinematic camera motion."
                             
-                            # ✨ รีโมทคอนโทรล: ดึงค่าสัดส่วนภาพจาก Dropdown ✨
-                            v_ratio_str = "9:16"
-                            ratio_match = re.search(r'\d+:\d+', st.session_state.v_ratio)
-                            if ratio_match: v_ratio_str = ratio_match.group()
+                            # ดึงค่าความเร็วเครดิต (Fast หรือ Lower Priority)
+                            credit_val = "Lower Priority" if "Lower Priority" in scene_credit else "Fast"
                             
                             task_payload = {
                                 "type": "scene_pipeline", 
@@ -288,7 +301,7 @@ with tab_video:
                                 "ref_image": ref_img_path,
                                 "scene_num": scene_num,
                                 "is_first_scene": is_first,
-                                "target_ratio": v_ratio_str # ส่งตัวแปรสัดส่วนภาพ
+                                "target_ratio": scene_ratio # ส่งสัดส่วนภาพที่เลือกในกล่องนี้ไปให้บอท
                             }
                             
                             with open("bot_task.json", "w", encoding="utf-8") as f: 
@@ -323,7 +336,7 @@ with tab_poster:
     p_head_col, p_ai_col, p_reset_col = st.columns([2.5, 1, 1])
     with p_head_col: st.markdown("### 🖼️ แผงควบคุม Image Gen (สำหรับโหมด Nano Banana 2)")
     with p_ai_col:
-        pass # ลดปุ่มเพื่อให้สั้นลง
+        pass 
                     
     with p_reset_col:
         if st.button("🔄 คืนค่าเริ่มต้น", key="reset_pos_btn", use_container_width=True):
