@@ -179,6 +179,7 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 path = os.path.join("temp_refs", up_product[0].name)
                 with open(path, "wb") as f: f.write(up_product[0].getbuffer())
                 st.session_state.ad_imgs.append(path)
+                st.image(up_product[0], width=200) # แสดงรูปพรีวิวสินค้า
                 if st.button("🔍 สกัดข้อมูล Ingredients", type="secondary"):
                     st.session_state.ad_product_text = smart_generate([Image.open(up_product[0]), "บรรยายรายละเอียด วัสดุ สี และรูปร่างสินค้าในภาพอย่างละเอียด"])
         
@@ -191,6 +192,7 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 path_pres = os.path.join("temp_refs", up_presenter.name)
                 with open(path_pres, "wb") as f: f.write(up_presenter.getbuffer())
                 st.session_state.ad_presenter_img.append(path_pres)
+                st.image(up_presenter, width=200) # แสดงรูปพรีวิวพรีเซนเตอร์
 
         st.session_state.ad_product_text = st.text_area("📝 ข้อมูลสินค้า:", value=st.session_state.ad_product_text, height=80)
 
@@ -212,7 +214,6 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 else:
                     with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
                         
-                        # สร้างตัวแปรบังคับตัวเลือกให้ AI เห็นเฉพาะข้อความที่เราอนุญาต
                         dur_options = '["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
                         if "6 วิ" in ai_dir_len: 
                             dur_options = '["Bumper Ads (6 วิ)"]'
@@ -250,9 +251,8 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"]
 
                         ⚠️ กฎพิเศษในการตั้งค่า (Hard Constraints):
-                        {len_constraint}
-                        {ratio_constraint}
-                        - หากไม่มีการบังคับข้างต้น ให้พิจารณาเลือกตามความเหมาะสมของสินค้า
+                        - เลือกตัวเลือกจากรายการที่กำหนดไว้เท่านั้น ห้ามคิดคำขึ้นมาเอง
+                        - พิจารณาความยาวคลิป (ad_dur) และ แพลตฟอร์ม (ad_plat) จากตัวเลือกที่มีให้จำกัดอย่างเคร่งครัด
 
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         ตัวอย่าง:
