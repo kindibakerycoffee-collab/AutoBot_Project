@@ -197,6 +197,13 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     tab_vid, tab_poster, tab_run = st.tabs(["🎬 1. สร้างสคริปต์วิดีโอ", "🖼️ 2. สร้างโปสเตอร์/หน้าปก", "🚀 3. รันระบบ (Handoff)"])
     
     with tab_vid:
+        st.markdown("##### 🎯 ล็อกเป้าหมายให้ AI (Pre-AI Controls)")
+        col_ai_dir1, col_ai_dir2 = st.columns(2)
+        with col_ai_dir1:
+            ai_dir_len = st.selectbox("⏱️ ล็อกความยาวคลิป:", ["🤖 ปล่อย AI คิดเอง (Free Style)", "⚡ บังคับสั้นกระแทกตา (Bumper 6 วิ)", "📱 บังคับคลิปกระแส (Shorts/Reels 15-30 วิ)", "🎬 บังคับคลิปเล่าเรื่อง (1 นาทีขึ้นไป)"], key="ai_dir_len")
+        with col_ai_dir2:
+            ai_dir_ratio = st.selectbox("📏 ล็อกสัดส่วนภาพ:", ["🤖 ปล่อย AI คิดเอง (Free Style)", "📱 แนวตั้ง (9:16) - เหมาะกับมือถือ", "📺 แนวนอน (16:9) - เหมาะกับ YouTube/TV", "⬛ จัตุรัส (1:1) - เหมาะกับ Facebook/IG Feed"], key="ai_dir_ratio")
+        
         col_ai, col_res = st.columns(2)
         with col_ai:
             if st.button("✨ ให้ AI ตั้งค่าอัตโนมัติ (Auto-Fill)", key="ad_vid_ai", use_container_width=True):
@@ -204,6 +211,23 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                     st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ เพื่อให้ AI นำไปวิเคราะห์")
                 else:
                     with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
+                        
+                        len_constraint = ""
+                        if "6 วิ" in ai_dir_len: 
+                            len_constraint = '- บังคับเลือก ad_dur เป็น "Bumper Ads (6 วิ)" เท่านั้น'
+                        elif "15-30" in ai_dir_len: 
+                            len_constraint = '- บังคับเลือก ad_dur เป็น "Shorts/Reels (15-30 วิ)" เท่านั้น'
+                        elif "1 นาที" in ai_dir_len: 
+                            len_constraint = '- บังคับเลือก ad_dur เป็น "มาตรฐาน (1 นาที)" หรือ "Long-form (เกิน 1 นาที)" เท่านั้น'
+                        
+                        ratio_constraint = ""
+                        if "9:16" in ai_dir_ratio: 
+                            ratio_constraint = '- บังคับเลือก ad_plat ที่เหมาะสมกับแนวตั้ง 9:16 เช่น "TikTok / Shopee Video" หรือ "IG Story (เน้นภาพสวย)" และเลือกมุมกล้องให้เหมาะกับพื้นที่แคบ'
+                        elif "16:9" in ai_dir_ratio: 
+                            ratio_constraint = '- บังคับเลือก ad_plat ที่เหมาะสมกับแนวนอน 16:9 เช่น "YouTube In-stream" และเลือกมุมกล้องแนวกว้าง'
+                        elif "1:1" in ai_dir_ratio: 
+                            ratio_constraint = '- บังคับเลือก ad_plat เป็น "Facebook Reels" หรือแพลตฟอร์มที่เหมาะกับ 1:1'
+
                         prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
                         แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
                         
@@ -224,8 +248,10 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         - ad_pacing: ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"]
                         - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"]
 
-                        ⚠️ กฎพิเศษในการตั้งค่า:
-                        - สำหรับหัวข้อ ad_dur (ความยาวคลิป): ให้พิจารณาเลือก "Shorts/Reels (15-30 วิ)" เป็นค่ามาตรฐานหลักเสมอ เพื่อให้ได้สคริปต์ที่มีหลายฉากต่อเนื่องกัน ยกเว้นแต่ว่าสินค้านั้นมีความเหมาะสมที่จะทำโฆษณาแบบสั้น 6 วินาทีจริงๆ
+                        ⚠️ กฎพิเศษในการตั้งค่า (Hard Constraints):
+                        {len_constraint}
+                        {ratio_constraint}
+                        - หากไม่มีการบังคับข้างต้น ให้พิจารณาเลือกตามความเหมาะสมของสินค้า
 
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         ตัวอย่าง:
