@@ -158,7 +158,7 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) [ปรับปรุงใหม่ล่าสุด]
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) [อัปเดต AI Auto-Fill & Reset]
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
@@ -200,10 +200,56 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         col_ai, col_res = st.columns(2)
         with col_ai:
             if st.button("✨ ให้ AI ตั้งค่าอัตโนมัติ (Auto-Fill)", key="ad_vid_ai", use_container_width=True):
-                st.info("ระบบจำลองการตั้งค่าออโต้...")
+                if not st.session_state.ad_product_text:
+                    st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ เพื่อให้ AI นำไปวิเคราะห์")
+                else:
+                    with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
+                        prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
+                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
+                        
+                        - ad_pres: ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"]
+                        - ad_tone: ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"]
+                        - ad_target: ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"]
+                        - ad_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"]
+                        - ad_dur: ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]
+                        - ad_style: ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"]
+                        - ad_story: ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"]
+                        - ad_cta: ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"]
+                        - ad_plat: ["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"]
+                        - ad_music: ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"]
+                        - ad_color: ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"]
+                        - ad_cam: ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"]
+                        - ad_light: ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น/พระอาทิตย์ตก)", "Cinematic Rim Light (แสงขอบ)", "แสงจัดจ้านสไตล์ป๊อป"]
+                        - ad_text: ["โปรโมชั่นพิเศษ/ราคา", "ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ป้ายราคาเด้งกระแทกตา", "ไม่มีข้อความ"]
+                        - ad_pacing: ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"]
+                        - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"]
+
+                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
+                        ตัวอย่าง:
+                        {{
+                            "ad_pres": "ผู้ใช้งานจริง (User)",
+                            "ad_tone": "เพื่อนป้ายยา"
+                        }}
+                        """
+                        try:
+                            res = smart_generate(prompt)
+                            json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
+                            ai_config = json.loads(json_str)
+                            for k, v in ai_config.items():
+                                st.session_state[k] = v
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ AI เกิดการขัดข้อง กรุณาลองใหม่อีกครั้ง ({e})")
+
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าวิดีโอ (Reset)", key="ad_vid_res", use_container_width=True):
+                # เคลียร์ Prompt และเคลียร์ค่าตัวแปรทั้งหมดให้กลับเป็น Default
                 st.session_state.ad_video_prompt = ""
+                vid_keys = ["ad_pres", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
+                for k in vid_keys:
+                    if k in st.session_state: del st.session_state[k]
+                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
+                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
                 st.rerun()
                 
         st.markdown("---")
@@ -245,10 +291,48 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         col_ai, col_res = st.columns(2)
         with col_ai:
             if st.button("✨ ให้ AI ตั้งค่าโปสเตอร์อัตโนมัติ", key="pos_ai", use_container_width=True):
-                st.info("ระบบจำลองการตั้งค่าออโต้สำหรับโปสเตอร์...")
+                if not st.session_state.ad_product_text:
+                    st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ")
+                else:
+                    with st.spinner("🧠 AI กำลังเลือกดีไซน์โปสเตอร์ที่เข้ากับสินค้า..."):
+                        prompt = f"""วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
+                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปกคลิป จากรายการด้านล่าง:
+                        
+                        - pos_style: ["โปสเตอร์แบบมินิมอล", "โบรชัวร์ลดราคา", "หน้าปกคลิปดึงดูดสายตา", "Hyper-Realistic (สมจริงขั้นสุด)", "3D Render (สไตล์โฆษณาสินค้า IT)", "ภาพวาดสีน้ำ", "Pop Art"]
+                        - pos_color: ["สว่างสดใสคลีนๆ", "โทนเข้มดุดันพรีเมียม", "พาสเทลน่ารัก", "Monochromatic (สีคุมโทน)", "Complementary (สีคู่ตรงข้ามดึงดูดตา)", "หรูหรา (ดำ-ทอง)"]
+                        - pos_cam: ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down)", "ซูมใกล้ (Macro)", "Flat Lay (ถ่ายเจาะจากมุมบน)", "Perspective (มีจุดนำสายตา)", "Close-up เจาะดีเทลวัสดุ"]
+                        - pos_light: ["แสงธรรมชาติส่องผ่านหน้าต่าง", "แสงสตูดิโอสว่างเคลียร์", "แสงนีออนตัดกัน", "แสง Softbox ละมุน", "แสง Hard Light ทอดเงาชัดเจน", "แสงนีออนสะท้อน"]
+                        - pos_bg: ["ฉากสตูดิโอสีพื้นฐาน", "วางบนแท่นโชว์สินค้า (Podium)", "พื้นหลังธรรมชาติ (ป่า/ทะเล)", "เมืองไซเบอร์พังก์", "ฉากห้องนั่งเล่นอบอุ่น"]
+                        - pos_comp: ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"]
+                        - pos_tex: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "มีควันหรือหมอกบางๆ (Fog/Mist)", "มีหยดน้ำเกาะ (Water Drops)"]
+                        - pos_text: ["พิมพ์กำหนดเอง...", "โปรโมชั่นพิเศษ", "ป้าย Flash Sale", "Typography อาร์ตๆ", "ข้อความรีวิวจากลูกค้า", "ไม่มีข้อความ"]
+
+                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
+                        ตัวอย่าง:
+                        {{
+                            "pos_style": "3D Render (สไตล์โฆษณาสินค้า IT)",
+                            "pos_color": "หรูหรา (ดำ-ทอง)"
+                        }}
+                        """
+                        try:
+                            res = smart_generate(prompt)
+                            json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
+                            ai_config = json.loads(json_str)
+                            for k, v in ai_config.items():
+                                st.session_state[k] = v
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ AI เกิดการขัดข้อง กรุณาลองใหม่อีกครั้ง ({e})")
+
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าโปสเตอร์", key="pos_res", use_container_width=True):
+                # เคลียร์ Prompt โปสเตอร์ และคืนค่าตัวแปรเป็น Default
                 st.session_state.ad_poster_prompt = ""
+                pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_text"]
+                for k in pos_keys:
+                    if k in st.session_state: del st.session_state[k]
+                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
+                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
                 st.rerun()
 
         st.markdown("---")
