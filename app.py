@@ -6,7 +6,7 @@ import json
 import subprocess
 import os
 import re
-import uuid # 🟢 เพิ่มเพื่อใช้สร้างชื่อไฟล์แบบไม่ซ้ำกัน
+import uuid 
 
 # ==========================================
 # 🚨 1. ตั้งค่าหน้าเว็บหลัก & UI/UX (Black & Gold Theme)
@@ -62,11 +62,12 @@ def smart_generate(prompt_contents):
             continue
     raise Exception(f"API Key ติดลิมิตหมดแล้วครับ! กรุณารอ 1 นาที")
 
-def render_custom_select(label, options, key):
+# เพิ่มพารามิเตอร์ help_text เพื่อใช้ไฮไลท์คำแนะนำ
+def render_custom_select(label, options, key, help_text=None):
     opt_list = options + ["พิมพ์กำหนดเอง..."]
     current_val = st.session_state.get(key, options[0])
     idx = options.index(current_val) if current_val in options else len(opt_list) - 1
-    selected = st.selectbox(label, opt_list, index=idx, key=f"select_{key}")
+    selected = st.selectbox(label, opt_list, index=idx, key=f"select_{key}", help=help_text)
     if selected == "พิมพ์กำหนดเอง...":
         default_text = current_val if current_val not in options else ""
         custom_val = st.text_input(f"✍️ ระบุแบบกำหนดเอง:", value=default_text, key=f"custom_{key}")
@@ -75,7 +76,7 @@ def render_custom_select(label, options, key):
         st.session_state[key] = selected
 
 # ==========================================
-# ⚙️ 3. ระบบ Handoff & รันบอท (แก้ไขแล้ว)
+# ⚙️ 3. ระบบ Handoff & รันบอท
 # ==========================================
 @st.dialog("⚙️ ตั้งค่าและรันบอท (Handoff)")
 def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=False):
@@ -94,7 +95,6 @@ def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=F
     ref_img_path = ref_img_list[0] if ref_img_list else ""
 
     if st.button("🚀 ยืนยันรันบอท" if not is_poster_only else "🖼️ รันบอทสร้างโปสเตอร์", type="primary", use_container_width=True):
-        # 🟢 จุดแก้ไข 2: สร้างชื่อไฟล์แบบ Unique 
         session_id = uuid.uuid4().hex[:6]
         task_filename = f"bot_task_{session_id}.json"
         
@@ -113,7 +113,6 @@ def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=F
         
         st.success(f"> 📡 ส่งคำสั่งเรียบร้อย (ID: {session_id}) บอทกำลังทำงานเบื้องหลัง หน้าเว็บใช้งานต่อได้ทันที...")
         
-        # 🟢 จุดแก้ไข 1: เอา .wait() ออก ส่งชื่อไฟล์ให้ test_bot.py ทำงานเบื้องหลัง
         subprocess.Popen(["python", "-u", "test_bot.py", task_filename], env=dict(os.environ, PYTHONIOENCODING="utf-8"))
         time.sleep(1)
         st.rerun()
@@ -159,7 +158,7 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director)
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) [ปรับปรุงใหม่ล่าสุด]
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
@@ -167,17 +166,32 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     if 'ad_video_prompt' not in st.session_state: st.session_state.ad_video_prompt = ""
     if 'ad_poster_prompt' not in st.session_state: st.session_state.ad_poster_prompt = ""
     if 'ad_imgs' not in st.session_state: st.session_state.ad_imgs = []
+    if 'ad_presenter_img' not in st.session_state: st.session_state.ad_presenter_img = []
 
-    with st.expander("📸 0. อัปโหลดรูปภาพสินค้า (ล็อกความเป๊ะ 100%)", expanded=True):
-        up_files = st.file_uploader("อัปโหลดรูปสินค้า", type=['png', 'jpg'], accept_multiple_files=True, key="ad_up")
-        if up_files:
-            st.session_state.ad_imgs = []
-            os.makedirs("temp_refs", exist_ok=True)
-            path = os.path.join("temp_refs", up_files[0].name)
-            with open(path, "wb") as f: f.write(up_files[0].getbuffer())
-            st.session_state.ad_imgs.append(path)
-            if st.button("🔍 สกัดข้อมูล Ingredients", type="secondary"):
-                st.session_state.ad_product_text = smart_generate([Image.open(up_files[0]), "บรรยายรายละเอียด วัสดุ สี และรูปร่างสินค้าในภาพอย่างละเอียด"])
+    with st.expander("📸 0. อัปโหลดรูปภาพ (สินค้า & พรีเซนเตอร์)", expanded=True):
+        col_up1, col_up2 = st.columns(2)
+        with col_up1:
+            st.markdown("**📦 1. รูปสินค้า/ฉลาก (จำเป็น)**")
+            up_product = st.file_uploader("ใช้อ่านส่วนผสมและดีเทล", type=['png', 'jpg'], accept_multiple_files=True, key="ad_up_prod")
+            if up_product:
+                st.session_state.ad_imgs = []
+                os.makedirs("temp_refs", exist_ok=True)
+                path = os.path.join("temp_refs", up_product[0].name)
+                with open(path, "wb") as f: f.write(up_product[0].getbuffer())
+                st.session_state.ad_imgs.append(path)
+                if st.button("🔍 สกัดข้อมูล Ingredients", type="secondary"):
+                    st.session_state.ad_product_text = smart_generate([Image.open(up_product[0]), "บรรยายรายละเอียด วัสดุ สี และรูปร่างสินค้าในภาพอย่างละเอียด"])
+        
+        with col_up2:
+            st.markdown("**👤 2. รูปพรีเซนเตอร์ (ทางเลือก)**")
+            up_presenter = st.file_uploader("ใช้เป็น Reference หน้าตา", type=['png', 'jpg'], accept_multiple_files=False, key="ad_up_pres")
+            if up_presenter:
+                st.session_state.ad_presenter_img = []
+                os.makedirs("temp_refs", exist_ok=True)
+                path_pres = os.path.join("temp_refs", up_presenter.name)
+                with open(path_pres, "wb") as f: f.write(up_presenter.getbuffer())
+                st.session_state.ad_presenter_img.append(path_pres)
+
         st.session_state.ad_product_text = st.text_area("📝 ข้อมูลสินค้า:", value=st.session_state.ad_product_text, height=80)
 
     tab_vid, tab_poster, tab_run = st.tabs(["🎬 1. สร้างสคริปต์วิดีโอ", "🖼️ 2. สร้างโปสเตอร์/หน้าปก", "🚀 3. รันระบบ (Handoff)"])
@@ -195,25 +209,34 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         st.markdown("---")
         c1, c2, c3 = st.columns(3)
         with c1:
-            render_custom_select("1. 👤 พรีเซนเตอร์:", ["ไม่มีพรีเซนเตอร์", "หญิงสาว", "ชายหนุ่ม"], "ad_pres")
-            render_custom_select("2. 🗣️ น้ำเสียง:", ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม"], "ad_tone")
-            render_custom_select("3. 🎯 กลุ่มเป้าหมาย:", ["วัยรุ่น", "คนทำงาน"], "ad_target")
-            render_custom_select("4. 🌐 ภาษา:", ["ภาษาไทยกลาง", "ภาษาอังกฤษ"], "ad_lang")
-            render_custom_select("5. ⏳ ความยาวคลิป:", ["สั้นกระชับ", "มาตรฐาน"], "ad_dur")
+            render_custom_select("1. 👤 พรีเซนเตอร์:", ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"], "ad_pres", "ผู้เชี่ยวชาญ=อาหารเสริม/สกินแคร์, ผู้ใช้งานจริง=ของใช้ทั่วไป")
+            render_custom_select("2. 🗣️ น้ำเสียง:", ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"], "ad_tone", "ASMR=สินค้าของกิน/สกินแคร์, ตลก=เพิ่มการแชร์")
+            render_custom_select("3. 🎯 กลุ่มเป้าหมาย:", ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"], "ad_target", "ช่วยให้ AI เลือกใช้ศัพท์ให้ตรงกับวัยของลูกค้า")
+            render_custom_select("4. 🌐 ภาษาและสำเนียง:", [
+                "ภาษาไทยกลาง", 
+                "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)",
+                "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)",
+                "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)",
+                "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)",
+                "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"
+            ], "ad_lang", "เลือกภาษาให้ตรงกับถิ่นฐานกลุ่มเป้าหมายเพื่อความเนียน")
+            render_custom_select("5. ⏳ ความยาวคลิป:", ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"], "ad_dur", "Shorts/Reels=ดันยอดวิวการเข้าถึง, Long-form=เน้นข้อมูลแน่น")
+            render_custom_select("6. 🎥 สไตล์โฆษณา:", ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"], "ad_style", "UGC=เน้นความจริงใจ/รีวิว, Cinematic=สร้างแบรนด์หรู")
         with c2:
-            render_custom_select("6. 🎥 สไตล์โฆษณา:", ["UGC", "Cinematic"], "ad_style")
-            render_custom_select("7. 📖 การเล่าเรื่อง:", ["PAS (ปัญหา-ทางแก้)", "Before/After"], "ad_story")
-            render_custom_select("8. 👉 ปิดการขาย:", ["กดตะกร้า", "ทักแชท"], "ad_cta")
-            render_custom_select("9. 📱 แพลตฟอร์ม:", ["TikTok / Shopee", "Facebook Reels"], "ad_plat")
-            render_custom_select("10. 🎵 ดนตรี:", ["Pop", "Epic"], "ad_music")
+            render_custom_select("7. 📖 การเล่าเรื่อง:", ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"], "ad_story", "PAS และ Pain Point เหมาะกับสินค้าแก้ปัญหา (สิว/ปวดเมื่อย)")
+            render_custom_select("8. 👉 ปิดการขาย (CTA):", ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"], "ad_cta", "FOMO=กระตุ้นการตัดสินใจทันที")
+            render_custom_select("9. 📱 แพลตฟอร์ม:", ["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"], "ad_plat", "กำหนดสัดส่วนภาพและพฤติกรรมคนดูบนแพลตฟอร์ม")
+            render_custom_select("10. 🎵 ดนตรี:", ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"], "ad_music", "Lofi=คลิป ASMR/สโลว์ไลฟ์, EDM=โปรโมชั่น/ของเซลล์")
+            render_custom_select("11. 🎨 โทนสี:", ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"], "ad_color", "พาสเทล=บิวตี้, นีออน/ดาร์ก=แก็ดเจ็ต/เกมมิ่ง")
         with c3:
-            render_custom_select("11. 🎨 โทนสี:", ["สดใสสว่าง", "โทนดาร์กเท่ๆ"], "ad_color")
-            render_custom_select("12. 🎥 มุมกล้อง:", ["ระดับสายตา", "ซูมใกล้"], "ad_cam")
-            render_custom_select("13. 💡 แสงและบรรยากาศ:", ["แสงธรรมชาติ", "แสงสตูดิโอ"], "ad_light")
-            render_custom_select("14. ✍️ ข้อความบนจอ:", ["โปรโมชั่นพิเศษ", "ไม่มีข้อความ"], "ad_text")
+            render_custom_select("12. 🎥 มุมกล้อง:", ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"], "ad_cam", "POV=ทำให้คนดูรู้สึกเหมือนใช้งานเอง, มุมเอียง=ฉากแอคชั่น/ตื่นเต้น")
+            render_custom_select("13. 💡 แสงและบรรยากาศ:", ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น/พระอาทิตย์ตก)", "Cinematic Rim Light (แสงขอบ)", "แสงจัดจ้านสไตล์ป๊อป"], "ad_light", "Golden hour=ฟีลลิ่งอบอุ่น/สกินแคร์")
+            render_custom_select("14. ✍️ ข้อความบนจอ:", ["โปรโมชั่นพิเศษ/ราคา", "ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ป้ายราคาเด้งกระแทกตา", "ไม่มีข้อความ"], "ad_text", "TikTok/Reels ขาดไม่ได้คือซับไตเติ้ลเพื่อหยุดนิ้วคนดู")
+            render_custom_select("15. 🎞️ จังหวะการตัดต่อ:", ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"], "ad_pacing", "Jump cut=วัยรุ่น/สั้นกระชับ, สโลว์โมชั่น=โชว์ดีเทล/สินค้าหรู")
+            render_custom_select("16. ✨ เอฟเฟกต์ (VFX):", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"], "ad_vfx", "VHS=วินเทจ/Y2K, Glitch=สินค้าเทคโนโลยี/แฟชั่น")
 
-        if st.button("🚀 เริ่มเขียนสคริปต์วิดีโอ", type="primary", use_container_width=True):
-            prompt = f"เขียนสคริปต์โฆษณา: {st.session_state.ad_product_text} พรีเซนเตอร์:{st.session_state.get('ad_pres')} เสียง:{st.session_state.get('ad_tone')} เป้าหมาย:{st.session_state.get('ad_target')} ภาษา:{st.session_state.get('ad_lang')} ความยาว:{st.session_state.get('ad_dur')} สไตล์:{st.session_state.get('ad_style')} เล่าเรื่อง:{st.session_state.get('ad_story')} CTA:{st.session_state.get('ad_cta')} แพลตฟอร์ม:{st.session_state.get('ad_plat')} เพลง:{st.session_state.get('ad_music')} โทนสี:{st.session_state.get('ad_color')} มุมกล้อง:{st.session_state.get('ad_cam')} แสง:{st.session_state.get('ad_light')} ข้อความ:{st.session_state.get('ad_text')}. แบ่งเป็นฉากๆ แยก Prompt ภาพนิ่งและวิดีโอ"
+        if st.button("🚀 เริ่มเขียนสคริปต์วิดีโอ & แคปชั่นป้ายยา", type="primary", use_container_width=True):
+            prompt = f"ทำหน้าที่เป็นครีเอทีฟโฆษณา สร้างสคริปต์วิดีโอและแคปชั่น สินค้า: {st.session_state.ad_product_text} พรีเซนเตอร์:{st.session_state.get('ad_pres')} เสียง:{st.session_state.get('ad_tone')} เป้าหมาย:{st.session_state.get('ad_target')} ภาษา:{st.session_state.get('ad_lang')} ความยาว:{st.session_state.get('ad_dur')} สไตล์:{st.session_state.get('ad_style')} เล่าเรื่อง:{st.session_state.get('ad_story')} CTA:{st.session_state.get('ad_cta')} แพลตฟอร์ม:{st.session_state.get('ad_plat')} เพลง:{st.session_state.get('ad_music')} โทนสี:{st.session_state.get('ad_color')} มุมกล้อง:{st.session_state.get('ad_cam')} แสง:{st.session_state.get('ad_light')} ข้อความ:{st.session_state.get('ad_text')} ตัดต่อ:{st.session_state.get('ad_pacing')} VFX:{st.session_state.get('ad_vfx')}\n\nคำสั่ง:\n1. เขียนสคริปต์แบ่งเป็นฉากๆ แยก Prompt ภาพนิ่งและวิดีโอ พร้อมเสียงพากย์และข้อความขึ้นจอ\n2. ในตอนท้ายของผลลัพธ์ ให้เขียน 'แคปชั่นป้ายยา 3 แพลตฟอร์ม' ดังนี้:\n - TikTok: เน้นฮุกกระแส + แฮชแท็กมาแรง\n - Facebook (Shopee Affiliate): เน้นสตอรี่เทลลิ่งโน้มน้าวให้กดลิงก์\n - Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *สำคัญมาก: Shopee ต้องมีความยาวรวมกันไม่เกิน 150 ตัวอักษร (นับรวมแฮชแท็กแล้ว)* ห้ามเกินเด็ดขาด"
             st.session_state.ad_video_prompt = smart_generate(prompt)
 
         if st.session_state.ad_video_prompt: st.code(st.session_state.ad_video_prompt, language="markdown")
@@ -231,24 +254,30 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         st.markdown("---")
         c1, c2 = st.columns(2)
         with c1:
-            render_custom_select("1. 🎨 สไตล์และแนวทาง (Style & Concept):", ["โปสเตอร์แบบมินิมอล", "โบรชัวร์ลดราคา", "หน้าปกคลิปดึงดูดสายตา"], "pos_style")
-            render_custom_select("2. 🌈 โทนสีและอารมณ์ (Color & Mood):", ["สว่างสดใสคลีนๆ", "โทนเข้มดุดันพรีเมียม", "พาสเทลน่ารัก"], "pos_color")
-            render_custom_select("3. 📸 มุมกล้องและการจัดวาง (Camera Angle):", ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down)", "ซูมใกล้ (Macro)"], "pos_cam")
+            render_custom_select("1. 🎨 สไตล์และแนวทาง:", ["โปสเตอร์แบบมินิมอล", "โบรชัวร์ลดราคา", "หน้าปกคลิปดึงดูดสายตา", "Hyper-Realistic (สมจริงขั้นสุด)", "3D Render (สไตล์โฆษณาสินค้า IT)", "ภาพวาดสีน้ำ", "Pop Art"], "pos_style", "3D Render เหมาะกับแกดเจ็ต/เครื่องใช้ไฟฟ้า, สีน้ำเหมาะกับสินค้าออร์แกนิก")
+            render_custom_select("2. 🌈 โทนสีและอารมณ์:", ["สว่างสดใสคลีนๆ", "โทนเข้มดุดันพรีเมียม", "พาสเทลน่ารัก", "Monochromatic (สีคุมโทน)", "Complementary (สีคู่ตรงข้ามดึงดูดตา)", "หรูหรา (ดำ-ทอง)"], "pos_color", "สีคู่ตรงข้ามช่วยให้โปสเตอร์เตะตาเมื่อไถฟีดผ่านรวดเร็ว")
+            render_custom_select("3. 📸 มุมกล้องและการจัดวาง:", ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down)", "ซูมใกล้ (Macro)", "Flat Lay (ถ่ายเจาะจากมุมบน)", "Perspective (มีจุดนำสายตา)", "Close-up เจาะดีเทลวัสดุ"], "pos_cam", "Flat Lay นิยมใช้จัดวางเครื่องสำอางหรืออุปกรณ์หลายชิ้นรวมกัน")
+            render_custom_select("4. 💡 แสงเงา (Lighting):", ["แสงธรรมชาติส่องผ่านหน้าต่าง", "แสงสตูดิโอสว่างเคลียร์", "แสงนีออนตัดกัน", "แสง Softbox ละมุน", "แสง Hard Light ทอดเงาชัดเจน", "แสงนีออนสะท้อน"], "pos_light", "Hard Light ให้ความรู้สึกแฟชั่นจ๋า/ล้ำสมัย")
         with c2:
-            render_custom_select("4. 💡 แสงเงา (Lighting):", ["แสงธรรมชาติส่องผ่านหน้าต่าง", "แสงสตูดิโอสว่างเคลียร์", "แสงนีออนตัดกัน"], "pos_light")
-            render_custom_select("5. 📝 ข้อความบนโปสเตอร์ (Text Overlay):", ["พิมพ์กำหนดเอง...", "โปรโมชั่นพิเศษ", "ไม่มีข้อความ"], "pos_text")
+            render_custom_select("5. 🏞️ พื้นหลัง/สภาพแวดล้อม:", ["ฉากสตูดิโอสีพื้นฐาน", "วางบนแท่นโชว์สินค้า (Podium)", "พื้นหลังธรรมชาติ (ป่า/ทะเล)", "เมืองไซเบอร์พังก์", "ฉากห้องนั่งเล่นอบอุ่น"], "pos_bg", "Podium จะทำให้สินค้าดูโดดเด่น หรูหราแพงขึ้นทันที")
+            render_custom_select("6. 📐 การจัดองค์ประกอบภาพ:", ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"], "pos_comp", "Magazine Layout จะเว้นพื้นที่ให้เราเอาภาพไปใส่ Text โฆษณาต่อได้ง่ายมาก")
+            render_custom_select("7. 🌟 พื้นผิวและบรรยากาศ:", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "มีควันหรือหมอกบางๆ (Fog/Mist)", "มีหยดน้ำเกาะ (Water Drops)"], "pos_tex", "มีหยดน้ำเกาะ=โฆษณาเครื่องดื่ม, ฟิล์มเกรน=แฟชั่น/ของวินเทจ")
+            render_custom_select("8. 📝 ข้อความบนโปสเตอร์:", ["พิมพ์กำหนดเอง...", "โปรโมชั่นพิเศษ", "ป้าย Flash Sale", "Typography อาร์ตๆ", "ข้อความรีวิวจากลูกค้า", "ไม่มีข้อความ"], "pos_text", "เพิ่มคำโปรยหรือส่วนลดเพื่อกระตุ้นยอดขาย")
         
         if st.button("🚀 เริ่มสร้าง Prompt โปสเตอร์", type="primary", use_container_width=True):
-            prompt = f"เขียน 'Prompt สร้างภาพนิ่ง:' เพื่อออกแบบโปสเตอร์ สินค้าคือ: {st.session_state.ad_product_text} สไตล์: {st.session_state.get('pos_style')} โทนสี: {st.session_state.get('pos_color')} มุมกล้อง: {st.session_state.get('pos_cam')} แสงเงา: {st.session_state.get('pos_light')} ข้อความฮุก: {st.session_state.get('pos_text')}"
+            prompt = f"เขียน 'Prompt สร้างภาพนิ่ง:' เพื่อออกแบบโปสเตอร์ สินค้าคือ: {st.session_state.ad_product_text} สไตล์: {st.session_state.get('pos_style')} โทนสี: {st.session_state.get('pos_color')} มุมกล้อง: {st.session_state.get('pos_cam')} แสงเงา: {st.session_state.get('pos_light')} พื้นหลัง: {st.session_state.get('pos_bg')} องค์ประกอบ: {st.session_state.get('pos_comp')} พื้นผิว: {st.session_state.get('pos_tex')} ข้อความฮุก: {st.session_state.get('pos_text')}"
             st.session_state.ad_poster_prompt = smart_generate(prompt)
 
         if st.session_state.ad_poster_prompt: st.code(st.session_state.ad_poster_prompt, language="markdown")
 
     with tab_run:
+        # ใช้รูปพรีเซนเตอร์เป็นหลักหากมีการอัปโหลด ถ้าไม่มีให้ใช้รูปสินค้า
+        active_refs = st.session_state.get('ad_presenter_img', []) if st.session_state.get('ad_presenter_img') else st.session_state.ad_imgs
+        
         if st.session_state.ad_poster_prompt:
             st.markdown("#### 🖼️ รันโปสเตอร์ / หน้าปกคลิป")
             if st.button("⚙️ รันบอทสร้างโปสเตอร์", key="run_poster_ad"):
-                run_bot_dialog(0, st.session_state.ad_poster_prompt, st.session_state.ad_imgs, True, is_poster_only=True)
+                run_bot_dialog(0, st.session_state.ad_poster_prompt, active_refs, True, is_poster_only=True)
             st.divider()
         if st.session_state.ad_video_prompt:
             st.markdown("#### 🎬 รันวิดีโอโฆษณา")
@@ -256,7 +285,7 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
             for i, s_text in enumerate(scenes):
                 with st.expander(f"🎬 ฉากที่ {i+1}", expanded=False):
                     if st.button(f"⚙️ รันบอทสร้างวิดีโอฉาก {i+1}", key=f"run_vid_ad_{i}"):
-                        run_bot_dialog(i+1, s_text, st.session_state.ad_imgs, i==0)
+                        run_bot_dialog(i+1, s_text, active_refs, i==0)
 
 # =========================================================================================
 # 💼 โหมด 2: 🍰 รีวิวร้านตัวเอง (UGC Vlogger)
