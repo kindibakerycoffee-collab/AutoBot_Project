@@ -212,21 +212,22 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 else:
                     with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
                         
-                        len_constraint = ""
+                        # สร้างตัวแปรบังคับตัวเลือกให้ AI เห็นเฉพาะข้อความที่เราอนุญาต
+                        dur_options = '["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
                         if "6 วิ" in ai_dir_len: 
-                            len_constraint = '- บังคับเลือก ad_dur เป็น "Bumper Ads (6 วิ)" เท่านั้น'
+                            dur_options = '["Bumper Ads (6 วิ)"]'
                         elif "15-30" in ai_dir_len: 
-                            len_constraint = '- บังคับเลือก ad_dur เป็น "Shorts/Reels (15-30 วิ)" เท่านั้น'
+                            dur_options = '["Shorts/Reels (15-30 วิ)"]'
                         elif "1 นาที" in ai_dir_len: 
-                            len_constraint = '- บังคับเลือก ad_dur เป็น "มาตรฐาน (1 นาที)" หรือ "Long-form (เกิน 1 นาที)" เท่านั้น'
+                            dur_options = '["มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
                         
-                        ratio_constraint = ""
+                        plat_options = '["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"]'
                         if "9:16" in ai_dir_ratio: 
-                            ratio_constraint = '- บังคับเลือก ad_plat ที่เหมาะสมกับแนวตั้ง 9:16 เช่น "TikTok / Shopee Video" หรือ "IG Story (เน้นภาพสวย)" และเลือกมุมกล้องให้เหมาะกับพื้นที่แคบ'
+                            plat_options = '["TikTok / Shopee Video", "IG Story (เน้นภาพสวย)"]'
                         elif "16:9" in ai_dir_ratio: 
-                            ratio_constraint = '- บังคับเลือก ad_plat ที่เหมาะสมกับแนวนอน 16:9 เช่น "YouTube In-stream" และเลือกมุมกล้องแนวกว้าง'
+                            plat_options = '["YouTube In-stream"]'
                         elif "1:1" in ai_dir_ratio: 
-                            ratio_constraint = '- บังคับเลือก ad_plat เป็น "Facebook Reels" หรือแพลตฟอร์มที่เหมาะกับ 1:1'
+                            plat_options = '["Facebook Reels"]'
 
                         prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
                         แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
@@ -235,11 +236,11 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         - ad_tone: ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"]
                         - ad_target: ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"]
                         - ad_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"]
-                        - ad_dur: ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]
+                        - ad_dur: {dur_options}
                         - ad_style: ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"]
                         - ad_story: ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"]
                         - ad_cta: ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"]
-                        - ad_plat: ["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"]
+                        - ad_plat: {plat_options}
                         - ad_music: ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"]
                         - ad_color: ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"]
                         - ad_cam: ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"]
@@ -248,17 +249,11 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         - ad_pacing: ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"]
                         - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"]
 
-                        ⚠️ กฎพิเศษในการตั้งค่า (Hard Constraints):
-                        {len_constraint}
-                        {ratio_constraint}
-                        - หากไม่มีการบังคับข้างต้น ให้พิจารณาเลือกตามความเหมาะสมของสินค้า
-
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         ตัวอย่าง:
                         {{
                             "ad_pres": "ผู้ใช้งานจริง (User)",
-                            "ad_tone": "เพื่อนป้ายยา",
-                            "ad_dur": "Shorts/Reels (15-30 วิ)"
+                            "ad_tone": "เพื่อนป้ายยา"
                         }}
                         """
                         try:
