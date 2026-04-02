@@ -1,4 +1,5 @@
 import os
+import sys # 🟢 เพิ่มเพื่อรับ Argument จาก app.py
 import json
 import time
 import socket
@@ -14,9 +15,10 @@ def is_chrome_ready():
 
 print("🤖 กำลังปลุก AutoBot หลังบ้าน (เวอร์ชันเจาะเกราะ JS Click 100%)...")
 
-task_file = "bot_task.json"
+# 🟢 จุดแก้ไข 1: รับชื่อไฟล์ที่ส่งมาจาก app.py
+task_file = sys.argv[1] if len(sys.argv) > 1 else "bot_task.json"
 if not os.path.exists(task_file):
-    print("📭 ไม่พบคำสั่งใหม่ในระบบ!")
+    print(f"📭 ไม่พบคำสั่งใหม่ในระบบ! ({task_file})")
     exit(1)
 
 with open(task_file, "r", encoding="utf-8") as f:
@@ -64,6 +66,18 @@ def force_click(driver, xpath_list, wait_time=1.0):
         except:
             continue
     return False
+
+# 🟢 จุดแก้ไข 2: ฟังก์ชันสำหรับยัด Prompt ลงไปแบบติดจรวด ไม่ต้องรอพิมพ์ทีละตัวอักษร
+def fast_typing(driver, input_element, text):
+    driver.execute_script("""
+        var el = arguments[0];
+        el.innerText = arguments[1];
+        // กระตุ้นให้ React/Angular ของ Google รู้ว่ามีการพิมพ์ข้อความแล้ว
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    """, input_element, text)
+    time.sleep(0.3)
+    # เคาะ Spacebar 1 ทีปิดท้าย เพื่อให้ปุ่มส่งข้อความ (Send) สว่างขึ้น
+    input_element.send_keys(" ")
 
 def switch_model_mode(target_mode):
     print(f"   🔄 กำลังบังคับเปิดหน้าต่างสลับโหมดเป็น: {target_mode}...")
@@ -135,12 +149,12 @@ def smart_wait_for_generation(driver, media_type="image", timeout=300):
     return False
 
 try:
-    if job_type == "scene_pipeline":
+    if job_type == "scene_pipeline" or job_type == "image_only":
         
         # ==========================================
-        # 🎬 กรณีฉากที่ 1 (Image Gen -> Frame to Video)
+        # 🎬 กรณีฉากที่ 1 (Image Gen -> Frame to Video) หรือ โปสเตอร์
         # ==========================================
-        if job_is_first:
+        if job_is_first or job_type == "image_only":
             print("=========================================")
             print("🚀 สเต็ป 1: Image Gen (Nano Banana 2)")
             print("=========================================")
@@ -157,18 +171,23 @@ try:
                 try:
                     file_input = wait.until(EC.presence_of_element_located((By.XPATH, "//input[@type='file']")))
                     file_input.send_keys(job_ref_image)
-                    time.sleep(6) # รอรูปโหลดเข้า Flow
+                    
+                    # 🟢 จุดแก้ไข 3: ใช้ Wait ตรวจจับ UI รูปภาพโหลดเสร็จ แทน sleep(6)
+                    wait.until(EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'thumbnail') or @aria-label='Remove image' or @role='img' or contains(@class, 'preview')]")))
+                    print("   ✅ รูปภาพโหลดเข้า Flow เรียบร้อย!")
+                    time.sleep(1) # เผื่อจังหวะ UI กระตุก
                 except Exception as e:
-                    print(f"   ❌ หาช่องอัปโหลดไม่เจอ! ({e})")
+                    print(f"   ❌ หาช่องอัปโหลดไม่เจอ หรือโหลดช้าเกินไป! ({e})")
                 
                 # แนบรูปที่เพิ่งอัปโหลดลงในช่อง Prompt (ลำดับที่ 1)
                 click_plus_and_select_item(1)
             
-            print("   ✍️ พิมพ์ Image Prompt...")
+            print("   ✍️ พิมพ์ Image Prompt แบบติดจรวด...")
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
-            driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_image_prompt_safe)
+            
+            # 🟢 จุดแก้ไข 4: ใช้ fast_typing แทน send_keys
+            fast_typing(driver, input_box, job_image_prompt_safe)
             
             send_btn_xpath = ["//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']]"]
             force_click(driver, send_btn_xpath)
@@ -176,6 +195,12 @@ try:
             if not smart_wait_for_generation(driver, "image", 180):
                 print("\n🛑 ยกเลิกสเต็ป 2 เนื่องจากรูปภาพล้มเหลว")
                 exit(1)
+            
+            # หากเป็นแค่ภาพนิ่ง/โปสเตอร์ ให้จบการทำงานตรงนี้
+            if job_type == "image_only":
+                print(f"\n🎉 รันโปสเตอร์เสร็จสมบูรณ์!")
+                if os.path.exists(task_file): os.remove(task_file)
+                exit(0)
             
             print("\n=========================================")
             print("🚀 สเต็ป 2: Frame to Video (Veo 3.1)")
@@ -188,10 +213,11 @@ try:
             # แนบภาพนิ่งที่เพิ่งเจนเสร็จ (ลำดับ 1) เพื่อใช้ตั้งต้นทำวิดีโอ
             click_plus_and_select_item(1) 
 
-            print("   ✍️ พิมพ์ Video Prompt...")
+            print("   ✍️ พิมพ์ Video Prompt แบบติดจรวด...")
             input_box = wait.until(EC.presence_of_element_located((By.XPATH, prompt_input_xpath)))
-            driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_video_prompt_safe) 
+            
+            # 🟢 จุดแก้ไข 4: ใช้ fast_typing แทน
+            fast_typing(driver, input_box, job_video_prompt_safe)
             
             force_click(driver, send_btn_xpath)
             
@@ -218,13 +244,14 @@ try:
                 
             force_click(driver, [f"//div[@role='option' or contains(text(), '{job_credit}')]"], wait_time=1)
 
-            print(f"   ✍️ พิมพ์ Video Prompt สำหรับต่อฉาก {job_scene_num}...")
+            print(f"   ✍️ พิมพ์ Video Prompt สำหรับต่อฉาก {job_scene_num} แบบติดจรวด...")
             prompt_input_xpath = "//div[@contenteditable='true']"
             input_boxes = driver.find_elements(By.XPATH, prompt_input_xpath)
             input_box = input_boxes[-1] 
             driver.execute_script("arguments[0].click();", input_box)
-            driver.execute_script("arguments[0].innerText = '';", input_box) 
-            input_box.send_keys(job_video_prompt_safe) 
+            
+            # 🟢 จุดแก้ไข 4: ใช้ fast_typing แทน
+            fast_typing(driver, input_box, job_video_prompt_safe)
             
             send_btn_xpath = ["(//button[@aria-label='ส่งข้อความ' or @aria-label='Send message' or descendant::*[@name='arrow-forward']])[last()]"]
             force_click(driver, send_btn_xpath)

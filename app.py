@@ -6,6 +6,7 @@ import json
 import subprocess
 import os
 import re
+import uuid # 🟢 เพิ่มเพื่อใช้สร้างชื่อไฟล์แบบไม่ซ้ำกัน
 
 # ==========================================
 # 🚨 1. ตั้งค่าหน้าเว็บหลัก & UI/UX (Black & Gold Theme)
@@ -74,7 +75,7 @@ def render_custom_select(label, options, key):
         st.session_state[key] = selected
 
 # ==========================================
-# ⚙️ 3. ระบบ Handoff & รันบอท
+# ⚙️ 3. ระบบ Handoff & รันบอท (แก้ไขแล้ว)
 # ==========================================
 @st.dialog("⚙️ ตั้งค่าและรันบอท (Handoff)")
 def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=False):
@@ -93,10 +94,27 @@ def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=F
     ref_img_path = ref_img_list[0] if ref_img_list else ""
 
     if st.button("🚀 ยืนยันรันบอท" if not is_poster_only else "🖼️ รันบอทสร้างโปสเตอร์", type="primary", use_container_width=True):
-        payload = {"type": "image_only" if is_poster_only else "scene_pipeline", "image_prompt": final_img, "video_prompt": final_vid, "credit_mode": "Lower Priority" if "Lower" in credit else "Fast", "ref_image": ref_img_path, "scene_num": scene_num, "is_first_scene": is_first, "target_ratio": ratio}
-        with open("bot_task.json", "w", encoding="utf-8") as f: json.dump(payload, f, ensure_ascii=False)
-        st.success("> 📡 ส่งข้อมูลให้บอทเรียบร้อย หน้าต่างบอทจะเด้งขึ้นมาทำงาน...")
-        subprocess.Popen(["python", "-u", "test_bot.py"], env=dict(os.environ, PYTHONIOENCODING="utf-8")).wait()
+        # 🟢 จุดแก้ไข 2: สร้างชื่อไฟล์แบบ Unique 
+        session_id = uuid.uuid4().hex[:6]
+        task_filename = f"bot_task_{session_id}.json"
+        
+        payload = {
+            "type": "image_only" if is_poster_only else "scene_pipeline", 
+            "image_prompt": final_img, 
+            "video_prompt": final_vid, 
+            "credit_mode": "Lower Priority" if "Lower" in credit else "Fast", 
+            "ref_image": ref_img_path, 
+            "scene_num": scene_num, 
+            "is_first_scene": is_first, 
+            "target_ratio": ratio,
+            "task_file": task_filename
+        }
+        with open(task_filename, "w", encoding="utf-8") as f: json.dump(payload, f, ensure_ascii=False)
+        
+        st.success(f"> 📡 ส่งคำสั่งเรียบร้อย (ID: {session_id}) บอทกำลังทำงานเบื้องหลัง หน้าเว็บใช้งานต่อได้ทันที...")
+        
+        # 🟢 จุดแก้ไข 1: เอา .wait() ออก ส่งชื่อไฟล์ให้ test_bot.py ทำงานเบื้องหลัง
+        subprocess.Popen(["python", "-u", "test_bot.py", task_filename], env=dict(os.environ, PYTHONIOENCODING="utf-8"))
         time.sleep(1)
         st.rerun()
 
