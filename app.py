@@ -158,7 +158,7 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) [อัปเดต AI Auto-Fill & Reset]
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director)
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
@@ -243,7 +243,6 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
 
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าวิดีโอ (Reset)", key="ad_vid_res", use_container_width=True):
-                # เคลียร์ Prompt และเคลียร์ค่าตัวแปรทั้งหมดให้กลับเป็น Default
                 st.session_state.ad_video_prompt = ""
                 vid_keys = ["ad_pres", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
                 for k in vid_keys:
@@ -282,7 +281,46 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
             render_custom_select("16. ✨ เอฟเฟกต์ (VFX):", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"], "ad_vfx", "VHS=วินเทจ/Y2K, Glitch=สินค้าเทคโนโลยี/แฟชั่น")
 
         if st.button("🚀 เริ่มเขียนสคริปต์วิดีโอ & แคปชั่นป้ายยา", type="primary", use_container_width=True):
-            prompt = f"ทำหน้าที่เป็นครีเอทีฟโฆษณา สร้างสคริปต์วิดีโอและแคปชั่น สินค้า: {st.session_state.ad_product_text} พรีเซนเตอร์:{st.session_state.get('ad_pres')} เสียง:{st.session_state.get('ad_tone')} เป้าหมาย:{st.session_state.get('ad_target')} ภาษา:{st.session_state.get('ad_lang')} ความยาว:{st.session_state.get('ad_dur')} สไตล์:{st.session_state.get('ad_style')} เล่าเรื่อง:{st.session_state.get('ad_story')} CTA:{st.session_state.get('ad_cta')} แพลตฟอร์ม:{st.session_state.get('ad_plat')} เพลง:{st.session_state.get('ad_music')} โทนสี:{st.session_state.get('ad_color')} มุมกล้อง:{st.session_state.get('ad_cam')} แสง:{st.session_state.get('ad_light')} ข้อความ:{st.session_state.get('ad_text')} ตัดต่อ:{st.session_state.get('ad_pacing')} VFX:{st.session_state.get('ad_vfx')}\n\nคำสั่ง:\n1. เขียนสคริปต์แบ่งเป็นฉากๆ แยก Prompt ภาพนิ่งและวิดีโอ พร้อมเสียงพากย์และข้อความขึ้นจอ\n2. ในตอนท้ายของผลลัพธ์ ให้เขียน 'แคปชั่นป้ายยา 3 แพลตฟอร์ม' ดังนี้:\n - TikTok: เน้นฮุกกระแส + แฮชแท็กมาแรง\n - Facebook (Shopee Affiliate): เน้นสตอรี่เทลลิ่งโน้มน้าวให้กดลิงก์\n - Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *สำคัญมาก: Shopee ต้องมีความยาวรวมกันไม่เกิน 150 ตัวอักษร (นับรวมแฮชแท็กแล้ว)* ห้ามเกินเด็ดขาด"
+            prompt = f"""คุณคือผู้กำกับโฆษณาระดับโลก (Commercial Director) หน้าที่ของคุณคือการเขียนสคริปต์โฆษณาสินค้าแบบแบ่งฉาก (ฉากละ 8 วินาที) เพื่อนำไปเจนภาพและวิดีโอบน AI (Veo 3.1) โดยอ้างอิงจากการตั้งค่าต่อไปนี้:
+สินค้า: {st.session_state.ad_product_text}
+พรีเซนเตอร์: {st.session_state.get('ad_pres')}
+เสียง: {st.session_state.get('ad_tone')}
+เป้าหมาย: {st.session_state.get('ad_target')}
+ภาษา: {st.session_state.get('ad_lang')}
+ความยาว: {st.session_state.get('ad_dur')}
+สไตล์: {st.session_state.get('ad_style')}
+เล่าเรื่อง: {st.session_state.get('ad_story')}
+CTA: {st.session_state.get('ad_cta')}
+แพลตฟอร์ม: {st.session_state.get('ad_plat')}
+เพลง: {st.session_state.get('ad_music')}
+โทนสี: {st.session_state.get('ad_color')}
+มุมกล้อง: {st.session_state.get('ad_cam')}
+แสง: {st.session_state.get('ad_light')}
+ข้อความบนจอ: {st.session_state.get('ad_text')}
+การตัดต่อ: {st.session_state.get('ad_pacing')}
+VFX: {st.session_state.get('ad_vfx')}
+
+⚠️ กฎเหล็กในการสร้างฉาก (สำคัญมาก ต้องทำตามโครงสร้างนี้เป๊ะๆ):
+
+🎬 ฉากที่ 1: เปิดตัวดึงดูดสายตา (The Hook - 8 วินาที)
+* รายละเอียดฉาก (ภาษาไทย): อธิบายภาพรวมว่าเกิดอะไรขึ้น
+* ข้อความบนจอ (Text on Screen): (ถ้ามี)
+* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (เขียนตามสำเนียงและภาษาที่กำหนด)
+* Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษ - สำหรับ Nano Banana 2) อธิบายหน้าตาพรีเซนเตอร์, เสื้อผ้า, สถานที่, แสง, โทนสี และมุมกล้องตั้งต้นอย่างละเอียดที่สุด เพื่อใช้เป็นภาพอ้างอิง (เขียนแบบบรรทัดเดียวห้ามขึ้นบรรทัดใหม่)
+* Prompt สร้างวิดีโอ: (ภาษาอังกฤษ - สำหรับ Veo 3.1) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ โดยระบุจังหวะตัดกล้อง (เช่น 0-4s: [แอคชั่น], 4-8s: Quick cut to [แอคชั่นใหม่]) และลงท้ายด้วยคำว่า "Audio: [เสียง SFX/ดนตรี]"
+
+🎬 ฉากที่ 2, 3, 4... : ต่อเนื่องเนื้อหา (Extend Scene - ฉากละ 8 วินาที)
+* รายละเอียดฉาก (ภาษาไทย): อธิบายแอคชั่นที่สานต่อจากฉากที่แล้ว เพื่อเดินเรื่องไปสู่การปิดการขาย
+* ข้อความบนจอ (Text on Screen): (ถ้ามี)
+* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (ขยี้ Pain Point หรือ Call to Action)
+* (ห้ามเขียน Prompt สร้างภาพนิ่งในฉากที่ 2 เป็นต้นไปเด็ดขาด)
+* Prompt สร้างวิดีโอ: (ภาษาอังกฤษ) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ เริ่มด้วย "Continuing from the previous frame..." ระบุจังหวะตัดกล้อง และลงท้ายด้วย "Audio: [เสียงประกอบที่สอดคล้อง]"
+
+📱 ส่วนท้ายสุด: แคปชั่นป้ายยา 3 แพลตฟอร์ม
+- TikTok: เน้นฮุกกระแส + แฮชแท็กมาแรง
+- Facebook (Shopee Affiliate): เน้นสตอรี่เทลลิ่งโน้มน้าวให้กดลิงก์
+- Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *สำคัญ: ความยาวรวมกันห้ามเกิน 150 ตัวอักษร นับรวมแฮชแท็กแล้ว ห้ามเกินเด็ดขาด*
+"""
             st.session_state.ad_video_prompt = smart_generate(prompt)
 
         if st.session_state.ad_video_prompt: st.code(st.session_state.ad_video_prompt, language="markdown")
@@ -326,7 +364,6 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
 
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าโปสเตอร์", key="pos_res", use_container_width=True):
-                # เคลียร์ Prompt โปสเตอร์ และคืนค่าตัวแปรเป็น Default
                 st.session_state.ad_poster_prompt = ""
                 pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_text"]
                 for k in pos_keys:
