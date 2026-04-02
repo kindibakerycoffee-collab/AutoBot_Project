@@ -366,34 +366,60 @@ VFX: {st.session_state.get('ad_vfx')}
         if st.session_state.ad_video_prompt: st.code(st.session_state.ad_video_prompt, language="markdown")
 
     with tab_poster:
+        st.markdown("##### 🎯 ล็อกเป้าหมายให้ AI (Pre-AI Controls - Poster)")
+        ai_dir_ratio_pos = st.selectbox("📏 ล็อกสัดส่วนภาพหน้าปก (Aspect Ratio):", ["🤖 ปล่อย AI คิดเอง (Free Style)", "16:9 (YouTube/TV)", "4:3 (หน้าจอมาตรฐาน)", "1:1 (Facebook/IG Post)", "3:4 (Portrait Feed)", "9:16 (TikTok/Reels/Shorts)"], key="ai_dir_ratio_pos")
+
         col_ai, col_res = st.columns(2)
         with col_ai:
             if st.button("✨ ให้ AI ตั้งค่าโปสเตอร์อัตโนมัติ", key="pos_ai", use_container_width=True):
                 if not st.session_state.ad_product_text:
                     st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ")
                 else:
-                    with st.spinner("🧠 AI กำลังเลือกดีไซน์โปสเตอร์ที่เข้ากับสินค้า..."):
-                        prompt = f"""วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
-                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปกคลิป จากรายการด้านล่าง:
+                    with st.spinner("🧠 AI กำลังสแกนรูปภาพและเลือกดีไซน์โปสเตอร์ที่เป๊ะที่สุด..."):
                         
-                        - pos_style: ["โปสเตอร์แบบมินิมอล", "โบรชัวร์ลดราคา", "หน้าปกคลิปดึงดูดสายตา", "Hyper-Realistic (สมจริงขั้นสุด)", "3D Render (สไตล์โฆษณาสินค้า IT)", "ภาพวาดสีน้ำ", "Pop Art"]
-                        - pos_color: ["สว่างสดใสคลีนๆ", "โทนเข้มดุดันพรีเมียม", "พาสเทลน่ารัก", "Monochromatic (สีคุมโทน)", "Complementary (สีคู่ตรงข้ามดึงดูดตา)", "หรูหรา (ดำ-ทอง)"]
-                        - pos_cam: ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down)", "ซูมใกล้ (Macro)", "Flat Lay (ถ่ายเจาะจากมุมบน)", "Perspective (มีจุดนำสายตา)", "Close-up เจาะดีเทลวัสดุ"]
-                        - pos_light: ["แสงธรรมชาติส่องผ่านหน้าต่าง", "แสงสตูดิโอสว่างเคลียร์", "แสงนีออนตัดกัน", "แสง Softbox ละมุน", "แสง Hard Light ทอดเงาชัดเจน", "แสงนีออนสะท้อน"]
-                        - pos_bg: ["ฉากสตูดิโอสีพื้นฐาน", "วางบนแท่นโชว์สินค้า (Podium)", "พื้นหลังธรรมชาติ (ป่า/ทะเล)", "เมืองไซเบอร์พังก์", "ฉากห้องนั่งเล่นอบอุ่น"]
+                        ratio_constraint_pos = ""
+                        if "16:9" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) และมุมกล้องให้เหมาะสมกับอัตราส่วนแนวนอนกว้าง 16:9'
+                        elif "4:3" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับแนวนอนมาตรฐาน 4:3'
+                        elif "1:1" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับสัดส่วนจัตุรัส 1:1 เน้นจุดสนใจตรงกลาง'
+                        elif "3:4" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับแนวตั้ง 3:4'
+                        elif "9:16" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบ (pos_comp) และตำแหน่งข้อความ (pos_text_pos) ให้เหมาะสมกับแนวตั้ง 9:16 โดยเว้น Safe Zone ให้มือถือเสมอ'
+
+                        # กวาดรูปภาพทั้งหมดไปให้ AI วิเคราะห์
+                        prompt_contents = []
+                        if st.session_state.ad_imgs:
+                            prompt_contents = [Image.open(img_file) for img_file in st.session_state.ad_imgs]
+                        
+                        prompt_text = f"""วิเคราะห์ข้อมูลสินค้าและภาพเหล่านี้: "{st.session_state.ad_product_text}"
+                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปกโฆษณา ระดับ Art Director จากรายการด้านล่าง:
+                        
+                        - pos_style: ["High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "Minimalist Lifestyle (คลีนๆ มินิมอล)", "Cyberpunk / Neon Product (ล้ำสมัย นีออน)", "Vintage / Retro Film (วินเทจ ฟิล์มคลาสสิก)", "Hyper-Realistic 3D Render (3D สมจริงขั้นสุด)"]
+                        - pos_color: ["สว่างสดใสคลีนๆ (Clean & Bright)", "โทนเข้มดุดันพรีเมียม (Dark & Moody)", "พาสเทลละมุนตา (Soft Pastel)", "สีสันจัดจ้านตัดกัน (Vibrant & Contrast)", "คุมโทนสีเดียว (Monochromatic)", "หรูหรา ดำ-ทอง (Black & Gold)"]
+                        - pos_cam: ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down / Flat Lay)", "ซูมใกล้เจาะดีเทล (Macro Close-up)", "มุมเสยดูยิ่งใหญ่ (Low Angle)", "มุมกว้างเห็นบรรยากาศ (Wide Angle)"]
+                        - pos_light: ["แสงธรรมชาติริมหน้าต่าง (Soft Daylight)", "แสงสตูดิโอเคลียร์ชัด (Studio Lighting)", "แสงแข็งเงาชัด (Hard Light & Bold Shadows)", "แสงนีออนสะท้อน (Neon Reflections)", "แสงพระอาทิตย์ตก (Golden Hour)"]
+                        - pos_bg: ["ฉากสตูดิโอสีพื้นฐาน (Solid Studio Color)", "แท่นโชว์สินค้า (Minimalist Podium)", "บรรยากาศใช้งานจริง (Lifestyle Context)", "ธรรมชาติ (Nature/Outdoors)", "ฉากหลังเบลอ (Bokeh/Depth of Field)"]
                         - pos_comp: ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"]
-                        - pos_tex: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "มีควันหรือหมอกบางๆ (Fog/Mist)", "มีหยดน้ำเกาะ (Water Drops)"]
-                        - pos_text: ["พิมพ์กำหนดเอง...", "โปรโมชั่นพิเศษ", "ป้าย Flash Sale", "Typography อาร์ตๆ", "ข้อความรีวิวจากลูกค้า", "ไม่มีข้อความ"]
+                        - pos_tex: ["คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "หยดน้ำเกาะสดชื่น (Water Drops)", "ควันหรือหมอกบางๆ (Fog/Mist)", "สะท้อนพื้นกระจก (Mirror Reflection)"]
+                        - pos_font: ["ฟอนต์ตัวหนากระแทกตา (Bold/Impact)", "ฟอนต์มินิมอลเรียบหรู (Minimalist/Sans-serif)", "ฟอนต์สไตล์สตรีท (Streetwear/Graffiti)", "ฟอนต์ลายมือดูเป็นกันเอง (Handwritten)", "ฟอนต์อาร์ตๆ มีสไตล์ (Artistic/Serif)"]
+                        - pos_text_pos: ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้ (Safe Zone มือถือ)"]
+                        - pos_text_main: ["โปรโมชั่นพิเศษ/Sale", "ป้าย Flash Sale", "ข้อความรีวิวจากลูกค้า", "คำโปรยสั้นๆ กระแทกใจ", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
+                        - pos_text_sub: ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ของแท้ 100%", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
+
+                        ⚠️ กฎพิเศษในการตั้งค่า:
+                        {ratio_constraint_pos}
 
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         ตัวอย่าง:
                         {{
-                            "pos_style": "3D Render (สไตล์โฆษณาสินค้า IT)",
-                            "pos_color": "หรูหรา (ดำ-ทอง)"
+                            "pos_style": "High-end E-commerce Catalog (หรูหราแคตตาล็อก)",
+                            "pos_color": "หรูหรา ดำ-ทอง (Black & Gold)",
+                            "pos_text_main": "โปรโมชั่นพิเศษ/Sale",
+                            "pos_text_sub": "ส่งฟรี!"
                         }}
                         """
+                        prompt_contents.append(prompt_text)
+                        
                         try:
-                            res = smart_generate(prompt)
+                            res = smart_generate(prompt_contents)
                             json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
                             ai_config = json.loads(json_str)
                             for k, v in ai_config.items():
@@ -405,7 +431,7 @@ VFX: {st.session_state.get('ad_vfx')}
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าโปสเตอร์", key="pos_res", use_container_width=True):
                 st.session_state.ad_poster_prompt = ""
-                pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_text"]
+                pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_font", "pos_text_pos", "pos_text_main", "pos_text_sub"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
                     if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
@@ -413,20 +439,50 @@ VFX: {st.session_state.get('ad_vfx')}
                 st.rerun()
 
         st.markdown("---")
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
-            render_custom_select("1. 🎨 สไตล์และแนวทาง:", ["โปสเตอร์แบบมินิมอล", "โบรชัวร์ลดราคา", "หน้าปกคลิปดึงดูดสายตา", "Hyper-Realistic (สมจริงขั้นสุด)", "3D Render (สไตล์โฆษณาสินค้า IT)", "ภาพวาดสีน้ำ", "Pop Art"], "pos_style", "3D Render เหมาะกับแกดเจ็ต/เครื่องใช้ไฟฟ้า, สีน้ำเหมาะกับสินค้าออร์แกนิก")
-            render_custom_select("2. 🌈 โทนสีและอารมณ์:", ["สว่างสดใสคลีนๆ", "โทนเข้มดุดันพรีเมียม", "พาสเทลน่ารัก", "Monochromatic (สีคุมโทน)", "Complementary (สีคู่ตรงข้ามดึงดูดตา)", "หรูหรา (ดำ-ทอง)"], "pos_color", "สีคู่ตรงข้ามช่วยให้โปสเตอร์เตะตาเมื่อไถฟีดผ่านรวดเร็ว")
-            render_custom_select("3. 📸 มุมกล้องและการจัดวาง:", ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down)", "ซูมใกล้ (Macro)", "Flat Lay (ถ่ายเจาะจากมุมบน)", "Perspective (มีจุดนำสายตา)", "Close-up เจาะดีเทลวัสดุ"], "pos_cam", "Flat Lay นิยมใช้จัดวางเครื่องสำอางหรืออุปกรณ์หลายชิ้นรวมกัน")
-            render_custom_select("4. 💡 แสงเงา (Lighting):", ["แสงธรรมชาติส่องผ่านหน้าต่าง", "แสงสตูดิโอสว่างเคลียร์", "แสงนีออนตัดกัน", "แสง Softbox ละมุน", "แสง Hard Light ทอดเงาชัดเจน", "แสงนีออนสะท้อน"], "pos_light", "Hard Light ให้ความรู้สึกแฟชั่นจ๋า/ล้ำสมัย")
+            render_custom_select("1. 🎨 สไตล์ภาพ (Style):", ["High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "Minimalist Lifestyle (คลีนๆ มินิมอล)", "Cyberpunk / Neon Product (ล้ำสมัย นีออน)", "Vintage / Retro Film (วินเทจ ฟิล์มคลาสสิก)", "Hyper-Realistic 3D Render (3D สมจริงขั้นสุด)"], "pos_style", "High-end=แบรนด์เนม/สกินแคร์, Clickbait=คลิปขายของไวรัล, 3D Render=แกดเจ็ต")
+            render_custom_select("2. 🌈 โทนสี (Color):", ["สว่างสดใสคลีนๆ (Clean & Bright)", "โทนเข้มดุดันพรีเมียม (Dark & Moody)", "พาสเทลละมุนตา (Soft Pastel)", "สีสันจัดจ้านตัดกัน (Vibrant & Contrast)", "คุมโทนสีเดียว (Monochromatic)", "หรูหรา ดำ-ทอง (Black & Gold)"], "pos_color", "Contrast=ดึงดูดสายตาเวลาไถฟีด, Black & Gold=อัปราคาดูแพง")
+            render_custom_select("3. 📸 มุมกล้อง (Camera):", ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down / Flat Lay)", "ซูมใกล้เจาะดีเทล (Macro Close-up)", "มุมเสยดูยิ่งใหญ่ (Low Angle)", "มุมกว้างเห็นบรรยากาศ (Wide Angle)"], "pos_cam", "Flat Lay=จัดวางของหลายชิ้นแบบเก๋ๆ, Macro=โชว์เนื้อครีมหรือวัสดุ")
+            render_custom_select("4. 💡 แสงเงา (Lighting):", ["แสงธรรมชาติริมหน้าต่าง (Soft Daylight)", "แสงสตูดิโอเคลียร์ชัด (Studio Lighting)", "แสงแข็งเงาชัด (Hard Light & Bold Shadows)", "แสงนีออนสะท้อน (Neon Reflections)", "แสงพระอาทิตย์ตก (Golden Hour)"], "pos_light", "Hard Light=แฟชั่นจ๋า/สตรีท, Golden Hour=อบอุ่น/สกินแคร์ออร์แกนิก")
         with c2:
-            render_custom_select("5. 🏞️ พื้นหลัง/สภาพแวดล้อม:", ["ฉากสตูดิโอสีพื้นฐาน", "วางบนแท่นโชว์สินค้า (Podium)", "พื้นหลังธรรมชาติ (ป่า/ทะเล)", "เมืองไซเบอร์พังก์", "ฉากห้องนั่งเล่นอบอุ่น"], "pos_bg", "Podium จะทำให้สินค้าดูโดดเด่น หรูหราแพงขึ้นทันที")
-            render_custom_select("6. 📐 การจัดองค์ประกอบภาพ:", ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"], "pos_comp", "Magazine Layout จะเว้นพื้นที่ให้เราเอาภาพไปใส่ Text โฆษณาต่อได้ง่ายมาก")
-            render_custom_select("7. 🌟 พื้นผิวและบรรยากาศ:", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "มีควันหรือหมอกบางๆ (Fog/Mist)", "มีหยดน้ำเกาะ (Water Drops)"], "pos_tex", "มีหยดน้ำเกาะ=โฆษณาเครื่องดื่ม, ฟิล์มเกรน=แฟชั่น/ของวินเทจ")
-            render_custom_select("8. 📝 ข้อความบนโปสเตอร์:", ["พิมพ์กำหนดเอง...", "โปรโมชั่นพิเศษ", "ป้าย Flash Sale", "Typography อาร์ตๆ", "ข้อความรีวิวจากลูกค้า", "ไม่มีข้อความ"], "pos_text", "เพิ่มคำโปรยหรือส่วนลดเพื่อกระตุ้นยอดขาย")
+            render_custom_select("5. 🏞️ พื้นหลัง (Background):", ["ฉากสตูดิโอสีพื้นฐาน (Solid Studio Color)", "แท่นโชว์สินค้า (Minimalist Podium)", "บรรยากาศใช้งานจริง (Lifestyle Context)", "ธรรมชาติ (Nature/Outdoors)", "ฉากหลังเบลอ (Bokeh/Depth of Field)"], "pos_bg", "Podium=ทำให้สินค้าเด่นเด้งขึ้นมาทันที")
+            render_custom_select("6. 📐 การจัดองค์ประกอบ (Composition):", ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"], "pos_comp", "Magazine Layout=เผื่อที่ให้ AI ใส่ข้อความแบบลงตัว")
+            render_custom_select("7. 🌟 พื้นผิวและเอฟเฟกต์ (Texture):", ["คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "หยดน้ำเกาะสดชื่น (Water Drops)", "ควันหรือหมอกบางๆ (Fog/Mist)", "สะท้อนพื้นกระจก (Mirror Reflection)"], "pos_tex", "Water Drops=เครื่องดื่ม/น้ำหอม, Film Grain=เสื้อผ้าวินเทจ")
+        with c3:
+            render_custom_select("8. 🔠 สไตล์ฟอนต์ (Typography):", ["ฟอนต์ตัวหนากระแทกตา (Bold/Impact)", "ฟอนต์มินิมอลเรียบหรู (Minimalist/Sans-serif)", "ฟอนต์สไตล์สตรีท (Streetwear/Graffiti)", "ฟอนต์ลายมือดูเป็นกันเอง (Handwritten)", "ฟอนต์อาร์ตๆ มีสไตล์ (Artistic/Serif)"], "pos_font", "Bold=สายกระตุ้นยอดขาย, Sans-serif=สายคลีนดูแพง")
+            render_custom_select("9. 📍 ตำแหน่งข้อความ (Text Placement):", ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้ (Safe Zone มือถือ)"], "pos_text_pos", "Safe Zone=สำหรับแนวตั้ง 9:16 หลบปุ่ม Like/Share ของ TikTok")
+            render_custom_select("10. 📢 พาดหัวหลัก (Main Headline):", ["โปรโมชั่นพิเศษ/Sale", "ป้าย Flash Sale", "ข้อความรีวิวจากลูกค้า", "คำโปรยสั้นๆ กระแทกใจ", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"], "pos_text_main", "คำใหญ่เด่นสุด กระแทกตา AI จะเรนเดอร์ได้แม่นยำกว่าประโยคยาวๆ")
+            render_custom_select("11. 🏷️ ป้ายโปรโมชั่น (Sub-text):", ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ของแท้ 100%", "รีวิว 5 ดาว", "ไม่มีข้อความ"], "pos_text_sub", "ข้อความรอง/ป้ายเล็กๆ (เว้นว่างได้ถ้าไม่ต้องการ)")
         
-        if st.button("🚀 เริ่มสร้าง Prompt โปสเตอร์", type="primary", use_container_width=True):
-            prompt = f"เขียน 'Prompt สร้างภาพนิ่ง:' เพื่อออกแบบโปสเตอร์ สินค้าคือ: {st.session_state.ad_product_text} สไตล์: {st.session_state.get('pos_style')} โทนสี: {st.session_state.get('pos_color')} มุมกล้อง: {st.session_state.get('pos_cam')} แสงเงา: {st.session_state.get('pos_light')} พื้นหลัง: {st.session_state.get('pos_bg')} องค์ประกอบ: {st.session_state.get('pos_comp')} พื้นผิว: {st.session_state.get('pos_tex')} ข้อความฮุก: {st.session_state.get('pos_text')}"
+        if st.button("🚀 เริ่มสร้าง Prompt โปสเตอร์ (Nano Banana 2)", type="primary", use_container_width=True):
+            prompt = f"""เขียน Prompt ภาษาอังกฤษ เพื่อนำไปเจนภาพด้วยโมเดล 'Nano Banana 2' (Gemini 3 Flash Image) 
+
+สินค้า/เนื้อหาหลัก: {st.session_state.ad_product_text}
+สไตล์ภาพ: {st.session_state.get('pos_style')}
+โทนสี: {st.session_state.get('pos_color')}
+มุมกล้อง: {st.session_state.get('pos_cam')}
+แสงเงา: {st.session_state.get('pos_light')}
+พื้นหลัง: {st.session_state.get('pos_bg')}
+องค์ประกอบ: {st.session_state.get('pos_comp')}
+พื้นผิว/VFX: {st.session_state.get('pos_tex')}
+ฟอนต์: {st.session_state.get('pos_font')}
+ตำแหน่งข้อความ: {st.session_state.get('pos_text_pos')}
+พาดหัวหลัก (Main Headline): {st.session_state.get('pos_text_main')}
+ข้อความรอง (Sub-text): {st.session_state.get('pos_text_sub')}
+
+**กฎเหล็กในการเขียน Prompt สำหรับ Nano Banana 2 (ต้องปฏิบัติตามอย่างเคร่งครัด):**
+1. เขียนเป็นภาษาอังกฤษ 1 ย่อหน้า ห้ามมีเลขข้อย่อย 
+2. การเรนเดอร์ข้อความ (Text Rendering): 
+   - ให้ระบุชัดเจนว่าพาดหัวหลัก "{st.session_state.get('pos_text_main')}" ต้องเขียนด้วยสไตล์ฟอนต์ {st.session_state.get('pos_font')} ขนาดใหญ่และโดดเด่นที่สุดที่ตำแหน่ง {st.session_state.get('pos_text_pos')}.
+   - (ถ้ามีข้อความรอง) ให้ข้อความรอง "{st.session_state.get('pos_text_sub')}" เป็นเหมือนป้ายโปรโมชั่นขนาดเล็ก (Sub-text badge) วางคู่กันอย่างลงตัว.
+3. กฎคุมกำเนิดความมั่ว (Anti-Hallucination & Cleanliness): 
+   - STRICTLY render ONLY the requested text. DO NOT add extra icons, stars, shopping carts, or random text anywhere in the image.
+   - DO NOT hallucinate gibberish text on the product packaging. Keep the product label as realistic and close to the original intent as possible without generating fake words.
+4. เน้นย้ำให้โมเดลทราบว่านี่คือภาพโฆษณาระดับมืออาชีพ (Professional Commercial Ad) ที่ดูแพงและสะอาดตา
+
+พิมพ์เฉพาะคำว่า 'Prompt สร้างภาพนิ่ง: ' แล้วตามด้วย Prompt ภาษาอังกฤษได้เลย
+"""
             st.session_state.ad_poster_prompt = smart_generate(prompt)
 
         if st.session_state.ad_poster_prompt: st.code(st.session_state.ad_poster_prompt, language="markdown")
