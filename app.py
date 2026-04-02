@@ -176,12 +176,19 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
             if up_product:
                 st.session_state.ad_imgs = []
                 os.makedirs("temp_refs", exist_ok=True)
-                path = os.path.join("temp_refs", up_product[0].name)
-                with open(path, "wb") as f: f.write(up_product[0].getbuffer())
-                st.session_state.ad_imgs.append(path)
-                st.image(up_product[0], width=200) # แสดงรูปพรีวิวสินค้า
+                for img_file in up_product:
+                    path = os.path.join("temp_refs", img_file.name)
+                    with open(path, "wb") as f: f.write(img_file.getbuffer())
+                    st.session_state.ad_imgs.append(path)
+                
+                # แสดงรูปพรีวิวสินค้าทั้งหมด
+                st.image(up_product, width=150)
+                
                 if st.button("🔍 สกัดข้อมูล Ingredients", type="secondary"):
-                    st.session_state.ad_product_text = smart_generate([Image.open(up_product[0]), "บรรยายรายละเอียด วัสดุ สี และรูปร่างสินค้าในภาพอย่างละเอียด"])
+                    # ส่งรูปทั้งหมดไปให้ AI วิเคราะห์พร้อมกัน
+                    prompt_contents = [Image.open(img_file) for img_file in up_product]
+                    prompt_contents.append("บรรยายรายละเอียด วัสดุ สี และรูปร่างสินค้าในภาพอย่างละเอียด")
+                    st.session_state.ad_product_text = smart_generate(prompt_contents)
         
         with col_up2:
             st.markdown("**👤 2. รูปพรีเซนเตอร์ (ทางเลือก)**")
@@ -214,6 +221,7 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 else:
                     with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
                         
+                        # สร้างตัวแปรบังคับตัวเลือกให้ AI เห็นเฉพาะข้อความที่เราอนุญาต
                         dur_options = '["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
                         if "6 วิ" in ai_dir_len: 
                             dur_options = '["Bumper Ads (6 วิ)"]'
