@@ -165,6 +165,7 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     if 'ad_product_text' not in st.session_state: st.session_state.ad_product_text = ""
     if 'ad_video_prompt' not in st.session_state: st.session_state.ad_video_prompt = ""
     if 'ad_poster_prompt' not in st.session_state: st.session_state.ad_poster_prompt = ""
+    if 'ad_poster_prompt_th' not in st.session_state: st.session_state.ad_poster_prompt_th = ""
     if 'ad_imgs' not in st.session_state: st.session_state.ad_imgs = []
     if 'ad_presenter_img' not in st.session_state: st.session_state.ad_presenter_img = []
 
@@ -431,6 +432,7 @@ VFX: {st.session_state.get('ad_vfx')}
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าโปสเตอร์", key="pos_res", use_container_width=True):
                 st.session_state.ad_poster_prompt = ""
+                st.session_state.ad_poster_prompt_th = ""
                 pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_font", "pos_text_pos", "pos_text_main", "pos_text_sub"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
@@ -456,36 +458,59 @@ VFX: {st.session_state.get('ad_vfx')}
             render_custom_select("11. 🏷️ ป้ายโปรโมชั่น (Sub-text):", ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ของแท้ 100%", "รีวิว 5 ดาว", "ไม่มีข้อความ"], "pos_text_sub", "ข้อความรอง/ป้ายเล็กๆ (เว้นว่างได้ถ้าไม่ต้องการ)")
         
         if st.button("🚀 เริ่มสร้าง Prompt โปสเตอร์ (Nano Banana 2)", type="primary", use_container_width=True):
-            prompt = f"""เขียน Prompt ภาษาอังกฤษ เพื่อนำไปเจนภาพด้วยโมเดล 'Nano Banana 2' (Gemini 3 Flash Image) 
+            with st.spinner("🧠 AI กำลังแต่ง Prompt และแยกหน้าจอแปลภาษา..."):
+                prompt = f"""คุณคือนักเขียน Prompt (Prompt Engineer) ระดับโลกสำหรับ AI สร้างภาพ 'Nano Banana 2' (Gemini 3 Flash Image)
 
-สินค้า/เนื้อหาหลัก: {st.session_state.ad_product_text}
-สไตล์ภาพ: {st.session_state.get('pos_style')}
-โทนสี: {st.session_state.get('pos_color')}
-มุมกล้อง: {st.session_state.get('pos_cam')}
-แสงเงา: {st.session_state.get('pos_light')}
-พื้นหลัง: {st.session_state.get('pos_bg')}
-องค์ประกอบ: {st.session_state.get('pos_comp')}
-พื้นผิว/VFX: {st.session_state.get('pos_tex')}
-ฟอนต์: {st.session_state.get('pos_font')}
-ตำแหน่งข้อความ: {st.session_state.get('pos_text_pos')}
-พาดหัวหลัก (Main Headline): {st.session_state.get('pos_text_main')}
-ข้อความรอง (Sub-text): {st.session_state.get('pos_text_sub')}
+ข้อมูลสำหรับการสร้างหน้าปก:
+- สินค้า: {st.session_state.ad_product_text}
+- สไตล์ภาพ: {st.session_state.get('pos_style')}
+- โทนสี: {st.session_state.get('pos_color')}
+- มุมกล้อง: {st.session_state.get('pos_cam')}
+- แสงเงา: {st.session_state.get('pos_light')}
+- พื้นหลัง: {st.session_state.get('pos_bg')}
+- องค์ประกอบ: {st.session_state.get('pos_comp')}
+- พื้นผิว/VFX: {st.session_state.get('pos_tex')}
+- ฟอนต์: {st.session_state.get('pos_font')}
+- ตำแหน่งข้อความ: {st.session_state.get('pos_text_pos')}
+- พาดหัวหลัก: "{st.session_state.get('pos_text_main')}"
+- ข้อความรอง: "{st.session_state.get('pos_text_sub')}"
 
-**กฎเหล็กในการเขียน Prompt สำหรับ Nano Banana 2 (ต้องปฏิบัติตามอย่างเคร่งครัด):**
-1. เขียนเป็นภาษาอังกฤษ 1 ย่อหน้า ห้ามมีเลขข้อย่อย 
-2. การเรนเดอร์ข้อความ (Text Rendering): 
-   - ให้ระบุชัดเจนว่าพาดหัวหลัก "{st.session_state.get('pos_text_main')}" ต้องเขียนด้วยสไตล์ฟอนต์ {st.session_state.get('pos_font')} ขนาดใหญ่และโดดเด่นที่สุดที่ตำแหน่ง {st.session_state.get('pos_text_pos')}.
-   - (ถ้ามีข้อความรอง) ให้ข้อความรอง "{st.session_state.get('pos_text_sub')}" เป็นเหมือนป้ายโปรโมชั่นขนาดเล็ก (Sub-text badge) วางคู่กันอย่างลงตัว.
-3. กฎคุมกำเนิดความมั่ว (Anti-Hallucination & Cleanliness): 
-   - STRICTLY render ONLY the requested text. DO NOT add extra icons, stars, shopping carts, or random text anywhere in the image.
-   - DO NOT hallucinate gibberish text on the product packaging. Keep the product label as realistic and close to the original intent as possible without generating fake words.
-4. เน้นย้ำให้โมเดลทราบว่านี่คือภาพโฆษณาระดับมืออาชีพ (Professional Commercial Ad) ที่ดูแพงและสะอาดตา
+**กฎเหล็กในการแต่ง Prompt (STRICT RULES):**
+1. **ห้ามแปลข้อความ (DO NOT TRANSLATE TEXT):** คำว่า "{st.session_state.get('pos_text_main')}" และ "{st.session_state.get('pos_text_sub')}" ต้องถูกเก็บไว้เป็นภาษาไทยในเครื่องหมายคำพูดแบบเป๊ะๆ ห้ามแปลเป็นภาษาอังกฤษเด็ดขาด! (ยกเว้นผู้ใช้พิมพ์คำว่า "ไม่มีข้อความ" ให้เว้นไว้ไม่ต้องเขียน)
+2. โครงสร้าง Prompt ภาษาอังกฤษ: เขียนเป็น 1 ย่อหน้า อธิบายรายละเอียดให้ครบถ้วน ต้องมีประโยคเกี่ยวกับการเรนเดอร์ข้อความ เช่น `The text "{st.session_state.get('pos_text_main')}" is clearly rendered using {st.session_state.get('pos_font')} typography placed at {st.session_state.get('pos_text_pos')}.`
+3. ห้ามมั่ว (Anti-Hallucination): เขียนทิ้งท้ายใน Prompt ภาษาอังกฤษด้วยคำว่า `STRICTLY render ONLY the requested text. DO NOT add extra icons, stars, shopping carts, or random text. DO NOT hallucinate gibberish text on the packaging.`
+4. คำอธิบายภาษาไทย (Thai Translation): แปลเนื้อหาของ Prompt อธิบายให้ผู้ใช้คนไทยอ่านเข้าใจ ว่าคุณสั่ง AI จัดแสง มุมกล้อง และวางข้อความไว้ตรงไหนบ้าง
 
-พิมพ์เฉพาะคำว่า 'Prompt สร้างภาพนิ่ง: ' แล้วตามด้วย Prompt ภาษาอังกฤษได้เลย
+**รูปแบบการตอบกลับ (JSON FORMAT ONLY):**
+ตอบกลับมาเป็น JSON ตามโครงสร้างนี้เท่านั้น ห้ามมีข้อความอื่นปน
+{{
+    "english_prompt": "Prompt สร้างภาพนิ่ง: [Prompt ภาษาอังกฤษทั้งหมดตามกฎ]",
+    "thai_translation": "[คำแปล Prompt และคำอธิบายเป็นภาษาไทย เพื่อให้คนอ่านเข้าใจ]"
+}}
 """
-            st.session_state.ad_poster_prompt = smart_generate(prompt)
+                try:
+                    res = smart_generate(prompt)
+                    json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
+                    prompt_data = json.loads(json_str)
+                    
+                    st.session_state.ad_poster_prompt = prompt_data.get("english_prompt", "")
+                    st.session_state.ad_poster_prompt_th = prompt_data.get("thai_translation", "")
+                except Exception as e:
+                    st.error(f"❌ AI เกิดการขัดข้อง กรุณาลองใหม่อีกครั้ง ({e})")
 
-        if st.session_state.ad_poster_prompt: st.code(st.session_state.ad_poster_prompt, language="markdown")
+        # แสดงผล 2 หน้าจอ (Split-Screen)
+        if st.session_state.ad_poster_prompt:
+            st.markdown("---")
+            st.markdown("### 📌 สรุปบรีฟงานหน้าปก (Summary Board)")
+            st.info(f"**สไตล์:** {st.session_state.get('pos_style')} | **โทนสี:** {st.session_state.get('pos_color')} | **ฟอนต์:** {st.session_state.get('pos_font')}\n\n**พาดหัวหลัก:** {st.session_state.get('pos_text_main')} | **ป้ายรอง:** {st.session_state.get('pos_text_sub')}")
+            
+            c_eng, c_th = st.columns(2)
+            with c_eng:
+                st.success("🇬🇧 คำสั่งภาษาอังกฤษ (ส่งให้ระบบ Handoff/บอท)")
+                st.code(st.session_state.ad_poster_prompt, language="markdown")
+            with c_th:
+                st.info("🇹🇭 คำอธิบายภาษาไทย (สำหรับคุณเช็กความถูกต้อง)")
+                st.markdown(f"*{st.session_state.ad_poster_prompt_th}*")
 
     with tab_run:
         # ใช้รูปพรีเซนเตอร์เป็นหลักหากมีการอัปโหลด ถ้าไม่มีให้ใช้รูปสินค้า
