@@ -74,7 +74,7 @@ def render_custom_select(label, options, key):
         st.session_state[key] = selected
 
 # ==========================================
-# ⚙️ 3. ระบบ Handoff & รันบอท (รวมศูนย์เพื่อความเสถียร)
+# ⚙️ 3. ระบบ Handoff & รันบอท
 # ==========================================
 @st.dialog("⚙️ ตั้งค่าและรันบอท (Handoff)")
 def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=False):
@@ -101,11 +101,25 @@ def run_bot_dialog(scene_num, raw_text, ref_img_list, is_first, is_poster_only=F
         st.rerun()
 
 # ==========================================
-# 🗂️ 4. เมนูนำทาง (Sidebar)
+# 🗂️ 4. เมนูนำทาง (Sidebar) - โชว์เต็ม 10 โหมด
 # ==========================================
 if logo_img != "🤖": st.sidebar.image(logo_img, width=150)
 st.sidebar.markdown("### 🗂️ แผงควบคุมหลัก")
-category = st.sidebar.selectbox("📂 เลือกหมวดหมู่คอนเทนต์:", ["🏠 หน้าแรก (Dashboard)", "💼 หมวดธุรกิจและการขาย", "🤣 หมวดเอนเตอร์เทน & มีม", "🕶️ หมวดช่องไร้หน้า (Faceless)", "🎵 หมวดเพลงและการเต้น"])
+
+app_mode = st.sidebar.radio("เลือกโหมดการทำงาน:", [
+    "🏠 หน้าแรก (Dashboard)",
+    "🎬 โฆษณาสินค้า (Ad Director)",
+    "🍰 รีวิวร้านตัวเอง (UGC Vlogger)",
+    "🎤 วิทยากร AI (AI Spokesperson)",
+    "🐾 สัตว์เลี้ยงไวรัล (Viral Pet)",
+    "🎭 คาแรคเตอร์สายฮา (Caricature)",
+    "🎙️ ทอล์คโชว์สายปั่น (Stand-up)",
+    "🕶️ ช่องคำคมสู้ชีวิต (Sigma Motivation)",
+    "👻 ช่องเล่าเรื่องหลอน (Creepypasta)",
+    "🕺 สายแดนซ์ชาเลนจ์ (Dance Character)",
+    "🎶 ห้องอัดเสียงเพลงแปลง (Parody Music)"
+])
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔑 สถานะ API Key")
 if not api_keys_list: 
@@ -114,20 +128,10 @@ else:
     for i in range(len(api_keys_list)): 
         st.sidebar.markdown(f"**Key {i+1}:** {st.session_state.key_status.get(i, '⏳')}")
 
-app_mode = "Dashboard"
-if category == "💼 หมวดธุรกิจและการขาย":
-    app_mode = st.sidebar.radio("เลือกเครื่องมือ:", ["🎬 โฆษณาสินค้า (Ad Director)", "🍰 รีวิวร้านตัวเอง (UGC Vlogger)", "🎤 วิทยากร AI (AI Spokesperson)"])
-elif category == "🤣 หมวดเอนเตอร์เทน & มีม":
-    app_mode = st.sidebar.radio("เลือกเครื่องมือ:", ["🐾 สัตว์เลี้ยงไวรัล (Viral Pet)", "🎭 คาแรคเตอร์สายฮา (Caricature)", "🎙️ ทอล์คโชว์สายปั่น (Stand-up)"])
-elif category == "🕶️ หมวดช่องไร้หน้า (Faceless)":
-    app_mode = st.sidebar.radio("เลือกเครื่องมือ:", ["🕶️ ช่องคำคมสู้ชีวิต (Sigma Motivation)", "👻 ช่องเล่าเรื่องหลอน (Creepypasta)"])
-elif category == "🎵 หมวดเพลงและการเต้น":
-    app_mode = st.sidebar.radio("เลือกเครื่องมือ:", ["🕺 สายแดนซ์ชาเลนจ์ (Dance Character)", "🎶 ห้องอัดเสียงเพลงแปลง (Parody Music)"])
-
 # =========================================================================================
 # 🏠 หน้าแรก (Dashboard)
 # =========================================================================================
-if app_mode == "Dashboard":
+if app_mode == "🏠 หน้าแรก (Dashboard)":
     st.markdown('<div class="main-header">ยินดีต้อนรับสู่ NextGen Ai STORE Super App ✨</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">ศูนย์รวมเครื่องมือสร้างคอนเทนต์ AI อัตโนมัติ ครบจบในที่เดียว</div>', unsafe_allow_html=True)
     
@@ -163,10 +167,10 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     with tab_vid:
         col_ai, col_res = st.columns(2)
         with col_ai:
-            if st.button("✨ ให้ AI ตั้งค่าอัตโนมัติ (Auto-Fill)", key="ad_ai_btn", use_container_width=True):
+            if st.button("✨ ให้ AI ตั้งค่าอัตโนมัติ (Auto-Fill)", key="ad_vid_ai", use_container_width=True):
                 st.info("ระบบจำลองการตั้งค่าออโต้...")
         with col_res:
-            if st.button("🔄 รีเซ็ตการตั้งค่าวิดีโอ (Reset)", key="ad_res_btn", use_container_width=True):
+            if st.button("🔄 รีเซ็ตการตั้งค่าวิดีโอ (Reset)", key="ad_vid_res", use_container_width=True):
                 st.session_state.ad_video_prompt = ""
                 st.rerun()
                 
@@ -480,7 +484,7 @@ elif app_mode == "🎭 คาแรคเตอร์สายฮา (Caricature
         with c3:
             render_custom_select("🎨 สไตล์:", ["3D Pixar Animation", "3D Caricature"], "meme_style")
             render_custom_select("💬 เสียง:", ["คุยโวเรื่องถูกหวย", "บ่นเมียหนี"], "meme_dialogue")
-        if st.button("🚀 สั่ง AI เขียนสคริปต์มีมไทบ้าน", type="primary"):
+        if st.button("🚀 สั่ง AI เขียนสคริปต์มีมไทบ้าน", type="primary", use_container_width=True):
             st.session_state.meme_prompt = smart_generate(f"สคริปต์วิดีโอล้อเลียน {st.session_state.get('meme_count')} คน ลักษณะ: {st.session_state.get('meme_feat')} ชุด: {st.session_state.get('meme_costume')} ฉาก: {st.session_state.get('meme_set')} สไตล์: {st.session_state.get('meme_style')} เสียง: {st.session_state.get('meme_dialogue')}. แยก Prompt ภาพนิ่งและวิดีโอ (พร้อม Audio cues)")
         if st.session_state.meme_prompt: st.code(st.session_state.meme_prompt, language="markdown")
     
@@ -512,7 +516,7 @@ elif app_mode == "🎭 คาแรคเตอร์สายฮา (Caricature
                         run_bot_dialog(i+1, s_text, [], i==0)
 
 # =========================================================================================
-# โหมด 6, 7, 8, 9, 10
+# 🤣 โหมด 6: 🎙️ ทอล์คโชว์สายปั่น (Stand-up)
 # =========================================================================================
 elif app_mode == "🎙️ ทอล์คโชว์สายปั่น (Stand-up)":
     st.markdown('<div class="main-header">🎙️ สตูดิโอทอล์คโชว์ & ปราศรัยสายฮา</div>', unsafe_allow_html=True)
@@ -545,6 +549,9 @@ elif app_mode == "🎙️ ทอล์คโชว์สายปั่น (Stan
                     if st.button(f"⚙️ ตั้งค่าและรันบอท (ฉาก {i+1})", key=f"sat_btn_{i}"):
                         run_bot_dialog(i+1, s_text, [], i==0)
 
+# =========================================================================================
+# 🕶️ โหมด 7: 🕶️ ช่องคำคมสู้ชีวิต (Sigma Motivation)
+# =========================================================================================
 elif app_mode == "🕶️ ช่องคำคมสู้ชีวิต (Sigma Motivation)":
     st.markdown('<div class="main-header">🕶️ สตูดิโอช่องคำคมรวยเงียบ (Faceless Sigma)</div>', unsafe_allow_html=True)
     if 'sigma_prompt' not in st.session_state: st.session_state.sigma_prompt = ""
@@ -566,6 +573,9 @@ elif app_mode == "🕶️ ช่องคำคมสู้ชีวิต (Sigm
                     if st.button(f"⚙️ ตั้งค่าและรันบอท (ฉาก {i+1})", key=f"sigma_btn_{i}"):
                         run_bot_dialog(i+1, s_text, [], i==0)
 
+# =========================================================================================
+# 🕶️ โหมด 8: 👻 ช่องเล่าเรื่องหลอน (Creepypasta)
+# =========================================================================================
 elif app_mode == "👻 ช่องเล่าเรื่องหลอน (Creepypasta)":
     st.markdown('<div class="main-header">👻 สตูดิโอนักเล่านิทานสยองขวัญ</div>', unsafe_allow_html=True)
     if 'creepy_prompt' not in st.session_state: st.session_state.creepy_prompt = ""
@@ -585,6 +595,9 @@ elif app_mode == "👻 ช่องเล่าเรื่องหลอน (C
                     if st.button(f"⚙️ ตั้งค่าและรันบอท (ฉาก {i+1})", key=f"creepy_btn_{i}"):
                         run_bot_dialog(i+1, s_text, [], i==0)
 
+# =========================================================================================
+# 🎵 โหมด 9: 🕺 สายแดนซ์ชาเลนจ์ (Image Only)
+# =========================================================================================
 elif app_mode == "🕺 สายแดนซ์ชาเลนจ์ (Dance Character)":
     st.markdown('<div class="main-header">🕺 สตูดิโอปั้นนักเต้น AI (Motion Transfer)</div>', unsafe_allow_html=True)
     if 'dance_prompt' not in st.session_state: st.session_state.dance_prompt = ""
@@ -606,6 +619,9 @@ elif app_mode == "🕺 สายแดนซ์ชาเลนจ์ (Dance Char
             if st.button("⚙️ รันบอทสร้างรูปนักเต้น", key="run_img_dance"):
                 run_bot_dialog(0, st.session_state.dance_prompt, [], True, is_poster_only=True)
 
+# =========================================================================================
+# 🎵 โหมด 10: 🎶 ห้องอัดเสียงเพลงแปลง (Text Only)
+# =========================================================================================
 elif app_mode == "🎶 ห้องอัดเสียงเพลงแปลง (Parody Music)":
     st.markdown('<div class="main-header">🎶 ห้องอัดเสียงเพลงแปลง (AI Music Studio)</div>', unsafe_allow_html=True)
     topic = st.text_input("📌 หัวข้อ/เรื่องที่จะบ่นในเพลง:", placeholder="เช่น ราคายางตก...")
