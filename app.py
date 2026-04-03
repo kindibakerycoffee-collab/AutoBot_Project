@@ -62,15 +62,23 @@ def smart_generate(prompt_contents):
             continue
     raise Exception(f"API Key ติดลิมิตหมดแล้วครับ! กรุณารอ 1 นาที")
 
-# เพิ่มพารามิเตอร์ help_text เพื่อใช้ไฮไลท์คำแนะนำ
+# [PATCH] แก้ไขฟังก์ชันให้จำค่าได้แม่นยำและไม่รีเซ็ตเมื่อถูกคลิก
 def render_custom_select(label, options, key, help_text=None):
     opt_list = options + ["พิมพ์กำหนดเอง..."]
-    current_val = st.session_state.get(key, options[0])
+    
+    # ถ้ายังไม่มีค่าในระบบ ให้เซ็ตค่าเริ่มต้น
+    if key not in st.session_state:
+        st.session_state[key] = options[0]
+        
+    current_val = st.session_state[key]
     idx = options.index(current_val) if current_val in options else len(opt_list) - 1
-    selected = st.selectbox(label, opt_list, index=idx, key=f"select_{key}", help=help_text)
+    
+    # ใช้คีย์แยกสำหรับ widget UI โดยเฉพาะ เพื่อป้องกัน State ชนกัน
+    selected = st.selectbox(label, opt_list, index=idx, key=f"ui_widget_{key}", help=help_text)
+    
     if selected == "พิมพ์กำหนดเอง...":
         default_text = current_val if current_val not in options else ""
-        custom_val = st.text_input(f"✍️ ระบุแบบกำหนดเอง:", value=default_text, key=f"custom_{key}")
+        custom_val = st.text_input(f"✍️ ระบุแบบกำหนดเอง:", value=default_text, key=f"ui_custom_{key}")
         st.session_state[key] = custom_val
     else:
         st.session_state[key] = selected
@@ -158,7 +166,7 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) - [PATCHED FULL AI AUTO-DECISION]
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) - [PATCHED FULL AI AUTO-DECISION + UI FIX]
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
@@ -253,13 +261,25 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         - ad_pacing: ["ตัดฉับไว (Jump Cut)", "Beat Sync"]
                         - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)"]
 
+                        ⚠️ กฎการจัดรูปแบบ JSON (สำคัญมาก): ให้ตอบเป็น String ธรรมดาเท่านั้น ห้ามใส่เครื่องหมายก้ามปู [...] หรือลิสต์ครอบค่า Value เด็ดขาด 
+                        ตัวอย่างที่ถูกต้อง: "ad_pres": "KOL / Influencer"
+                        ตัวอย่างที่ผิด (ห้ามทำ): "ad_pres": "['KOL / Influencer']"
+
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยเลือกตัวเลือกจากรายการที่กำหนดไว้เท่านั้น ห้ามคิดคำขึ้นมาเองเด็ดขาด
                         """
                         try:
                             res = smart_generate(prompt)
                             json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
                             ai_config = json.loads(json_str)
-                            for k, v in ai_config.items(): st.session_state[k] = v
+                            
+                            # [PATCH] ตัวกรองข้อมูลให้สะอาด 100% ป้องกัน AI เผลอส่งวงเล็บมา
+                            for k, v in ai_config.items():
+                                if isinstance(v, list) and len(v) > 0: 
+                                    v = str(v[0])
+                                elif isinstance(v, str): 
+                                    v = re.sub(r"^\[['\"]|['\"]\]$", "", v.strip())
+                                st.session_state[k] = v
+                                
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ AI เกิดการขัดข้อง กรุณาลองใหม่อีกครั้ง ({e})")
@@ -270,8 +290,9 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 vid_keys = ["ad_pres", "ad_voice", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
                 for k in vid_keys:
                     if k in st.session_state: del st.session_state[k]
-                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
-                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
+                    # เคลียร์คีย์ widget ด้วย
+                    if f"ui_widget_{k}" in st.session_state: del st.session_state[f"ui_widget_{k}"]
+                    if f"ui_custom_{k}" in st.session_state: del st.session_state[f"ui_custom_{k}"]
                 st.rerun()
                 
         st.markdown("---")
@@ -394,6 +415,8 @@ VFX: {st.session_state.get('ad_vfx')}
                         - ad_pos_main_headline: ["โปรโมชั่นพิเศษ/Sale", "Flash Sale สุดช็อก", "อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
                         - ad_pos_sub_text: ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ราคาหลักสิบ", "คุ้มมากแม่!", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
 
+                        ⚠️ กฎการจัดรูปแบบ JSON (สำคัญมาก): ให้ตอบเป็น String ธรรมดาเท่านั้น ห้ามใส่เครื่องหมายก้ามปู [...] หรือลิสต์ครอบค่า Value เด็ดขาด 
+
                         ⚠️ กฎพิเศษในการตั้งค่า:
                         {ratio_constraint_pos}
 
@@ -405,7 +428,15 @@ VFX: {st.session_state.get('ad_vfx')}
                             res = smart_generate(prompt_contents)
                             json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
                             ai_config = json.loads(json_str)
-                            for k, v in ai_config.items(): st.session_state[k] = v
+                            
+                            # [PATCH] กรองข้อมูลให้สะอาดสำหรับ Poster ด้วย
+                            for k, v in ai_config.items():
+                                if isinstance(v, list) and len(v) > 0: 
+                                    v = str(v[0])
+                                elif isinstance(v, str): 
+                                    v = re.sub(r"^\[['\"]|['\"]\]$", "", v.strip())
+                                st.session_state[k] = v
+                                
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ AI เกิดการขัดข้อง กรุณาลองใหม่อีกครั้ง ({e})")
@@ -417,8 +448,8 @@ VFX: {st.session_state.get('ad_vfx')}
                 pos_keys = ["ad_pos_style", "ad_pos_color", "ad_pos_cam", "ad_pos_light", "ad_pos_display", "ad_pos_ad_comp", "ad_pos_graphics", "ad_pos_bg", "ad_pos_typography", "ad_pos_typo_effect", "ad_pos_badge_style", "ad_pos_trust", "ad_pos_text_pos", "ad_pos_main_headline", "ad_pos_sub_text"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
-                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
-                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
+                    if f"ui_widget_{k}" in st.session_state: del st.session_state[f"ui_widget_{k}"]
+                    if f"ui_custom_{k}" in st.session_state: del st.session_state[f"ui_custom_{k}"]
                 st.rerun()
 
         st.markdown("---")
@@ -520,7 +551,7 @@ VFX: {st.session_state.get('ad_vfx')}
 # 🍰 โหมด 2: 🍰 รีวิวร้านตัวเอง (UGC Vlogger) 
 # =========================================================================================
 elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogger)":
-    st.markdown('<div class="main-header">🍰 สตูดิโอเจ้าของร้านรีวิวเอง (UGC Vlogger)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">🍰 สตูดิเจ้าของร้านรีวิวเอง (UGC Vlogger)</div>', unsafe_allow_html=True)
     if 'ugc_prompt' not in st.session_state: st.session_state.ugc_prompt = ""
     if 'ugc_poster_prompt' not in st.session_state: st.session_state.ugc_poster_prompt = ""
     if 'ugc_poster_prompt_th' not in st.session_state: st.session_state.ugc_poster_prompt_th = ""
@@ -609,8 +640,8 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
                 vid_keys = ["ugc_actor", "ugc_tone", "ugc_cam", "ugc_vibe", "ugc_lang", "ugc_music", "ugc_cta", "ugc_pacing", "ugc_text_overlay"]
                 for k in vid_keys:
                     if k in st.session_state: del st.session_state[k]
-                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
-                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
+                    if f"ui_widget_{k}" in st.session_state: del st.session_state[f"ui_widget_{k}"]
+                    if f"ui_custom_{k}" in st.session_state: del st.session_state[f"ui_custom_{k}"]
                 st.rerun()
                 
         st.markdown("---")
@@ -716,8 +747,8 @@ CTA: {st.session_state.get('ugc_cta')}
                 pos_keys = ["ugc_pos_style", "ugc_pos_color", "ugc_pos_cam", "ugc_pos_graphics", "ugc_pos_typography", "ugc_pos_main_headline", "ugc_pos_sub_text"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
-                    if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
-                    if f"custom_{k}" in st.session_state: del st.session_state[f"custom_{k}"]
+                    if f"ui_widget_{k}" in st.session_state: del st.session_state[f"ui_widget_{k}"]
+                    if f"ui_custom_{k}" in st.session_state: del st.session_state[f"ui_custom_{k}"]
                 st.rerun()
 
         st.markdown("---")
