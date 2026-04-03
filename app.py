@@ -158,11 +158,12 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) - [LOCKED - DO NOT MODIFY]
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) - [PATCHED]
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
     if 'ad_product_text' not in st.session_state: st.session_state.ad_product_text = ""
+    if 'ad_extra_note' not in st.session_state: st.session_state.ad_extra_note = ""
     if 'ad_video_prompt' not in st.session_state: st.session_state.ad_video_prompt = ""
     if 'ad_poster_prompt' not in st.session_state: st.session_state.ad_poster_prompt = ""
     if 'ad_poster_prompt_th' not in st.session_state: st.session_state.ad_poster_prompt_th = ""
@@ -201,6 +202,8 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 st.image(up_presenter, width=200) 
 
         st.session_state.ad_product_text = st.text_area("📝 ข้อมูลสินค้า:", value=st.session_state.ad_product_text, height=80)
+        # Patch: เพิ่มช่องบรีฟพิเศษ
+        st.session_state.ad_extra_note = st.text_area("📌 บรีฟพิเศษ / สิ่งที่ต้องเน้น (Director's Note):", value=st.session_state.ad_extra_note, height=80, placeholder="เช่น พรีเซนเตอร์คือแมวตัวผู้ชื่อ 'บุญช่วย' นิสัยกวนๆ เรียกคนดูว่า 'นุด' ให้เน้นความคุ้มค่า...")
 
     tab_vid, tab_poster, tab_run = st.tabs(["🎬 1. สร้างสคริปต์วิดีโอ", "🖼️ 2. สร้างโปสเตอร์/หน้าปก", "🚀 3. รันระบบ (Handoff)"])
     
@@ -216,9 +219,9 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         with col_ai:
             if st.button("✨ ให้ AI ตั้งค่าอัตโนมัติ (Auto-Fill)", key="ad_vid_ai", use_container_width=True):
                 if not st.session_state.ad_product_text:
-                    st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ เพื่อให้ AI นำไปวิเคราะห์")
+                    st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ")
                 else:
-                    with st.spinner("🧠 AI กำลังวิเคราะห์สินค้าและจับคู่ตัวเลือกที่เหมาะสม..."):
+                    with st.spinner("🧠 AI กำลังวิเคราะห์ข้อมูลทั้งหมดและจัดเตรียมผู้พากย์เสียงที่เป๊ะที่สุด..."):
                         dur_options = '["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
                         if "6 วิ" in ai_dir_len: dur_options = '["Bumper Ads (6 วิ)"]'
                         elif "15-30" in ai_dir_len: dur_options = '["Shorts/Reels (15-30 วิ)"]'
@@ -229,30 +232,35 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                         elif "16:9" in ai_dir_ratio: plat_options = '["YouTube In-stream"]'
                         elif "1:1" in ai_dir_ratio: plat_options = '["Facebook Reels"]'
 
-                        prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลสินค้าต่อไปนี้: "{st.session_state.ad_product_text}"
-                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
+                        # Patch: AI วิเคราะห์บรีฟพิเศษเพื่อเลือกเพศเสียงพากย์
+                        context = f"สินค้า: {st.session_state.ad_product_text} | บรีฟพิเศษ: {st.session_state.ad_extra_note}"
+                        prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลต่อไปนี้: "{context}"
+                        (และรูปภาพถ้ามี) แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
+                        
                         - ad_pres: ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"]
+                        
+                        - Patch: เพิ่ม Dropdown เพศและสรรพนาม
+                        - ad_voice: ["🤖 ปล่อย AI คิดเอง", "👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "Bab เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"]
+
                         - ad_tone: ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"]
                         - ad_target: ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"]
-                        - ad_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"]
+                        - ad_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อังกฤษ US Native"]
                         - ad_dur: {dur_options}
-                        - ad_style: ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"]
-                        - ad_story: ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"]
-                        - ad_cta: ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"]
+                        - ad_style: ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ"]
+                        - ad_story: ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "สาธิตวิธีใช้ (How-to)"]
+                        - ad_cta: ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "คลิกลิงก์หน้าโปรไฟล์"]
                         - ad_plat: {plat_options}
-                        - ad_music: ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"]
-                        - ad_color: ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"]
-                        - ad_cam: ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"]
-                        - ad_light: ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น/พระอาทิตย์ตก)", "Cinematic Rim Light (แสงขอบ)", "แสงจัดจ้านสไตล์ป๊อป"]
-                        - ad_text: ["โปรโมชั่นพิเศษ/ราคา", "ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ป้ายราคาเด้งกระแทกตา", "ไม่มีข้อความ"]
-                        - ad_pacing: ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"]
-                        - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"]
+                        - ad_music: ["Pop สนุกสนาน", "Epic อลังการ", "EDM (ตื่นเต้นเร้าใจ)"]
+                        - ad_color: ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)"]
+                        - ad_cam: ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro)", "POV (มุมมองบุคคลที่ 1)"]
+                        - ad_light: ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น)"]
+                        - ad_text: ["ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ไม่มีข้อความ"]
+                        - ad_pacing: ["ตัดฉับไว (Jump Cut)", "Beat Sync"]
+                        - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)"]
 
-                        ⚠️ กฎพิเศษในการตั้งค่า (Hard Constraints):
-                        - เลือกตัวเลือกจากรายการที่กำหนดไว้เท่านั้น ห้ามคิดคำขึ้นมาเอง
-                        - พิจารณาความยาวคลิป (ad_dur) และ แพลตฟอร์ม (ad_plat) จากตัวเลือกที่มีให้จำกัดอย่างเคร่งครัด
+                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยเลือกตัวเลือกจากรายการที่กำหนดไว้เท่านั้น ห้ามคิดคำขึ้นมาเองเด็ดขาด
 
-                        ตอบกลับมาเป็น JSON Format เท่านั้น
+                        答复：
                         """
                         try:
                             res = smart_generate(prompt)
@@ -266,7 +274,8 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         with col_res:
             if st.button("🔄 รีเซ็ตการตั้งค่าวิดีโอ (Reset)", key="ad_vid_res", use_container_width=True):
                 st.session_state.ad_video_prompt = ""
-                vid_keys = ["ad_pres", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
+                # Patch: รวม ad_voice เข้าในการรีเซ็ต
+                vid_keys = ["ad_pres", "ad_voice", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
                 for k in vid_keys:
                     if k in st.session_state: del st.session_state[k]
                     if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
@@ -277,29 +286,40 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         c1, c2, c3 = st.columns(3)
         with c1:
             render_custom_select("1. 👤 พรีเซนเตอร์:", ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"], "ad_pres", "ผู้เชี่ยวชาญ=อาหารเสริม/สกินแคร์, ผู้ใช้งานจริง=ของใช้ทั่วไป")
-            render_custom_select("2. 🗣️ น้ำเสียง:", ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"], "ad_tone", "ASMR=สินค้าของกิน/สกินแคร์, ตลก=เพิ่มการแชร์")
-            render_custom_select("3. 🎯 กลุ่มเป้าหมาย:", ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"], "ad_target", "ช่วยให้ AI เลือกใช้ศัพท์ให้ตรงกับวัยของลูกค้า")
-            render_custom_select("4. 🌐 ภาษาและสำเนียง:", ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"], "ad_lang", "เลือกภาษาให้ตรงกับถิ่นฐานกลุ่มเป้าหมายเพื่อความเนียน")
-            render_custom_select("5. ⏳ ความยาวคลิป:", ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"], "ad_dur", "Shorts/Reels=ดันยอดวิวการเข้าถึง, Long-form=เน้นข้อมูลแน่น")
-            render_custom_select("6. 🎥 สไตล์โฆษณา:", ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"], "ad_style", "UGC=เน้นความจริงใจ/รีวิว, Cinematic=สร้างแบรนด์หรู")
+            # Patch: เพิ่มช่อง "เพศเสียงพากย์" เป็นข้อ 2 ให้อยู่ระหว่างพรีเซนเตอร์กับโทนเสียง
+            render_custom_select("2. 🚻 เพศเสียงพากย์:", ["🤖 ปล่อย AI คิดเอง", "👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "Bab เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"], "ad_voice", "สำคัญมาก: ช่วยล็อกเพศและสรรพนามของเสียง (แก้ปัญหาแมวตัวผู้เสียงสาว)")
+            render_custom_select("3. 🗣️ น้ำเสียง (Tone):", ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"], "ad_tone", "ASMR=สินค้าของกิน/สกินแคร์, ตลก=เพิ่มการแชร์")
+            render_custom_select("4. 🎯 กลุ่มเป้าหมาย:", ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"], "ad_target", "ช่วยให้ AI เลือกใช้ศัพท์ให้ตรงกับวัยของลูกค้า")
+            render_custom_select("5. 🌐 ภาษาและสำเนียง:", ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"], "ad_lang", "เลือกภาษาให้ตรงกับถิ่นฐานกลุ่มเป้าหมายเพื่อความเนียน")
+            render_custom_select("6. ⏳ ความยาวคลิป:", ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"], "ad_dur", "Shorts/Reels=ดันยอดวิวการเข้าถึง, Long-form=เน้นข้อมูลแน่น")
+            render_custom_select("7. 🎥 สไตล์โฆษณา:", ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ", "Stop Motion", "3D Animation"], "ad_style", "UGC=เน้นความจริงใจ/รีวิว, Cinematic=สร้างแบรนด์หรู")
         with c2:
-            render_custom_select("7. 📖 การเล่าเรื่อง:", ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"], "ad_story", "PAS และ Pain Point เหมาะกับสินค้าแก้ปัญหา (สิว/ปวดเมื่อย)")
-            render_custom_select("8. 👉 ปิดการขาย (CTA):", ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"], "ad_cta", "FOMO=กระตุ้นการตัดสินใจทันที")
-            render_custom_select("9. 📱 แพลตฟอร์ม:", ["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"], "ad_plat", "กำหนดสัดส่วนภาพและพฤติกรรมคนดูบนแพลตฟอร์ม")
-            render_custom_select("10. 🎵 ดนตรี:", ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"], "ad_music", "Lofi=คลิป ASMR/สโลว์ไลฟ์, EDM=โปรโมชั่น/ของเซลล์")
-            render_custom_select("11. 🎨 โทนสี:", ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"], "ad_color", "พาสเทล=บิวตี้, นีออน/ดาร์ก=แก็ดเจ็ต/เกมมิ่ง")
+            render_custom_select("8. 📖 การเล่าเรื่อง:", ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "ขยี้ Pain Point", "สาธิตวิธีใช้ (How-to)"], "ad_story", "PAS และ Pain Point เหมาะกับสินค้าแก้ปัญหา (สิว/ปวดเมื่อย)")
+            render_custom_select("9. 👉 ปิดการขาย (CTA):", ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "ให้รีบซื้อก่อนหมด (FOMO)", "คลิกลิงก์หน้าโปรไฟล์", "สมัครสมาชิก"], "ad_cta", "FOMO=กระตุ้นการตัดสินใจทันที")
+            render_custom_select("10. 📱 แพลตฟอร์ม:", ["TikTok / Shopee Video", "Facebook Reels", "YouTube In-stream", "IG Story (เน้นภาพสวย)"], "ad_plat", "กำหนดสัดส่วนภาพและพฤติกรรมคนดูบนแพลตฟอร์ม")
+            render_custom_select("11. 🎵 ดนตรี:", ["Pop สนุกสนาน", "Epic อลังการ", "Lofi (ชิลๆสบายๆ)", "EDM (ตื่นเต้นเร้าใจ)", "ดนตรีประกอบระทึกขวัญ", "ไม่มีเพลงเน้นเสียงพูด"], "ad_music", "Lofi=คลิป ASMR/สโลว์ไลฟ์, EDM=โปรโมชั่น/ของเซลล์")
+            render_custom_select("12. 🎨 โทนสี:", ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)", "ขาวดำคลาสสิก", "นีออนไซเบอร์พังก์"], "ad_color", "พาสเทล=บิวตี้, นีออน/ดาร์ก=แก็ดเจ็ต/เกมมิ่ง")
         with c3:
-            render_custom_select("12. 🎥 มุมกล้อง:", ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"], "ad_cam", "POV=ทำให้คนดูรู้สึกเหมือนใช้งานเอง, มุมเอียง=ฉากแอคชั่น/ตื่นเต้น")
-            render_custom_select("13. 💡 แสงและบรรยากาศ:", ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น/พระอาทิตย์ตก)", "Cinematic Rim Light (แสงขอบ)", "แสงจัดจ้านสไตล์ป๊อป"], "ad_light", "Golden hour=ฟีลลิ่งอบอุ่น/สกินแคร์")
-            render_custom_select("14. ✍️ ข้อความบนจอ:", ["โปรโมชั่นพิเศษ/ราคา", "ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ป้ายราคาเด้งกระแทกตา", "ไม่มีข้อความ"], "ad_text", "TikTok/Reels ขาดไม่ได้คือซับไตเติ้ลเพื่อหยุดนิ้วคนดู")
-            render_custom_select("15. 🎞️ จังหวะการตัดต่อ:", ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"], "ad_pacing", "Jump cut=วัยรุ่น/สั้นกระชับ, สโลว์โมชั่น=โชว์ดีเทล/สินค้าหรู")
-            render_custom_select("16. ✨ เอฟเฟกต์ (VFX):", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"], "ad_vfx", "VHS=วินเทจ/Y2K, Glitch=สินค้าเทคโนโลยี/แฟชั่น")
+            render_custom_select("13. 🎥 มุมกล้อง:", ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro/Close-up)", "POV (มุมมองบุคคลที่ 1)", "มุมสูง (Drone/Top-down)", "มุมเอียง (Dutch Angle)"], "ad_cam", "POV=ทำให้คนดูรู้สึกเหมือนใช้งานเอง, มุมเอียง=ฉากแอคชั่น/ตื่นเต้น")
+            render_custom_select("14. 💡 แสงและบรรยากาศ:", ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น/พระอาทิตย์ตก)", "Cinematic Rim Light (แสงขอบ)", "แสงจัดจ้านสไตล์ป๊อป"], "ad_light", "Golden hour=ฟีลลิ่งอบอุ่น/สกินแคร์")
+            render_custom_select("15. ✍️ ข้อความบนจอ:", ["โปรโมชั่นพิเศษ/ราคา", "ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ป้ายราคาเด้งกระแทกตา", "ไม่มีข้อความ"], "ad_text", "TikTok/Reels ขาดไม่ได้คือซับไตเติ้ลเพื่อหยุดนิ้วคนดู")
+            render_custom_select("16. 🎞️ จังหวะการตัดต่อ:", ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่น", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนาน)"], "ad_pacing", "Jump cut=วัยรุ่น/สั้นกระชับ, สโลว์โมชั่น=โชว์ดีเทล/สินค้าหรู")
+            render_custom_select("17. ✨ เอฟเฟกต์ (VFX):", ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)", "เทคนิคกลิทช์ (Cyberpunk Glitch)", "แสงแฟลร์ (Lens Flare)"], "ad_vfx", "VHS=วินเทจ/Y2K, Glitch=สินค้าเทคโนโลยี/แฟชั่น")
 
         if st.button("🚀 เริ่มเขียนสคริปต์วิดีโอ & แคปชั่นป้ายยา", type="primary", use_container_width=True):
-            prompt = f"""คุณคือผู้กำกับโฆษณาระดับโลก (Commercial Director) หน้าที่ของคุณคือการเขียนสคริปต์โฆษณาสินค้าแบบแบ่งฉาก (ฉากละ 8 วินาที) เพื่อนำไปเจนภาพและวิดีโอบน AI (Veo 3.1) โดยอ้างอิงจากการตั้งค่าต่อไปนี้:
+            # Patch: อัปเดต Prompt ให้ฉลาดขึ้น อิงเพศเสียงตาม Dropdown และเอาบรีฟพิเศษไปสั่ง AI เขียนสรรพนามกวนๆ ได้ทันที
+            voice_persona = st.session_state.get('ad_voice')
+            if voice_persona == "🤖 ปล่อย AI คิดเอง":
+                voice_instruction = "ให้พิจารณา 'พรีเซนเตอร์' และสินค้าเพื่อเลือกสรรพนามที่เหมาะสม"
+            else:
+                voice_instruction = f"บังคับล็อกเพศและสรรพนามเสียงพากย์ตามที่กำหนดไว้เด็ดขาด: {voice_persona}"
+
+            prompt = f"""คุณคือผู้กำกับโฆษณาระดับโลก (Commercial Director) เขียนสคริปต์โฆษณาสินค้าแบบแบ่งฉาก (ฉากละ 8 วินาที) อ้างอิงจากการตั้งค่า:
 สินค้า: {st.session_state.ad_product_text}
+📌 บรีฟพิเศษ/สิ่งที่ต้องเน้น: {st.session_state.ad_extra_note}
+ผู้พากย์เสียง/สรรพนาม (Hard Constraint): {voice_instruction}
 พรีเซนเตอร์: {st.session_state.get('ad_pres')}
-เสียง: {st.session_state.get('ad_tone')}
+เสียง (Tone): {st.session_state.get('ad_tone')}
 เป้าหมาย: {st.session_state.get('ad_target')}
 ภาษา: {st.session_state.get('ad_lang')}
 ความยาว: {st.session_state.get('ad_dur')}
@@ -315,35 +335,37 @@ CTA: {st.session_state.get('ad_cta')}
 การตัดต่อ: {st.session_state.get('ad_pacing')}
 VFX: {st.session_state.get('ad_vfx')}
 
-⚠️ กฎเหล็กในการสร้างฉาก (สำคัญมาก ต้องทำตามโครงสร้างนี้เป๊ะๆ):
-- กฎเรื่องสรรพนามและน้ำเสียง (Gender & Pronoun Rule): ตรวจสอบ "พรีเซนเตอร์", "กลุ่มเป้าหมาย" และ "สินค้า" หากเป็นผู้ชายหรือสินค้าผู้ชาย ให้ใช้คำพูดและคำสร้อยแบบผู้ชายแท้ๆ (เช่น ผม, ครับ, โคตรเท่, จัดเลยพี่, หวัดดีพวก) ห้ามใช้คำศัพท์ผู้หญิง (เช่น เห้ยแก, ดีย์, สิคะ, คร้า) เด็ดขาด หากเป็นผู้หญิงหรือสินค้าผู้หญิงให้ใช้คำพูดผู้หญิง หากไม่ระบุให้ใช้ภาษากลางๆที่เข้าถึงได้ทุกคน
+⚠️ กฎเหล็กเรื่องสรรพนามและน้ำเสียง (สำคัญมาก Must Follow):
+- พิจารณา 'ผู้พากย์เสียง/สรรพนาม' ที่กำหนดไว้ และนำข้อมูลใน '📌 บรีฟพิเศษ' ไปสร้างบทพูดที่เนียนตา หากระบุว่าเป็น 'สัตว์เลี้ยงตัวผู้' และบรีฟพิเศษสั่งให้ใช้คำว่า 'นุด'/'ผม' หรือระบุสรรพนามอื่น ห้าม AI เผลอใช้คำว่า แก, ดีย์, เริ่ด, ค่ะ, สิคะ เด็ดขาด
 
 🎬 ฉากที่ 1: เปิดตัวดึงดูดสายตา (The Hook - 8 วินาที)
 * รายละเอียดฉาก (ภาษาไทย): อธิบายภาพรวมว่าเกิดอะไรขึ้น
 * ข้อความบนจอ (Text on Screen): (ถ้ามี)
-* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (เขียนตามสำเนียง ภาษา และกฎสรรพนามเพศที่กำหนด)
+* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (เขียนตามสรรพนามเพศและบรีฟพิเศษที่กำหนดอย่างเคร่งครัด)
 * Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษ - สำหรับ Nano Banana 2) อธิบายหน้าตาพรีเซนเตอร์, เสื้อผ้า, สถานที่, แสง, โทนสี และมุมกล้องตั้งต้นอย่างละเอียดที่สุด เพื่อใช้เป็นภาพอ้างอิง (เขียนแบบบรรทัดเดียวห้ามขึ้นบรรทัดใหม่)
 * Prompt สร้างวิดีโอ: (ภาษาอังกฤษ - สำหรับ Veo 3.1) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ โดยระบุจังหวะตัดกล้อง (เช่น 0-4s: [แอคชั่น], 4-8s: Quick cut to [แอคชั่นใหม่]) และลงท้ายด้วยคำว่า "Audio: [เสียง SFX/ดนตรี]"
 
 🎬 ฉากที่ 2, 3, 4... : ต่อเนื่องเนื้อหา (Extend Scene - ฉากละ 8 วินาที)
 * รายละเอียดฉาก (ภาษาไทย): อธิบายแอคชั่นที่สานต่อจากฉากที่แล้ว เพื่อเดินเรื่องไปสู่การปิดการขาย
 * ข้อความบนจอ (Text on Screen): (ถ้ามี)
-* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (ขยี้ Pain Point หรือ Call to Action ตามกฎสรรพนามเพศ)
+* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (ขยี้ Pain Point หรือ Call to Action ตามสรรพนามเพศ)
 * (ห้ามเขียน Prompt สร้างภาพนิ่งในฉากที่ 2 เป็นต้นไปเด็ดขาด)
 * Prompt สร้างวิดีโอ: (ภาษาอังกฤษ) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ เริ่มด้วย "Continuing from the previous frame..." ระบุจังหวะตัดกล้อง และลงท้ายด้วย "Audio: [เสียงประกอบที่สอดคล้อง]"
 
 📱 ส่วนท้ายสุด: แคปชั่นป้ายยา 3 แพลตฟอร์ม
 - TikTok: เน้นฮุกกระแส + แฮชแท็กมาแรง (ความยาวปกติ)
 - Facebook (Shopee Affiliate): เน้นสตอรี่เทลลิ่งโน้มน้าวให้กดลิงก์ (ความยาวปกติ)
-- Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *(กฎเหล็ก: เฉพาะข้อ Shopee นี้เท่านั้น ที่ตัวอักษรของข้อความและแฮชแท็กบวกกันแล้วต้องไม่เกิน 150 ตัวอักษร ห้ามเกินเด็ดขาด)*
+- Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *(กฎเหล็ก: ห้ามเกิน 150 ตัวอักษรรวมแฮชแท็ก)*
 """
             st.session_state.ad_video_prompt = smart_generate(prompt)
 
-        if st.session_state.ad_video_prompt: st.code(st.session_state.ad_video_prompt, language="markdown")
+        # Patch: เปลี่ยน st.code เป็น st.text_area รองรับมือถือและแก้ไขได้
+        if st.session_state.ad_video_prompt: st.text_area("📄 สคริปต์วิดีโอฉบับเต็ม:", value=st.session_state.ad_video_prompt, height=400, key="ad_vid_text_output")
 
     with tab_poster:
         st.markdown("##### 🎯 ล็อกเป้าหมายให้ AI (Pre-AI Controls - Poster)")
-        ai_dir_ratio_pos = st.selectbox("📏 ล็อกสัดส่วนภาพหน้าปก (Aspect Ratio):", ["🤖 ปล่อย AI คิดเอง (Free Style)", "16:9 (YouTube/TV)", "4:3 (หน้าจอมาตรฐาน)", "1:1 (Facebook/IG Post)", "3:4 (Portrait Feed)", "9:16 (TikTok/Reels/Shorts)"], key="ai_dir_ratio_pos")
+        # Patch: ดึงปุ่มล็อกสัดส่วนออกมาเป็นพระเอก
+        ai_dir_ratio_pos = st.selectbox("📏 ล็อกสัดส่วนภาพหน้าปก (Aspect Ratio):", ["🤖 ปล่อย AI คิดเอง", "16:9 (YouTube/TV แนวนอน)", "4:3 (แนวนอนมาตรฐาน)", "1:1 (Facebook/IG จัตุรัส)", "3:4 (Portrait แมนยง)", "9:16 (TikTok/Reels แนวตั้ง)"], key="ai_dir_ratio_pos")
 
         col_ai, col_res = st.columns(2)
         with col_ai:
@@ -351,36 +373,41 @@ VFX: {st.session_state.get('ad_vfx')}
                 if not st.session_state.ad_product_text:
                     st.warning("⚠️ กรุณาระบุหรือสกัดข้อมูลสินค้าในช่อง '📝 ข้อมูลสินค้า' ก่อนครับ")
                 else:
-                    with st.spinner("🧠 AI กำลังสแกนรูปภาพและเลือกดีไซน์โปสเตอร์ที่เป๊ะที่สุด..."):
+                    with st.spinner("🧠 AI กำลังสแกนข้อมูลสินค้า รูปภาพ และบรีฟพิเศษ เพื่อออกแบบโปสเตอร์สุดปัง..."):
                         ratio_constraint_pos = ""
-                        if "16:9" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) และมุมกล้องให้เหมาะสมกับอัตราส่วนแนวนอนกว้าง 16:9'
-                        elif "4:3" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับแนวนอนมาตรฐาน 4:3'
-                        elif "1:1" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับสัดส่วนจัตุรัส 1:1 เน้นจุดสนใจตรงกลาง'
-                        elif "3:4" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (pos_comp) ให้เหมาะสมกับแนวตั้ง 3:4'
-                        elif "9:16" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบ (pos_comp) และตำแหน่งข้อความ (pos_text_pos) ให้เหมาะสมกับแนวตั้ง 9:16 โดยเว้น Safe Zone ให้มือถือเสมอ'
+                        if "16:9" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกเลย์เอาต์ยิงแอด (ad_pos_ad_comp) ให้เหมาะสมกับแนวนอนกว้าง 16:9'
+                        elif "1:1" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกเลย์เอาต์ยิงแอด (ad_pos_ad_comp) ให้เหมาะสมกับจัตุรัส 1:1 เน้นจุดสนใจตรงกลาง'
+                        elif "9:16" in ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกเลย์เอาต์ยิงแอด (ad_pos_ad_comp) และตำแหน่งข้อความให้เหมาะสมกับแนวตั้ง 9:16 หลบปุ่ม Safe Zone มือถือ'
 
+                        # Patch: AI วิเคราะห์ข้อมูลสินค้า + บรีฟพิเศษ
+                        context = f"สินค้า: {st.session_state.ad_product_text} | บรีฟพิเศษ: {st.session_state.ad_extra_note}"
+                        
                         prompt_contents = []
                         if st.session_state.ad_imgs:
                             prompt_contents = [Image.open(img_file) for img_file in st.session_state.ad_imgs]
                         
-                        prompt_text = f"""วิเคราะห์ข้อมูลสินค้าและภาพเหล่านี้: "{st.session_state.ad_product_text}"
-                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปกโฆษณา ระดับ Art Director จากรายการด้านล่าง:
-                        - pos_style: ["High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "Minimalist Lifestyle (คลีนๆ มินิมอล)", "Cyberpunk / Neon Product (ล้ำสมัย นีออน)", "Vintage / Retro Film (วินเทจ ฟิล์มคลาสสิก)", "Hyper-Realistic 3D Render (3D สมจริงขั้นสุด)"]
-                        - pos_color: ["สว่างสดใสคลีนๆ (Clean & Bright)", "โทนเข้มดุดันพรีเมียม (Dark & Moody)", "พาสเทลละมุนตา (Soft Pastel)", "สีสันจัดจ้านตัดกัน (Vibrant & Contrast)", "คุมโทนสีเดียว (Monochromatic)", "หรูหรา ดำ-ทอง (Black & Gold)"]
-                        - pos_cam: ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down / Flat Lay)", "ซูมใกล้เจาะดีเทล (Macro Close-up)", "มุมเสยดูยิ่งใหญ่ (Low Angle)", "มุมกว้างเห็นบรรยากาศ (Wide Angle)"]
-                        - pos_light: ["แสงธรรมชาติริมหน้าต่าง (Soft Daylight)", "แสงสตูดิโอเคลียร์ชัด (Studio Lighting)", "แสงแข็งเงาชัด (Hard Light & Bold Shadows)", "แสงนีออนสะท้อน (Neon Reflections)", "แสงพระอาทิตย์ตก (Golden Hour)"]
-                        - pos_bg: ["ฉากสตูดิโอสีพื้นฐาน (Solid Studio Color)", "แท่นโชว์สินค้า (Minimalist Podium)", "บรรยากาศใช้งานจริง (Lifestyle Context)", "ธรรมชาติ (Nature/Outdoors)", "ฉากหลังเบลอ (Bokeh/Depth of Field)"]
-                        - pos_comp: ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"]
-                        - pos_tex: ["คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "หยดน้ำเกาะสดชื่น (Water Drops)", "ควันหรือหมอกบางๆ (Fog/Mist)", "สะท้อนพื้นกระจก (Mirror Reflection)"]
-                        - pos_font: ["ฟอนต์ตัวหนากระแทกตา (Bold/Impact)", "ฟอนต์มินิมอลเรียบหรู (Minimalist/Sans-serif)", "ฟอนต์สไตล์สตรีท (Streetwear/Graffiti)", "ฟอนต์ลายมือดูเป็นกันเอง (Handwritten)", "ฟอนต์อาร์ตๆ มีสไตล์ (Artistic/Serif)"]
-                        - pos_text_pos: ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้ (Safe Zone มือถือ)"]
-                        - pos_text_main: ["โปรโมชั่นพิเศษ/Sale", "ป้าย Flash Sale", "ข้อความรีวิวจากลูกค้า", "คำโปรยสั้นๆ กระแทกใจ", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
-                        - pos_text_sub: ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ของแท้ 100%", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
+                        prompt_text = f"""วิเคราะห์ข้อมูล: "{context}" และภาพเหล่านี้:
+                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์โฆษณา ระดับ Art Director จากรายการด้านล่าง:
+                        
+                        - ad_pos_style: ["Vlog / UGC Review Style (เน้นความเรียลปังๆ)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)", "Cyberpunk Neon (นีออนล้ำสมัย)"]
+                        - ad_pos_color: ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "โทนแดง-ทอง ดุดันพรีเมียม (Red & Gold Premium)", "จัดจ้านตัดกัน (Vibrant Contrast)", "สว่างสดใสคลีนๆ (Clean & Bright)", "โทนดาร์กเท่ๆ (Dark Moody)"]
+                        - ad_pos_cam: ["ระดับสายตาเห็นคนและสินค้า (Eye-level portrait)", "ซูมใกล้เนื้ออาหาร/สินค้าฉ่ำๆ (Macro Close-up)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)"]
+                        - ad_pos_light: ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์Y2K (Hard Flash)", "นีออนสตรีทฟู้ดกลางคืน (Street Neon Light)", "Golden Hour (แสงเย็นอบอุ่น)"]
+                        - ad_pos_display: ["พรีเซนเตอร์ถือและยิ้มหวาน (Presenter holding and smiling)", "พรีเซนเตอร์ถือสินค้าข้างแก้ม (Hand holding near face)", "น้ำสาดกระจายความสดชื่น (Liquid Splash)", "ลอยอยู่กลางอากาศแบบมีมิติ (Floating)", "วัตถุดิบกระจายรอบๆ (Exploding Ingredients)"]
+                        - ad_pos_ad_comp: ["คนอยู่ซ้าย-ข้อความอยู่ขวา (Presenter Left, Text Right)", "สินค้าไซส์ยักษ์อลังการ (Oversized Product Focus)", "เลย์เอาต์แบ่งครึ่ง บน-ล่าง (Split Top-Bottom)", "กฎสามส่วน (Rule of Thirds)"]
+                        - ad_pos_graphics: ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)"]
+                        - ad_pos_typography: ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Minimalist Sans-serif)"]
+                        - ad_pos_typo_effect: ["ข้อความเรืองแสงมีขอบนีออน (Neon Glowing Text)", "ป้ายราคาห้อยเชือก/ป้ายแท็ก 3D (3D Hanging Price Tag)", "ข้อความตัวหนาซ้อนเลเยอร์ (Layered Bold)", "ไม่มีเอฟเฟกต์ (Clean)"]
+                        - ad_pos_badge_style: ["ป้าย 3D เด้งทะลุจอ (3D Pop-up Badge)", "ป้ายนีออนสว่างวาบ (Glowing Neon Sign)", "ป้ายวงกลมสไตล์มินิมอล (Minimalist Circle Sticker)", "ริบบิ้นพาดมุมภาพ (Corner Ribbon Tag)"]
+                        - ad_pos_trust: ["ป้ายรีวิว 5 ดาว (5-Star Rating)", "โลโก้แอปส้ม/แอปตะกร้าตะกร้าตะกร้า (E-com平台 โลโก้)", "ป้ายยอดขาย 100k+ (Top Seller)", "ไม่ใส่ป้าย"]
+                        - ad_pos_text_pos: ["Safe Zone แนวตั้ง (9:16 หลบปุ่ม)", "บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)"]
+                        - ad_pos_main_headline: ["โปรโมชั่นพิเศษ/Sale", "ป้าย Flash Sale", "อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
+                        - ad_pos_sub_text: ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ราคาหลักสิบ", "คิวยาวมาก", "ของแท้ 100%", "ไม่มีข้อความ"]
 
                         ⚠️ กฎพิเศษในการตั้งค่า:
                         {ratio_constraint_pos}
 
-                        ตอบกลับมาเป็น JSON Format เท่านั้น
+                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         """
                         prompt_contents.append(prompt_text)
                         
@@ -397,7 +424,8 @@ VFX: {st.session_state.get('ad_vfx')}
             if st.button("🔄 รีเซ็ตการตั้งค่าโปสเตอร์", key="pos_res", use_container_width=True):
                 st.session_state.ad_poster_prompt = ""
                 st.session_state.ad_poster_prompt_th = ""
-                pos_keys = ["pos_style", "pos_color", "pos_cam", "pos_light", "pos_bg", "pos_comp", "pos_tex", "pos_font", "pos_text_pos", "pos_text_main", "pos_text_sub"]
+                # Patch: รวม ad_pos_display, ad_pos_ad_comp, ad_pos_graphics เข้าในการรีเซ็ต
+                pos_keys = ["ad_pos_style", "ad_pos_color", "ad_pos_cam", "ad_pos_light", "ad_pos_display", "ad_pos_ad_comp", "ad_pos_graphics", "ad_pos_typography", "ad_pos_typo_effect", "ad_pos_badge_style", "ad_pos_trust", "ad_pos_text_pos", "ad_pos_main_headline", "ad_pos_sub_text"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
                     if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
@@ -405,51 +433,65 @@ VFX: {st.session_state.get('ad_vfx')}
                 st.rerun()
 
         st.markdown("---")
-        c1, c2, c3 = st.columns(3)
+        # Patch: จัดระเบียบชุดควบคุมโปสเตอร์เป็น 4 คอลัมน์ เพื่อรองรับตัวเลือกจัดเต็ม
+        c1, c2, c3, c4 = st.columns(4)
         with c1:
-            render_custom_select("1. 🎨 สไตล์ภาพ (Style):", ["High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "Minimalist Lifestyle (คลีนๆ มินิมอล)", "Cyberpunk / Neon Product (ล้ำสมัย นีออน)", "Vintage / Retro Film (วินเทจ ฟิล์มคลาสสิก)", "Hyper-Realistic 3D Render (3D สมจริงขั้นสุด)"], "pos_style", "High-end=แบรนด์เนม/สกินแคร์, Clickbait=คลิปขายของไวรัล, 3D Render=แกดเจ็ต")
-            render_custom_select("2. 🌈 โทนสี (Color):", ["สว่างสดใสคลีนๆ (Clean & Bright)", "โทนเข้มดุดันพรีเมียม (Dark & Moody)", "พาสเทลละมุนตา (Soft Pastel)", "สีสันจัดจ้านตัดกัน (Vibrant & Contrast)", "คุมโทนสีเดียว (Monochromatic)", "หรูหรา ดำ-ทอง (Black & Gold)"], "pos_color", "Contrast=ดึงดูดสายตาเวลาไถฟีด, Black & Gold=อัปราคาดูแพง")
-            render_custom_select("3. 📸 มุมกล้อง (Camera):", ["ระดับสายตา (Eye-level)", "มุมสูง (Top-down / Flat Lay)", "ซูมใกล้เจาะดีเทล (Macro Close-up)", "มุมเสยดูยิ่งใหญ่ (Low Angle)", "มุมกว้างเห็นบรรยากาศ (Wide Angle)"], "pos_cam", "Flat Lay=จัดวางของหลายชิ้นแบบเก๋ๆ, Macro=โชว์เนื้อครีมหรือวัสดุ")
-            render_custom_select("4. 💡 แสงเงา (Lighting):", ["แสงธรรมชาติริมหน้าต่าง (Soft Daylight)", "แสงสตูดิโอเคลียร์ชัด (Studio Lighting)", "แสงแข็งเงาชัด (Hard Light & Bold Shadows)", "แสงนีออนสะท้อน (Neon Reflections)", "แสงพระอาทิตย์ตก (Golden Hour)"], "pos_light", "Hard Light=แฟชั่นจ๋า/สตรีท, Golden Hour=อบอุ่น/สกินแคร์ออร์แกนิก")
+            render_custom_select("1. 🎨 สไตล์ภาพ (Style):", ["Vlog / UGC Review Style (เน้นความเรียลปังๆ)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)", "Cyberpunk Neon (นีออนล้ำสมัย)"], "ad_pos_style", "UGC Style = เน้นความจริงใจ/รีวิว, Cinematic = สร้างแบรนด์หรู")
+            render_custom_select("2. 🌈 โทนสี (Color Grading):", ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "โทนแดง-ทอง ดุดันพรีเมียม (Red & Gold Premium)", "จัดจ้านตัดกัน (Vibrant Contrast)", "สว่างสดใสคลีนๆ (Clean & Bright)", "โทนดาร์กเท่ๆ (Dark Moody)"], "ad_pos_color", "โทนอมส้ม/จัดจ้าน = กระตุ้นความหิวได้ดีที่สุด")
+            render_custom_select("3. 📸 มุมกล้อง (Camera Angle):", ["ระดับสายตาเห็นคนและสินค้า (Eye-level portrait)", "ซูมใกล้เนื้ออาหาร/สินค้าฉ่ำๆ (Macro Close-up)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)"], "ad_pos_cam", "Macro Close-up = โชว์ความน่ากินของอาหาร/เนื้อสกินแคร์")
+            render_custom_select("4. 💡 แสงและบรรยากาศ (Lighting):", ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์Y2K (Hard Flash)", "นีออนสตรีทฟู้ดกลางคืน (Street Neon Light)", "Golden Hour (แสงเย็นอบอุ่น)"], "ad_pos_light", "Hard Flash = กำลังฮิตในวัยรุ่น Y2K/สตรีทฟู้ด")
         with c2:
-            render_custom_select("5. 🏞️ พื้นหลัง (Background):", ["ฉากสตูดิโอสีพื้นฐาน (Solid Studio Color)", "แท่นโชว์สินค้า (Minimalist Podium)", "บรรยากาศใช้งานจริง (Lifestyle Context)", "ธรรมชาติ (Nature/Outdoors)", "ฉากหลังเบลอ (Bokeh/Depth of Field)"], "pos_bg", "Podium=ทำให้สินค้าเด่นเด้งขึ้นมาทันที")
-            render_custom_select("6. 📐 การจัดองค์ประกอบ (Composition):", ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)", "พื้นที่ว่างเยอะ (Negative Space)"], "pos_comp", "Magazine Layout=เผื่อที่ให้ AI ใส่ข้อความแบบลงตัว")
-            render_custom_select("7. 🌟 พื้นผิวและเอฟเฟกต์ (Texture):", ["คลีนและเงางาม (Glossy/Clean)", "ภาพฟิล์มมีเกรน (Film Grain)", "หยดน้ำเกาะสดชื่น (Water Drops)", "ควันหรือหมอกบางๆ (Fog/Mist)", "สะท้อนพื้นกระจก (Mirror Reflection)"], "pos_tex", "Water Drops=เครื่องดื่ม/น้ำหอม, Film Grain=เสื้อผ้าวินเทจ")
+            # Patch: เพิ่มหมวดการจัดวางสินค้า
+            render_custom_select("5. 📦 การนำเสนอสินค้า (Display):", ["พรีเซนเตอร์ถือและยิ้มหวาน (Presenter holding and smiling)", "พรีเซนเตอร์ถือสินค้าข้างแก้ม (Hand holding near face)", "น้ำสาดกระจายความสดชื่น (Liquid Splash)", "ลอยอยู่กลางอากาศแบบมีมิติ (Floating)", "วัตถุดิบกระจายรอบๆ (Exploding Ingredients)"], "ad_pos_display", " water splash = สกินแคร์/เครื่องดื่ม, Exploding = โชว์ไส้ขนม")
+            # Patch: เพิ่มหมวดเลย์เอาต์ยิงแอด
+            render_custom_select("6. 📐 เลย์เอาต์ยิงแอด (Ad-Specific):", ["คนอยู่ซ้าย-ข้อความอยู่ขวา (Presenter Left, Text Right)", "สินค้าไซส์ยักษ์อลังการ (Oversized Product Focus)", "เลย์เอาต์แบ่งครึ่ง บน-ล่าง (Split Top-Bottom)", "กฎสามส่วน (Rule of Thirds)"], "ad_pos_ad_comp", "คนอยู่ซ้าย-ข้อความขวา = อ่านง่ายสุดบนมือถือ")
+            # Patch: เพิ่มกราฟิกกระตุ้นสายตา
+            render_custom_select("7. ✨ กราฟิก/VFX (Graphics):", ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)"], "ad_pos_graphics", "ลูกศร/เส้นนำสายตา = บังคับคนดูให้มองจุดสำคัญ")
+            render_custom_select("8. 🖼️ พื้นหลัง (Background Context):", ["ฉากเบลอเน้นพรีเซนเตอร์ (Blurred Bokeh)", "ฉากครัว (Kitchen Area)", "สวนหลังบ้าน (Backyard Garden)", "ร้านสตรีทฟู้ด (Street Food Stall)", "สตูดิโอสีพื้น (Solid Studio Color)"], "ad_pos_bg", "ฉากหลังที่สอดคล้องกับสินค้าช่วยเพิ่มความเรียล")
         with c3:
-            render_custom_select("8. 🔠 สไตล์ฟอนต์ (Typography):", ["ฟอนต์ตัวหนากระแทกตา (Bold/Impact)", "ฟอนต์มินิมอลเรียบหรู (Minimalist/Sans-serif)", "ฟอนต์สไตล์สตรีท (Streetwear/Graffiti)", "ฟอนต์ลายมือดูเป็นกันเอง (Handwritten)", "ฟอนต์อาร์ตๆ มีสไตล์ (Artistic/Serif)"], "pos_font", "Bold=สายกระตุ้นยอดขาย, Sans-serif=สายคลีนดูแพง")
-            render_custom_select("9. 📍 ตำแหน่งข้อความ (Text Placement):", ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้ (Safe Zone มือถือ)"], "pos_text_pos", "Safe Zone=สำหรับแนวตั้ง 9:16 หลบปุ่ม Like/Share ของ TikTok")
-            render_custom_select("10. 📢 พาดหัวหลัก (Main Headline):", ["โปรโมชั่นพิเศษ/Sale", "ป้าย Flash Sale", "ข้อความรีวิวจากลูกค้า", "คำโปรยสั้นๆ กระแทกใจ", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"], "pos_text_main", "คำใหญ่เด่นสุด กระแทกตา AI จะเรนเดอร์ได้แม่นยำกว่าประโยคยาวๆ")
-            render_custom_select("11. 🏷️ ป้ายโปรโมชั่น (Sub-text):", ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ของแท้ 100%", "รีวิว 5 ดาว", "ไม่มีข้อความ"], "pos_text_sub", "ข้อความรอง/ป้ายเล็กๆ (เว้นว่างได้ถ้าไม่ต้องการ)")
+            render_custom_select("9. 🔠 สไตล์ฟอนต์ (Typography):", ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold with Stroke)", "ฟอนต์ลายมือดูเป็น มิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Clean Sans-serif)", "ฟอนต์รายการทีวี (TV Show Variety)"], "ad_pos_typography", " Bold with Stroke = อ่านง่ายสุดบนมือถือ ยอดนิยมบน TikTok/Shopee")
+            render_custom_select("10. 💅 เอฟเฟกต์ฟอนต์ (Hard-Sell):", ["ข้อความเรืองแสงมีขอบนีออน (Neon Glowing Text)", "ป้ายราคาห้อยเชือก/ป้ายแท็ก 3D (3D Hanging Price Tag)", "ข้อความตัวหนาซ้อนเลเยอร์ (Layered Bold)", "ไม่มีเอฟเฟกต์ (Clean)"], "ad_pos_typo_effect", "3D Price Tag = เหมาะกับโปรแรงๆ, Neon Glowing = ข้อความลอยเด่น")
+            render_custom_select("11. 📌 ตำแหน่งข้อความ (Text Pos):", ["Safe Zone แนวตั้ง (9:16 หลบปุ่ม)", "บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)"], "ad_pos_text_pos", "Safe Zone = สำหรับ 9:16 แนวตั้ง หลบปุ่ม Like/Share TikTok")
+            render_custom_select("12. 🏞️ องค์ประกอบภาพ (Composition):", ["กฎสามส่วน (Rule of Thirds)", "สมมาตรตรงกลางเป๊ะ (Symmetrical)", "สไตล์หน้าปกนิตยสาร (Magazine Layout)"], "ad_pos_comp", "Symmetrical = สินค้าเด่นเด้งขึ้นมาทันที")
+        with c4:
+            # Patch: เพิ่มหมวดป้ายความน่าเชื่อถือ
+            render_custom_select("13. 🛡️ ป้ายน่าเชื่อถือ (Trust Badges):", ["ป้ายรีวิว 5 ดาว (5-Star Rating)", "โลโก้แอปส้ม/แอปตะกร้าตะกร้าตะกร้า (E-com Platform โลโก้)", "ป้ายยอดขาย 100k+ (Top Seller Badge)", "ป้ายรับประกัน/โล่ทอง (Warranty Shield)", "ไม่ใส่ป้าย"], "ad_pos_trust", "5 ดาว = สร้างความมั่นใจ, ตะกร้า = เร่งให้กดซื้อ")
+            # Patch: เพิ่มหมวดสไตล์ของป้ายโปรโมชั่น
+            render_custom_select("14. 📢 สไตล์ป้ายโปร (Promo Badge Style):", ["ป้าย 3D เด้งทะลุจอ (3D Pop-up Badge)", "ป้ายนีออนสว่างวาบ (Glowing Neon Sign)", "ป้ายวงกลมสไตล์มินิมอล (Minimalist Circle Sticker)", "ริบบิ้นพาดมุมภาพ (Corner Ribbon Tag)"], "ad_pos_badge_style", "3D Badge = ฮาร์ดเซลล์ดุดัน")
+            render_custom_select("15. 📣 พาดหัวหลัก (Main Headline):", ["โปรโมชั่นพิเศษ/Sale", "Flash Sale สุดช็อก", "อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"], "ad_pos_main_headline", "คำใหญ่เด่นสุด กระแทกตา AI จะเรนเดอร์ได้แม่นยำกว่าประโยคยาวๆ")
+            render_custom_select("16. 🏷️ ป้ายโปร/ราคา (Sub-text):", ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ราคาหลักสิบ", "คุ้มมากแม่!", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"], "ad_pos_sub_text", "ข้อความดึงดูดใจเพิ่มเติม หรือเว้นว่างได้ถ้าไม่ต้องการ")
         
         if st.button("🚀 เริ่มสร้าง Prompt โปสเตอร์ (Nano Banana 2)", type="primary", use_container_width=True):
+            # Patch: อัปเดต Prompt ให้ฉลาดขึ้น อิงตัวเลือกจัดเต็ม
             with st.spinner("🧠 AI กำลังแต่ง Prompt และแยกหน้าจอแปลภาษา..."):
-                prompt = f"""คุณคือนักเขียน Prompt (Prompt Engineer) ระดับโลกสำหรับ AI สร้างภาพ 'Nano Banana 2' (Gemini 3 Flash Image)
+                prompt = f"""คุณคือนักเขียน Prompt ระดับโลกสำหรับ AI สร้างภาพ 'Nano Banana 2'
 
-ข้อมูลสำหรับการสร้างหน้าปก:
-- สินค้า: {st.session_state.ad_product_text}
-- สไตล์ภาพ: {st.session_state.get('pos_style')}
-- โทนสี: {st.session_state.get('pos_color')}
-- มุมกล้อง: {st.session_state.get('pos_cam')}
-- แสงเงา: {st.session_state.get('pos_light')}
-- พื้นหลัง: {st.session_state.get('pos_bg')}
-- องค์ประกอบ: {st.session_state.get('pos_comp')}
-- พื้นผิว/VFX: {st.session_state.get('pos_tex')}
-- ฟอนต์: {st.session_state.get('pos_font')}
-- ตำแหน่งข้อความ: {st.session_state.get('pos_text_pos')}
-- พาดหัวหลัก: "{st.session_state.get('pos_text_main')}"
-- ข้อความรอง: "{st.session_state.get('pos_text_sub')}"
+ข้อมูลสำหรับการสร้างโฆษณาฉบับ Hard-Sell ยุคใหม่:
+- บริบทสินค้า & บรีฟพิเศษ: {st.session_state.ad_product_text} | {st.session_state.ad_extra_note}
+- สไตล์ปก: {st.session_state.get('ad_pos_style')}
+- โทนสี & Vibe: {st.session_state.get('ad_pos_color')}
+- มุมกล้อง: {st.session_state.get('ad_pos_cam')}
+- แสงเงา: {st.session_state.get('ad_pos_light')}
+- ฉากหลัง: {st.session_state.get('ad_pos_bg')}
+- การจัดนำเสนอสินค้า (Interaction): {st.session_state.get('ad_pos_display')}
+- กราฟิกนำสายตา/VFX: {st.session_state.get('ad_pos_graphics')}
+- เลย์เอาต์เฉพาะทางโฆษณา (Composition): {st.session_state.get('ad_pos_ad_comp')}
+- สไตล์ฟอนต์ (Typography): {st.session_state.get('ad_pos_typography')}
+- เอฟเฟกต์ฟอนต์: {st.session_state.get('ad_pos_typo_effect')}
+- ป้ายความน่าเชื่อถือ (Trust Badge): {st.session_state.get('ad_pos_trust')}
+- สไตล์ป้ายโปร (Promo Badge): {st.session_state.get('ad_pos_badge_style')}
+- ตำแหน่งข้อความ (Text Placement): {st.session_state.get('ad_pos_text_pos')}
+- พาดหัวหลัก: "{st.session_state.get('ad_pos_main_headline')}"
+- ป้ายโปร/ราคา: "{st.session_state.get('ad_pos_sub_text')}"
 
 **กฎเหล็กในการแต่ง Prompt (STRICT RULES):**
-1. **ห้ามแปลข้อความ (DO NOT TRANSLATE TEXT):** คำว่า "{st.session_state.get('pos_text_main')}" และ "{st.session_state.get('pos_text_sub')}" ต้องถูกเก็บไว้เป็นภาษาไทยในเครื่องหมายคำพูดแบบเป๊ะๆ ห้ามแปลเป็นภาษาอังกฤษเด็ดขาด! (ยกเว้นผู้ใช้พิมพ์คำว่า "ไม่มีข้อความ" ให้เว้นไว้ไม่ต้องเขียน)
-2. โครงสร้าง Prompt ภาษาอังกฤษ: เขียนเป็น 1 ย่อหน้า อธิบายรายละเอียดให้ครบถ้วน ต้องมีประโยคเกี่ยวกับการเรนเดอร์ข้อความ เช่น `The text "{st.session_state.get('pos_text_main')}" is clearly rendered using {st.session_state.get('pos_font')} typography placed at {st.session_state.get('pos_text_pos')}.`
-3. ห้ามมั่ว (Anti-Hallucination): เขียนทิ้งท้ายใน Prompt ภาษาอังกฤษด้วยคำว่า `STRICTLY render ONLY the requested text. DO NOT add extra icons, stars, shopping carts, or random text. DO NOT hallucinate gibberish text on the packaging.`
-4. คำอธิบายภาษาไทย (Thai Translation): แปลเนื้อหาของ Prompt อธิบายให้ผู้ใช้คนไทยอ่านเข้าใจ ว่าคุณสั่ง AI จัดแสง มุมกล้อง และวางข้อความไว้ตรงไหนบ้าง
+1. **ห้ามแปลข้อความ (DO NOT TRANSLATE TEXT):** คำว่า "{st.session_state.get('ad_pos_main_headline')}" และ "{st.session_state.get('ad_pos_sub_text')}" ต้องเก็บไว้เป็นภาษาไทยในเครื่องหมายคำพูดเป๊ะๆ
+2. โครงสร้าง Prompt ภาษาอังกฤษ: เขียนเป็น 1 ย่อหน้า อธิบายหน้าตาพรีเซนเตอร์ การจัดดิสเพลย์สินค้าอลังการ และต้องมีประโยคเกี่ยวกับการเรนเดอร์ข้อความและป้ายต่างๆ เช่น `The text "{st.session_state.get('ad_pos_main_headline')}" and "{st.session_state.get('ad_pos_sub_text')}" are clearly rendered using {st.session_state.get('ad_pos_typography')} typography with {st.session_state.get('ad_pos_typo_effect')} effect, placed at {st.session_state.get('ad_pos_text_pos')} within a prominent {st.session_state.get('ad_pos_badge_style')}. Also, display the {st.session_state.get('ad_pos_trust')} prominently. STRICTLY render ONLY the requested text. DO NOT render extra symbols or gibberish. Apply {st.session_state.get('ad_pos_graphics')}.`
 
 **รูปแบบการตอบกลับ (JSON FORMAT ONLY):**
-ตอบกลับมาเป็น JSON ตามโครงสร้างนี้เท่านั้น ห้ามมีข้อความอื่นปน
 {{
-    "english_prompt": "Prompt สร้างภาพนิ่ง: [Prompt ภาษาอังกฤษทั้งหมดตามกฎ]",
-    "thai_translation": "[คำแปล Prompt และคำอธิบายเป็นภาษาไทย เพื่อให้คนอ่านเข้าใจ]"
+    "english_prompt": "Prompt สร้างภาพนิ่ง: [Prompt ภาษาอังกฤษฉบับ Hard-Sell จัดเต็ม]",
+    "thai_translation": "[คำแปล Prompt และคำอธิบายภาษาไทยให้คนอ่านเข้าใจ]"
 }}
 """
                 try:
@@ -465,12 +507,13 @@ VFX: {st.session_state.get('ad_vfx')}
         if st.session_state.ad_poster_prompt:
             st.markdown("---")
             st.markdown("### 📌 สรุปบรีฟงานหน้าปก (Summary Board)")
-            st.info(f"**สไตล์:** {st.session_state.get('pos_style')} | **โทนสี:** {st.session_state.get('pos_color')} | **ฟอนต์:** {st.session_state.get('pos_font')}\n\n**พาดหัวหลัก:** {st.session_state.get('pos_text_main')} | **ป้ายรอง:** {st.session_state.get('pos_text_sub')}")
+            st.info(f"**ดิสเพลย์:** {st.session_state.get('ad_pos_display')} | **เลย์เอาต์:** {st.session_state.get('ad_pos_ad_comp')} | **VFX:** {st.session_state.get('ad_pos_graphics')}\n\n**พาดหัว:** {st.session_state.get('ad_pos_main_headline')} | **ราคา:** {st.session_state.get('ad_pos_sub_text')} | **ความน่าเชื่อถือ:** {st.session_state.get('ad_pos_trust')}")
             
             c_eng, c_th = st.columns(2)
             with c_eng:
                 st.success("🇬🇧 คำสั่งภาษาอังกฤษ (ส่งให้ระบบ Handoff/บอท)")
-                st.code(st.session_state.ad_poster_prompt, language="markdown")
+                # Patch: เปลี่ยน st.code เป็น st.text_area
+                st.text_area("📄 Prompt ภาษาอังกฤษฉบับ Hard-Sell:", value=st.session_state.ad_poster_prompt, height=200, key="ad_pos_eng_text_output")
             with c_th:
                 st.info("🇹🇭 คำอธิบายภาษาไทย (สำหรับคุณเช็กความถูกต้อง)")
                 st.markdown(f"*{st.session_state.ad_poster_prompt_th}*")
@@ -491,7 +534,7 @@ VFX: {st.session_state.get('ad_vfx')}
                         run_bot_dialog(i+1, s_text, active_refs, i==0)
 
 # =========================================================================================
-# 🍰 โหมด 2: 🍰 รีวิวร้านตัวเอง (UGC Vlogger) - [UPGRADED POSTER TAB]
+# 🍰 โหมด 2: 🍰 รีวิวร้านตัวเอง (UGC Vlogger) - [PATCHED]
 # =========================================================================================
 elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogger)":
     st.markdown('<div class="main-header">🍰 สตูดิโอเจ้าของร้านรีวิวเอง (UGC Vlogger)</div>', unsafe_allow_html=True)
@@ -537,11 +580,7 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
     
     with tab_vid:
         st.markdown("##### 🎯 ล็อกเป้าหมายให้ AI (Pre-AI Controls)")
-        col_ai_dir1, col_ai_dir2 = st.columns(2)
-        with col_ai_dir1:
-            ugc_ai_dir_len = st.selectbox("⏱️ ล็อกความยาวคลิป:", ["🤖 ปล่อย AI คิดเอง (Free Style)", "⚡ บังคับสั้นกระแทกตา (Bumper 6 วิ)", "📱 บังคับคลิปกระแส (Shorts/Reels 15-30 วิ)", "🎬 บังคับคลิปเล่าเรื่อง (1 นาทีขึ้นไป)"], key="ugc_ai_dir_len")
-        with col_ai_dir2:
-            ugc_ai_dir_ratio = st.selectbox("📏 ล็อกสัดส่วนภาพ:", ["🤖 ปล่อย AI คิดเอง (Free Style)", "📱 แนวตั้ง (9:16) - เหมาะกับมือถือ", "📺 แนวนอน (16:9) - เหมาะกับ YouTube/TV", "⬛ จัตุรัส (1:1) - เหมาะกับ Facebook/IG Feed"], key="ugc_ai_dir_ratio")
+        ugc_ai_dir_len = st.selectbox("⏱️ ล็อกความยาวคลิป:", ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"], key="ugc_ai_dir_len")
 
         col_ai, col_res = st.columns(2)
         with col_ai:
@@ -550,11 +589,6 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
                     st.warning("⚠️ กรุณาระบุชื่อร้านหรือเมนูเด็ดก่อนครับ เพื่อให้ AI นำไปวิเคราะห์")
                 else:
                     with st.spinner("🧠 AI กำลังสแกนรูปภาพและบริบทของร้าน..."):
-                        dur_options = '["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
-                        if "6 วิ" in ugc_ai_dir_len: dur_options = '["Bumper Ads (6 วิ)"]'
-                        elif "15-30" in ugc_ai_dir_len: dur_options = '["Shorts/Reels (15-30 วิ)"]'
-                        elif "1 นาที" in ugc_ai_dir_len: dur_options = '["มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"]'
-
                         ugc_context = f"ร้าน: {st.session_state.get('ugc_shop_name', '')} | เมนู: {st.session_state.get('ugc_menu', '')} | พิกัด: {st.session_state.get('ugc_location', '')} | บรีฟพิเศษ: {st.session_state.get('ugc_extra_brief', '')}"
                         prompt_contents = []
                         if st.session_state.ugc_imgs:
@@ -563,16 +597,15 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
                         prompt_text = f"""คุณคือผู้กำกับคลิปไวรัลและ Vlogger ระดับโปร วิเคราะห์ข้อมูลร้านและเมนูต่อไปนี้: "{ugc_context}"
                         (และรูปภาพถ้ามี) แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างคลิปรีวิวร้าน จากรายการด้านล่าง:
                         
-                        - ugc_actor: ["เจ้าของร้านใจดี/เป็นกันเอง", "วัยรุ่นเทสดี (Cafe Hopper)", "สายกินจุ (Mukbang)", "นักวิจารณ์อาหาร (ด่าไปกินไป/เรียลๆ)", "เชฟทำอาหาร/ผู้เชี่ยวชาญ", "พนักงานเสิร์ฟสายฮา", "ไม่มีคน (เน้นอาหาร/บรรยากาศ)"]
-                        - ugc_tone: ["ASMR (เน้นเสียงเคี้ยว/ทำอาหาร)", "เล่าสตอรี่สู้ชีวิต (Storytelling)", "ตื่นเต้นอวยยศ (Hype)", "รีวิวตามจริงไม่อวย (Honest Review)", "ตลกขบขัน/ซิทคอม", "ดุดันจริงจัง (Hardcore)"]
-                        - ugc_cam: ["ถือกล้องเซลฟี่เดินเข้าร้าน (Vlog POV)", "ตั้งกล้องกินโชว์ (Static/Tabletop)", "มุมมองแทนสายตาตอนกิน (First-person POV)", "ตากล้องแอบถ่าย (Third-person/Candid)", "ซูมเจาะอาหารยั่วๆ (Macro/B-roll)"]
-                        - ugc_vibe: ["สตรีทฟู้ดริมทาง (Street Food/Local)", "คาเฟ่มินิมอล (Minimalist/Clean)", "หรูหราภัตตาคาร (Fine Dining)", "ร้านลับในซอย (Hidden Gem/Cozy)", "โฮมมี่ทำกินเองที่บ้าน (Home-cooked)"]
-                        - ugc_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน", "ภาษาใต้", "ภาษาเหนือ", "อังกฤษ (English)"]
-                        - ugc_music: ["เพลงฮิตแผ่นเสียงรันเวย์ (Trendy TikTok)", "Acoustic ชิลๆ (Cafe Vibe)", "โจ๊ะๆ รถแห่ (Fun Thai Local)", "Lo-fi สบายๆ", "Epic ยิ่งใหญ่อลังการ", "ไม่มีเพลง (เน้นเสียง ASMR/เสียงบรรยากาศ)"]
-                        - ugc_cta: ["ปักหมุดแผนที่ร้าน/ชวนมากิน", "แจกโปรโมชั่นหน้าร้าน", "สั่งผ่านแอปเดลิเวอรี่ (Grab/Lineman)", "กดตะกร้าสั่งซื้อ (ขายอาหารแห้ง/สำเร็จรูป)", "กดติดตามรอคลิปหน้า"]
-                        - ugc_pacing: ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่นยั่วๆ", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนานให้เห็นความเรียล)"]
-                        - ugc_text_overlay: ["บรรยายความอร่อยคำต่อคำ", "ซับไตเติ้ล", "ป้ายราคาเด้งกระแทกตา", "คะแนนรีวิวดาว", "ไม่มีข้อความ"]
-                        - ugc_dur: {dur_options}
+                        - ugc_actor: ["เจ้าของร้านใจดี", "วัยรุ่นเทสดี (Cafe Hopper)", "สายกินจุ (Mukbang)", "นักวิจารณ์อาหาร", "เชฟทำอาหาร"]
+                        - ugc_tone: ["ASMR (กระซิบ)", "Storytelling", "ตื่นเต้นอวยยศ (Hype)"]
+                        - ugc_cam: ["ถือกล้องเซลฟี่เดินเข้าร้าน (Vlog POV)", "ตั้งกล้องกินโชว์", "มุมมองแทนสายตาตอนกิน (First-person POV)"]
+                        - ugc_vibe: ["สตรีทฟู้ดริมทาง", "คาเฟ่มินิมอล", "หรูหราภัตตาคาร"]
+                        - ugc_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน", "ภาษาใต้", "ภาษาเหนือ"]
+                        - ugc_music: ["เพลงฮิตTikTok", "Acoustic ชิลๆ", "ไม่มีเพลง (เน้นASMR)"]
+                        - ugc_cta: ["ปักหมุดแผนที่ร้าน/ชวนมากิน", "แจกโปรโมชั่นหน้าร้าน"]
+                        - ugc_pacing: ["ตัดฉับไว (Jump Cut)", "Beat Sync"]
+                        - ugc_text_overlay: ["ซับไตเติ้ลคำต่อคำ", "ไม่มีข้อความ"]
 
                         ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
                         """
@@ -590,7 +623,7 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
         with col_res:
             if st.button("🔄 รีเซ็ต (Reset)", key="ugc_vid_res", use_container_width=True):
                 st.session_state.ugc_prompt = ""
-                vid_keys = ["ugc_actor", "ugc_tone", "ugc_cam", "ugc_vibe", "ugc_lang", "ugc_music", "ugc_cta", "ugc_pacing", "ugc_text_overlay", "ugc_dur"]
+                vid_keys = ["ugc_actor", "ugc_tone", "ugc_cam", "ugc_vibe", "ugc_lang", "ugc_music", "ugc_cta", "ugc_pacing", "ugc_text_overlay"]
                 for k in vid_keys:
                     if k in st.session_state: del st.session_state[k]
                     if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
@@ -600,65 +633,55 @@ elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogge
         st.markdown("---")
         c1, c2, c3 = st.columns(3)
         with c1:
-            render_custom_select("1. 👤 คาแรคเตอร์ผู้รีวิว:", ["เจ้าของร้านใจดี/เป็นกันเอง", "วัยรุ่นเทสดี (Cafe Hopper)", "สายกินจุ (Mukbang)", "นักวิจารณ์อาหาร (ด่าไปกินไป/เรียลๆ)", "เชฟทำอาหาร/ผู้เชี่ยวชาญ", "พนักงานเสิร์ฟสายฮา", "ไม่มีคน (เน้นอาหาร/บรรยากาศ)"], "ugc_actor", "สายด่าไปกินไป=สตรีทฟู้ดสร้างความเรียล, เชฟ=ภัตตาคาร/โอมากาเสะ")
-            render_custom_select("2. 🗣️ สไตล์การเล่าเรื่อง:", ["ASMR (เน้นเสียงเคี้ยว/ทำอาหาร)", "เล่าสตอรี่สู้ชีวิต (Storytelling)", "ตื่นเต้นอวยยศ (Hype)", "รีวิวตามจริงไม่อวย (Honest Review)", "ตลกขบขัน/ซิทคอม", "ดุดันจริงจัง (Hardcore)"], "ugc_tone", "ASMR=เหมาะกับของทอด/ย่าง, Storytelling=สร้างความผูกพันกับร้าน")
-            render_custom_select("3. 🎥 มุมกล้องและพร็อพ:", ["ถือกล้องเซลฟี่เดินเข้าร้าน (Vlog POV)", "ตั้งกล้องกินโชว์ (Static/Tabletop)", "มุมมองแทนสายตาตอนกิน (First-person POV)", "ตากล้องแอบถ่าย (Third-person/Candid)", "ซูมเจาะอาหารยั่วๆ (Macro/B-roll)"], "ugc_cam", "เซลฟี่=ความเป็นกันเอง (UGC แท้ๆ), ซูมเจาะ=เน้นความน่ากิน")
-            render_custom_select("4. ✨ บรรยากาศร้าน (Vibe):", ["สตรีทฟู้ดริมทาง (Street Food/Local)", "คาเฟ่มินิมอล (Minimalist/Clean)", "หรูหราภัตตาคาร (Fine Dining)", "ร้านลับในซอย (Hidden Gem/Cozy)", "โฮมมี่ทำกินเองที่บ้าน (Home-cooked)"], "ugc_vibe", "ช่วยให้ AI กำหนดฉากหลังและจัดแสงได้ตรงปก")
+            render_custom_select("👤 ผู้รีวิว/คาแรคเตอร์:", ["เจ้าของร้านใจดี", "วัยรุ่นเทสดี (Cafe Hopper)", "สายกินจุ (Mukbang)", "นักวิจารณ์อาหาร", "เชฟทำอาหาร"], "ugc_actor")
+            render_custom_select("🗣️ สไตล์น้ำเสียง:", ["ASMR (กระซิบ)", "Storytelling", "ตื่นเต้นอวยยศ (Hype)"], "ugc_tone")
+            render_custom_select("🎥 มุมกล้อง/พร็อพ:", ["ถือกล้องเซลฟี่เดินเข้าร้าน (Vlog POV)", "ตั้งกล้องกินโชว์", "มุมมองแทนสายตาตอนกิน (First-person POV)"], "ugc_cam")
         with c2:
-            render_custom_select("5. 🌐 ภาษาและสำเนียง:", ["ภาษาไทยกลาง", "อีสานมาตรฐาน", "ภาษาใต้", "ภาษาเหนือ", "อังกฤษ (English)"], "ugc_lang", "เพิ่มความ Local และความน่าเชื่อถือให้กับร้านพื้นถิ่น")
-            render_custom_select("6. 🎵 ดนตรีประกอบ (BGM):", ["เพลงฮิตแผ่นเสียงรันเวย์ (Trendy TikTok)", "Acoustic ชิลๆ (Cafe Vibe)", "โจ๊ะๆ รถแห่ (Fun Thai Local)", "Lo-fi สบายๆ", "Epic ยิ่งใหญ่อลังการ", "ไม่มีเพลง (เน้นเสียง ASMR/เสียงบรรยากาศ)"], "ugc_music", "ถ้าเลือกแนว ASMR ด้านบน แนะนำให้เลือก 'ไม่มีเพลง' ครับ")
-            render_custom_select("7. 👉 จุดปิดการขาย (CTA):", ["ปักหมุดแผนที่ร้าน/ชวนมากิน", "แจกโปรโมชั่นหน้าร้าน", "สั่งผ่านแอปเดลิเวอรี่ (Grab/Lineman)", "กดตะกร้าสั่งซื้อ (ขายอาหารแห้ง/สำเร็จรูป)", "กดติดตามรอคลิปหน้า"], "ugc_cta", "เป้าหมายหลักของคลิปนี้คือให้คนดูทำอะไรต่อ")
+            render_custom_select("✨ บรรยากาศร้าน (Vibe):", ["สตรีทฟู้ดริมทาง", "คาเฟ่มินิมอล", "หรูหราภัตตาคาร"], "ugc_vibe")
+            render_custom_select("🌐 ภาษาและสำเนียง:", ["ภาษาไทยกลาง", "อีสานมาตรฐาน", "ภาษาใต้", "ภาษาเหนือ"], "ugc_lang")
+            render_custom_select("🎵 ดนตรีประกอบ (BGM):", ["เพลงฮิตTikTok", "Acoustic ชิลๆ", "ไม่มีเพลง (เน้นASMR)"], "ugc_music")
         with c3:
-            render_custom_select("8. 🎞️ จังหวะการตัดต่อ:", ["ตัดฉับไว (Jump Cut)", "สมูทและสโลว์โมชั่นยั่วๆ", "ตัดตามจังหวะเพลง (Beat Sync)", "Long Take (แช่กล้องนานให้เห็นความเรียล)"], "ugc_pacing", "สโลว์โมชั่น=เวลายกชีสยืดๆ หรือเทน้ำจิ้ม")
-            render_custom_select("9. ✍️ ข้อความบนจอ:", ["บรรยายความอร่อยคำต่อคำ", "ซับไตเติ้ล", "ป้ายราคาเด้งกระแทกตา", "คะแนนรีวิวดาว", "ไม่มีข้อความ"], "ugc_text_overlay", "ป้ายราคา=ดึงดูดสายประหยัด, บรรยายคำต่อคำ=วัยรุ่นฮิตมาก")
-            render_custom_select("10. ⏳ ความยาวคลิป:", ["Bumper Ads (6 วิ)", "Shorts/Reels (15-30 วิ)", "มาตรฐาน (1 นาที)", "Long-form (เกิน 1 นาที)"], "ugc_dur", "Shorts/Reels (15-30 วิ) เหมาะกับการดันอัลกอริทึมมากที่สุด")
+            render_custom_select("👉 ปิดการขาย (CTA):", ["ปักหมุดแผนที่ร้าน/ชวนมากิน", "แจกโปรโมชั่นหน้าร้าน"], "ugc_cta")
+            render_custom_select("🎞️ จังหวะตัดต่อ:", ["ตัดฉับไว (Jump Cut)", "Beat Sync"], "ugc_pacing")
+            render_custom_select("✍️ ข้อความบนจอ:", ["ซับไตเติ้ลคำต่อคำ", "ไม่มีข้อความ"], "ugc_text_overlay")
 
         if st.button("🚀 เริ่มเขียนสคริปต์รีวิวร้าน (UGC Vlogger)", type="primary", use_container_width=True):
-            prompt = f"""คุณคือผู้กำกับและ Content Creator ระดับประเทศ หน้าที่ของคุณคือการเขียนสคริปต์คลิปรีวิวร้านอาหารแบบแบ่งฉาก (ฉากละ 8 วินาที) เพื่อนำไปเจนวิดีโอบน AI (Veo 3.1) โดยอ้างอิงจากการตั้งค่าต่อไปนี้:
+            prompt = f"""คุณคือผู้กำกับและ Content Creator ระดับประเทศ เขียนสคริปต์คลิปรีวิวร้านอาหารแบบแบ่งฉาก (ฉากละ 8 วินาที) อ้างอิงจากการตั้งค่า:
 ชื่อร้าน: {st.session_state.get('ugc_shop_name')}
 เมนูเด็ด: {st.session_state.get('ugc_menu')}
 พิกัด: {st.session_state.get('ugc_location')}
-บรีฟพิเศษที่ต้องมี: {st.session_state.get('ugc_extra_brief')}
+บรีฟพิเศษ: {st.session_state.get('ugc_extra_brief')}
 ผู้รีวิว: {st.session_state.get('ugc_actor')}
-โทนการเล่าเรื่อง: {st.session_state.get('ugc_tone')}
+เสียง (Tone): {st.session_state.get('ugc_tone')}
 มุมกล้อง: {st.session_state.get('ugc_cam')}
 บรรยากาศร้าน: {st.session_state.get('ugc_vibe')}
 ภาษา: {st.session_state.get('ugc_lang')}
 ดนตรี: {st.session_state.get('ugc_music')}
 CTA: {st.session_state.get('ugc_cta')}
-การตัดต่อ: {st.session_state.get('ugc_pacing')}
-ความยาวคลิป: {st.session_state.get('ugc_dur')}
-
-⚠️ กฎเหล็กในการสร้างฉาก:
-- กฎเรื่องสรรพนามและเพศ (Gender & Pronoun Rule): ตรวจสอบ "คาแรคเตอร์ผู้รีวิว" เพื่อกำหนดเพศและสรรพนามให้ถูกต้อง หากเป็นวัยรุ่นใช้ศัพท์แสลงวัยรุ่น (เช่น แก, จึ้ง, แสงออกปาก) หากเป็นเชฟ/เจ้าของร้านใช้ภาษาที่ดูเชี่ยวชาญ/เป็นกันเอง 
-- ข้อมูลจากบรีฟพิเศษ: คุณต้องนำข้อมูลใน "บรีฟพิเศษที่ต้องมี" แทรกเข้าไปในบทพูดของฉากใดฉากหนึ่งอย่างเป็นธรรมชาติ
+ความยาวคลิป: {ugc_ai_dir_len}
 
 🎬 ฉากที่ 1: เปิดคลิปเรียกน้ำย่อย (The Hook - 8 วินาที)
 * รายละเอียดฉาก (ภาษาไทย): อธิบายภาพรวมว่าเกิดอะไรขึ้น (เช่น โชว์อาหารน่ากิน หรือคนรีวิวกำลังตื่นเต้น)
-* ข้อความบนจอ (Text on Screen): (ถ้ามี)
-* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (เขียนตามสำเนียง ภาษา และกฎสรรพนามเพศที่กำหนด)
-* Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษ - สำหรับ Nano Banana 2) อธิบายหน้าตาผู้รีวิว (ถ้ามี), อาหาร, ฉากหลัง, แสง, โทนสี และมุมกล้องอย่างละเอียดที่สุด เพื่อใช้เป็นภาพอ้างอิง (เขียนแบบบรรทัดเดียวห้ามขึ้นบรรทัดใหม่)
-* Prompt สร้างวิดีโอ: (ภาษาอังกฤษ - สำหรับ Veo 3.1) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ โดยระบุจังหวะตัดกล้อง และลงท้ายด้วยคำว่า "Audio: [เสียง SFX/ดนตรี]"
+* ข้อความบนจอ: (ถ้ามี)
+* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (เขียนตามสรรพนามเพศที่เหมาะสมกับคาแรคเตอร์)
+* Prompt สร้างภาพนิ่ง: (ภาษาอังกฤษ - สำหรับ Nano Banana 2) อธิบายหน้าตาผู้รีวิว (ถ้ามี), อาหาร, ฉากหลัง, แสง, โทนสี และมุมกล้องอย่างละเอียดที่สุด เพื่อใช้เป็นภาพอ้างอิง
+* Prompt สร้างวิดีโอ: (ภาษาอังกฤษ - สำหรับ Veo 3.1) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ ระบุจังหวะตัดกล้อง และลงท้ายด้วยคำว่า "Audio: [เสียง SFX/ดนตรี]"
 
 🎬 ฉากที่ 2, 3, 4... : รีวิวและกินโชว์ (Review & Eat - ฉากละ 8 วินาที)
-* รายละเอียดฉาก (ภาษาไทย): อธิบายแอคชั่นการกิน การตักอาหาร หรือพาดูบรรยากาศร้าน
-* ข้อความบนจอ (Text on Screen): (ถ้ามี)
-* บทพูดตัวละคร/เสียงพากย์ (Voiceover): (ขยี้ความอร่อย บรรยากาศ หรือใส่บรีฟพิเศษลงไป)
 * (ห้ามเขียน Prompt สร้างภาพนิ่งในฉากที่ 2 เป็นต้นไปเด็ดขาด)
 * Prompt สร้างวิดีโอ: (ภาษาอังกฤษ) เขียนต่อเนื่องกัน ห้ามขึ้นบรรทัดใหม่ เริ่มด้วย "Continuing from the previous frame..." ระบุจังหวะตัดกล้อง และลงท้ายด้วย "Audio: [เสียงประกอบที่สอดคล้อง]"
 
 📱 ส่วนท้ายสุด: แคปชั่นดันคลิป 3 แพลตฟอร์ม
-- TikTok: เน้นฮุกกระแส + พิกัดร้าน + แฮชแท็กสายกิน (ความยาวปกติ)
-- Facebook Reels: เน้นสตอรี่ความน่ากิน โน้มน้าวให้แท็กเพื่อนมา (ความยาวปกติ)
-- Shopee Video/Feed: ฮาร์ดเซลล์กระชับ *(กฎเหล็ก: ห้ามเกิน 150 ตัวอักษรรวมแฮชแท็ก)*
+- TikTok, Facebook Reels, Shopee Video (Hard-sell กระชับ ห้ามเกิน 150 ตัวอักษรรวมแฮชแท็ก)
 """
             st.session_state.ugc_prompt = smart_generate(prompt)
 
-        if st.session_state.ugc_prompt: st.code(st.session_state.ugc_prompt, language="markdown")
+        # Patch: เปลี่ยน st.code เป็น st.text_area รองรับมือถือและแก้ไขได้
+        if st.session_state.ugc_prompt: st.text_area("📄 สคริปต์คลิปรีวิวฉบับเต็ม:", value=st.session_state.ugc_prompt, height=400, key="ugc_vid_text_output")
 
     with tab_poster:
         st.markdown("##### 🎯 ล็อกเป้าหมายให้ AI (Pre-AI Controls - Poster)")
-        ugc_ai_dir_ratio_pos = st.selectbox("📏 ล็อกสัดส่วนภาพหน้าปก (Aspect Ratio):", ["🤖 ปล่อย AI คิดเอง (Free Style)", "16:9 (YouTube Vlog)", "4:3 (หน้าจอมาตรฐาน)", "1:1 (Facebook/IG Post)", "3:4 (Portrait Menu)", "9:16 (TikTok/Reels/Shorts)"], key="ugc_ai_dir_ratio_pos")
+        ugc_ai_dir_ratio_pos = st.selectbox("📏 ล็อกสัดส่วนภาพหน้าปก (Aspect Ratio):", ["🤖 ปล่อย AI คิดเอง", "16:9 (YouTube Vlog แนวนอน)", "4:3 (แนวนอนมาตรฐาน)", "1:1 (Facebook/IG จัตุรัส)", "3:4 (Portrait แมนยง)", "9:16 (TikTok/Reels แนวตั้ง)"], key="ugc_ai_dir_ratio_pos")
 
         col_ai, col_res = st.columns(2)
         with col_ai:
@@ -668,11 +691,9 @@ CTA: {st.session_state.get('ugc_cta')}
                 else:
                     with st.spinner("🧠 AI กำลังสแกนรูปภาพและออกแบบหน้าปก Vlog..."):
                         ratio_constraint_pos = ""
-                        if "16:9" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (ugc_pos_comp) และมุมกล้องให้เหมาะสมกับอัตราส่วนแนวนอนกว้าง 16:9 (YouTube Vlog)'
-                        elif "4:3" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (ugc_pos_comp) ให้เหมาะสมกับแนวนอนมาตรฐาน 4:3'
-                        elif "1:1" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (ugc_pos_comp) ให้เหมาะสมกับสัดส่วนจัตุรัส 1:1 เน้นจุดสนใจตรงกลาง'
-                        elif "3:4" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบภาพ (ugc_pos_comp) ให้เหมาะสมกับแนวตั้ง 3:4'
-                        elif "9:16" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกการจัดองค์ประกอบ (ugc_pos_comp) และตำแหน่งข้อความ (ugc_pos_text_pos) ให้เหมาะสมกับแนวตั้ง 9:16 โดยเว้น Safe Zone ให้มือถือเสมอ'
+                        if "16:9" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกมุมกล้องให้เหมาะสมกับอัตราส่วนแนวนอนกว้าง 16:9 (YouTube Vlog)'
+                        elif "1:1" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกมุมกล้องให้เหมาะสมกับสัดส่วนจัตุรัส 1:1 เน้นจุดสนใจตรงกลางอาหาร'
+                        elif "9:16" in ugc_ai_dir_ratio_pos: ratio_constraint_pos = '- บังคับเลือกมุมกล้อง และตำแหน่งข้อความให้เหมาะสมกับแนวตั้ง 9:16 โดยเว้น Safe Zone ให้มือถือเสมอ'
 
                         ugc_context = f"ร้าน: {st.session_state.get('ugc_shop_name', '')} | เมนู: {st.session_state.get('ugc_menu', '')} | พิกัด: {st.session_state.get('ugc_location', '')}"
                         prompt_contents = []
@@ -680,25 +701,21 @@ CTA: {st.session_state.get('ugc_cta')}
                             prompt_contents = [Image.open(img_file) for img_file in st.session_state.ugc_imgs]
                         
                         prompt_text = f"""วิเคราะห์ข้อมูลร้านและรูปภาพเหล่านี้: "{ugc_context}"
-                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปก Vlog อาหาร ระดับผู้กำกับศิลป์ จากรายการด้านล่าง:
+                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์/หน้าปก Vlog อาหาร ระดับมืออาชีพ จากรายการด้านล่าง:
                         
-                        - ugc_pos_actor_act: ["ไม่มีคน (โฟกัสอาหารเต็มๆ)", "อ้าปากค้างตกใจชามยักษ์ (Shocked Face)", "คีบเส้น/ตักอาหารโชว์กล้อง (Food Lift)", "ถือจานส่งยิ้มหวาน (Friendly Smile)", "ชี้ไปที่อาหารพร้อมทำตาโต (Pointing)", "ทำหน้าฟินหลับตาพริ้ม (Satisfied Face)"]
-                        - ugc_pos_food_fx: ["ชีสยืดเยิ้มๆ (Melty Cheese)", "ควันพุ่งร้อนๆ (Steaming Hot)", "น้ำจิ้มราดฉ่ำๆ (Juicy Sauce Drop)", "เนื้อสัตว์ย่างเกรียมๆ (Sizzling Grill)", "หยดน้ำเกาะแก้วเย็นจัด (Ice Cold Condensation)", "จัดจานเนี้ยบสไตล์ Fine Dining (Perfectly Plated)", "ล้นชามดูคุ้มค่าจุกๆ (Overflowing/Massive)"]
-                        - ugc_pos_style: ["Vlog Thumbnail สายกิน (Clickbait Youtuber)", "Minimalist Cafe Cover (ปกมินิมอลคาเฟ่)", "Street Food Authentic (ปกสตรีทฟู้ดเรียลๆ)", "Premium Dining (ปกหรูหราภัตตาคาร)", "Home-cooked Cozy (ปกทำอาหารที่บ้านอบอุ่น)", "Food Delivery App Cover (ปกแอปสั่งอาหารคลีนๆ)"]
-                        - ugc_pos_color: ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "คลีนสว่างสบายตา (Bright & Clean)", "จัดจ้านตัดกันดึงดูดสายตา (Vibrant Contrast)", "โทนฟิล์มญี่ปุ่นละมุนๆ (Japanese Film/Muted)", "ดาร์กพรีเมียม (Dark & Moody)", "นีออนกลางคืน (Night Neon Cyber)"]
-                        - ugc_pos_cam: ["ซูมใกล้เนื้ออาหารฉ่ำๆ (Macro Close-up)", "ระดับสายตาเห็นคนและอาหาร (Eye-level Portrait)", "มุมมองคนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)", "มุมกว้างเห็นบรรยากาศร้าน (Wide Angle)"]
-                        - ugc_pos_light: ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์วัยรุ่น (Hard Flash/Y2K)", "แสงไฟคาเฟ่อบอุ่น (Warm Bistro Light)", "แสงสตูดิโอเคลียร์ชัด (Studio Ring Light)", "แสงนีออนสตรีทฟู้ด (Street Neon Light)", "แสงแดดตอนเย็น (Golden Hour)"]
-                        - ugc_pos_bg: ["บรรยากาศในร้านเบลอๆ (Blurred Restaurant Vibe)", "โต๊ะไม้สุดคลาสสิก (Rustic Wooden Table)", "โต๊ะหินอ่อนหรูหรา (Marble Countertop)", "ริมถนนสตรีทฟู้ด (Street Food Cart)", "วิวธรรมชาติ/สวนคาเฟ่ (Outdoor Garden)", "ฉากสตูดิโอสีพื้น (Solid Studio Color)"]
-                        - ugc_pos_comp: ["แบ่งครึ่งจอคนกับอาหาร (Split-screen)", "จัดวางอาหารตรงกลางเป๊ะ (Center Focus)", "กฎสามส่วน (Rule of Thirds)", "พื้นที่ว่างด้านซ้ายเยอะๆ (Left Negative Space)", "พื้นที่ว่างด้านขวาเยอะๆ (Right Negative Space)"]
-                        - ugc_pos_font: ["ฟอนต์ตัวหนาขอบดำสไตล์ Youtuber (Bold Impact with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Clean Sans-serif)", "ฟอนต์อาร์ตๆ สไตล์นิตยสาร (Elegant Serif)", "ฟอนต์สไตล์รายการทีวี (TV Show Variety)"]
-                        - ugc_pos_text_pos: ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้หลบปุ่มกด (Safe Zone มือถือ)"]
-                        - ugc_pos_text_main: ["อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ไม่กินคือพลาด!", "ถูกและดีมีอยู่จริง!", "สูตรต้นตำรับ!", "ไม่มีข้อความ"]
-                        - ugc_pos_text_sub: ["พิกัดลับ", "ราคาหลักสิบ", "คิวยาวมาก", "รีวิว 5 ดาว", "เปิดยันเช้า", "ขายวันละ 100 ชาม", "ไม่มีข้อความ"]
+                        - ugc_pos_style: ["Vlog Thumbnail (ปกคลิปรีวิวไวรัล)", "Minimalist Cafe Cover (ปกมินิมอลคาเฟ่)", "Street Food Authentic (ปกสตรีทฟู้ดเรียลๆ)", "High-end E-commerce (แคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)"]
+                        - ugc_pos_color: ["Warm & Appetizing (สดใสอมส้ม)", "Vibrant Contrast (จัดจ้านตัดกัน)", "Bright & Clean (สว่างสว่างคลีนๆ)", "Japanese Film/Muted (โทนฟิล์มญี่ปุ่นละมุนๆ)"]
+                        - ugc_pos_cam: ["ซูมใกล้เนื้ออาหารฉ่ำๆ (Macro Close-up)", "ระดับสายตาเห็นคนและอาหาร (Eye-level portrait)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงเจาะเต็มโต๊ะ (Top-down Flat Lay)"]
+                        - ugc_pos_graphics: ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)", "ชีสยืด/ควันพุ่ง (Hard-Sell Appetizing)"]
+                        - ugc_pos_typography: ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold Impact with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Clean Sans-serif)"]
+                        - ugc_pos_main_headline: ["อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
+                        - ugc_pos_sub_text: ["พิกัดลับ", "ราคาหลักสิบ", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
 
                         ⚠️ กฎพิเศษในการตั้งค่า:
                         {ratio_constraint_pos}
 
-                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
+                        ตอบกลับมาเป็น JSON Format เท่านั้น
+                        答复：
                         """
                         prompt_contents.append(prompt_text)
                         
@@ -715,7 +732,7 @@ CTA: {st.session_state.get('ugc_cta')}
             if st.button("🔄 รีเซ็ตหน้าปก", key="ugc_pos_res", use_container_width=True):
                 st.session_state.ugc_poster_prompt = ""
                 st.session_state.ugc_poster_prompt_th = ""
-                pos_keys = ["ugc_pos_actor_act", "ugc_pos_food_fx", "ugc_pos_style", "ugc_pos_color", "ugc_pos_cam", "ugc_pos_light", "ugc_pos_bg", "ugc_pos_comp", "ugc_pos_font", "ugc_pos_text_pos", "ugc_pos_text_main", "ugc_pos_text_sub"]
+                pos_keys = ["ugc_pos_style", "ugc_pos_color", "ugc_pos_cam", "ugc_pos_graphics", "ugc_pos_typography", "ugc_pos_main_headline", "ugc_pos_sub_text"]
                 for k in pos_keys:
                     if k in st.session_state: del st.session_state[k]
                     if f"select_{k}" in st.session_state: del st.session_state[f"select_{k}"]
@@ -723,52 +740,41 @@ CTA: {st.session_state.get('ugc_cta')}
                 st.rerun()
 
         st.markdown("---")
+        # Patch: จัดระเบียบชุดควบคุมโปสเตอร์รีวิวเป็น 3 คอลัมน์
         c1, c2, c3 = st.columns(3)
         with c1:
-            render_custom_select("1. 🏃‍♂️ ท่าทางผู้รีวิว (Action):", ["ไม่มีคน (โฟกัสอาหารเต็มๆ)", "อ้าปากค้างตกใจชามยักษ์ (Shocked Face)", "คีบเส้น/ตักอาหารโชว์กล้อง (Food Lift)", "ถือจานส่งยิ้มหวาน (Friendly Smile)", "ชี้ไปที่อาหารพร้อมทำตาโต (Pointing)", "ทำหน้าฟินหลับตาพริ้ม (Satisfied Face)"], "ugc_pos_actor_act", "หน้าตกใจ/คีบอาหาร = Clickbait ดึงยอดวิวชั้นดีบน YouTube")
-            render_custom_select("2. 🍝 สภาพอาหาร (Food FX):", ["ชีสยืดเยิ้มๆ (Melty Cheese)", "ควันพุ่งร้อนๆ (Steaming Hot)", "น้ำจิ้มราดฉ่ำๆ (Juicy Sauce Drop)", "เนื้อสัตว์ย่างเกรียมๆ (Sizzling Grill)", "หยดน้ำเกาะแก้วเย็นจัด (Ice Cold Condensation)", "จัดจานเนี้ยบสไตล์ Fine Dining (Perfectly Plated)", "ล้นชามดูคุ้มค่าจุกๆ (Overflowing/Massive)"], "ugc_pos_food_fx", "ชีสยืด/ควันพุ่ง ช่วยหยุดนิ้วคนดูได้ 100%")
-            render_custom_select("3. 🎨 สไตล์ปกคลิป (Style):", ["Vlog Thumbnail สายกิน (Clickbait Youtuber)", "Minimalist Cafe Cover (ปกมินิมอลคาเฟ่)", "Street Food Authentic (ปกสตรีทฟู้ดเรียลๆ)", "Premium Dining (ปกหรูหราภัตตาคาร)", "Home-cooked Cozy (ปกทำอาหารที่บ้านอบอุ่น)", "Food Delivery App Cover (ปกแอปสั่งอาหารคลีนๆ)"], "ugc_pos_style", "กำหนดอารมณ์และ Positioning ของช่องคุณ")
-            render_custom_select("4. 🌈 โทนสี (Color Grading):", ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "คลีนสว่างสบายตา (Bright & Clean)", "จัดจ้านตัดกันดึงดูดสายตา (Vibrant Contrast)", "โทนฟิล์มญี่ปุ่นละมุนๆ (Japanese Film/Muted)", "ดาร์กพรีเมียม (Dark & Moody)", "นีออนกลางคืน (Night Neon Cyber)"], "ugc_pos_color", "โทนอมส้ม/จัดจ้าน กระตุ้นความหิวได้ดีที่สุด")
+            render_custom_select("1. 🎨 สไตล์หน้าปก (Style):", ["Vlog Thumbnail (ปกคลิปรีวิวไวรัล)", "Minimalist Cafe Cover (ปกมินิมอลคาเฟ่)", "Street Food Authentic (ปกสตรีทฟู้ดเรียลๆ)", "High-end E-commerce (แคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)"], "ugc_pos_style")
+            render_custom_select("2. 🌈 โทนสี (Color Grading):", ["Warm & Appetizing (สดใสอมส้ม)", "Vibrant Contrast (จัดจ้านตัดกัน)", "Bright & Clean (สว่างสว่างคลีนๆ)", "Japanese Film/Muted (โทนฟิล์มญี่ปุ่นละมุนๆ)"], "ugc_pos_color")
         with c2:
-            render_custom_select("5. 📸 มุมกล้อง (Camera Angle):", ["ซูมใกล้เนื้ออาหารฉ่ำๆ (Macro Close-up)", "ระดับสายตาเห็นคนและอาหาร (Eye-level Portrait)", "มุมมองคนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)", "มุมกว้างเห็นบรรยากาศร้าน (Wide Angle)"], "ugc_pos_cam", "Macro Close-up ทำให้คนดูรู้สึกเหมือนได้กลิ่นอาหาร")
-            render_custom_select("6. 💡 แสงและบรรยากาศ (Lighting):", ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์วัยรุ่น (Hard Flash/Y2K)", "แสงไฟคาเฟ่อบอุ่น (Warm Bistro Light)", "แสงสตูดิโอเคลียร์ชัด (Studio Ring Light)", "แสงนีออนสตรีทฟู้ด (Street Neon Light)", "แสงแดดตอนเย็น (Golden Hour)"], "ugc_pos_light", "สาดแฟลช (Hard Flash) กำลังฮิตมากในวัยรุ่น Y2K/สตรีทฟู้ด")
-            render_custom_select("7. 🏞️ ฉากหลัง (Background):", ["บรรยากาศในร้านเบลอๆ (Blurred Restaurant Vibe)", "โต๊ะไม้สุดคลาสสิก (Rustic Wooden Table)", "โต๊ะหินอ่อนหรูหรา (Marble Countertop)", "ริมถนนสตรีทฟู้ด (Street Food Cart)", "วิวธรรมชาติ/สวนคาเฟ่ (Outdoor Garden)", "ฉากสตูดิโอสีพื้น (Solid Studio Color)"], "ugc_pos_bg", "ฉากหลังเบลอๆ (Bokeh) จะช่วยให้อาหารดูโดดเด่นลอยออกมา")
-            render_custom_select("8. 📐 การจัดองค์ประกอบ (Comp):", ["แบ่งครึ่งจอคนกับอาหาร (Split-screen)", "จัดวางอาหารตรงกลางเป๊ะ (Center Focus)", "กฎสามส่วน (Rule of Thirds)", "พื้นที่ว่างด้านซ้ายเยอะๆ (Left Negative Space)", "พื้นที่ว่างด้านขวาเยอะๆ (Right Negative Space)"], "ugc_pos_comp", "Split-screen เล่าเรื่องคนกินและอาหารพร้อมกันได้ดีมาก")
+            render_custom_select("3. 📸 มุมกล้อง (Camera Angle):", ["ซูมใกล้เนื้ออาหารฉ่ำๆ (Macro Close-up)", "ระดับสายตาเห็นคนและอาหาร (Eye-level portrait)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงเจาะเต็มโต๊ะ (Top-down Flat Lay)"], "ugc_pos_cam")
+            render_custom_select("4. ✨ VFX/กราฟิกน่ากิน:", ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)", "ชีสยืด/ควันพุ่ง (Hard-Sell Appetizing)"], "ugc_pos_graphics", "ชีสยืด/ควันพุ่ง = Hard-Sell กระตุ้นความหิวชั้นดี")
         with c3:
-            render_custom_select("9. 🔠 สไตล์ฟอนต์ (Typography):", ["ฟอนต์ตัวหนาขอบดำสไตล์ Youtuber (Bold Impact with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Clean Sans-serif)", "ฟอนต์อาร์ตๆ สไตล์นิตยสาร (Elegant Serif)", "ฟอนต์สไตล์รายการทีวี (TV Show Variety)"], "ugc_pos_font", "ขอบดำสไตล์ Youtuber ทำให้อ่านง่ายบนทุกสภาพพื้นหลัง")
-            render_custom_select("10. 📍 ตำแหน่งข้อความ (Text Pos):", ["บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)", "ล่างซ้าย (Bottom-Left)", "ล่างขวา (Bottom-Right)", "เว้นขวาไว้หลบปุ่มกด (Safe Zone มือถือ)"], "ugc_pos_text_pos", "ลงคลิปแนวตั้ง (TikTok/Reels) ควรเลือกหลบปุ่มกดเสมอ")
-            render_custom_select("11. 📢 พาดหัวหลัก (Headline):", ["อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ไม่กินคือพลาด!", "ถูกและดีมีอยู่จริง!", "สูตรต้นตำรับ!", "ไม่มีข้อความ"], "ugc_pos_text_main", "คำสั้นๆ โดนใจ AI จะเรนเดอร์ได้แม่นยำกว่าประโยคยาวๆ")
-            render_custom_select("12. 🏷️ ป้ายรอง (Sub-text):", ["พิกัดลับ", "ราคาหลักสิบ", "คิวยาวมาก", "รีวิว 5 ดาว", "เปิดยันเช้า", "ขายวันละ 100 ชาม", "ไม่มีข้อความ"], "ugc_pos_text_sub", "ข้อความดึงดูดใจเพิ่มเติม หรือเว้นว่างไว้ถ้าไม่ต้องการ")
+            render_custom_select("5. 🔠 สไตล์ฟอนต์ (Typography):", ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold Impact with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Clean Sans-serif)"], "ugc_pos_typography")
+            render_custom_select("6. 📢 พาดหัวหลัก (Headline):", ["อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ไม่กินคือพลาด!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"], "ugc_pos_main_headline")
+            render_custom_select("7. 🏷️ ป้ายราคา/โปร (Sub-text):", ["พิกัดลับ", "ราคาหลักสิบ", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"], "ugc_pos_sub_text")
 
         if st.button("🚀 เริ่มสร้าง Prompt ปกคลิปรีวิว (Nano Banana 2)", type="primary", use_container_width=True):
             with st.spinner("🧠 AI กำลังแต่ง Prompt และแยกหน้าจอแปลภาษา..."):
-                prompt = f"""คุณคือนักเขียน Prompt ระดับโลกสำหรับ AI สร้างภาพ 'Nano Banana 2' (Gemini 3 Flash Image)
+                prompt = f"""คุณคือนักเขียน Prompt ระดับโลกสำหรับ AI สร้างภาพ 'Nano Banana 2'
 
 ข้อมูลสำหรับปกคลิปรีวิวอาหาร:
 - ร้าน/เมนู: {st.session_state.get('ugc_shop_name')} {st.session_state.get('ugc_menu')}
-- ท่าทางคนรีวิว: {st.session_state.get('ugc_pos_actor_act')}
-- สภาพอาหาร: {st.session_state.get('ugc_pos_food_fx')}
 - สไตล์ปกคลิป: {st.session_state.get('ugc_pos_style')}
-- โทนสี: {st.session_state.get('ugc_pos_color')}
+- โทนสี & Vibe: {st.session_state.get('ugc_pos_color')}
 - มุมกล้อง: {st.session_state.get('ugc_pos_cam')}
-- แสงเงา: {st.session_state.get('ugc_pos_light')}
-- ฉากหลัง: {st.session_state.get('ugc_pos_bg')}
-- องค์ประกอบ: {st.session_state.get('ugc_pos_comp')}
-- ฟอนต์: {st.session_state.get('ugc_pos_font')}
-- ตำแหน่งข้อความ: {st.session_state.get('ugc_pos_text_pos')}
-- พาดหัวหลัก: "{st.session_state.get('ugc_pos_text_main')}"
-- ป้ายรอง: "{st.session_state.get('ugc_pos_text_sub')}"
+- กราฟิกน่ากิน/VFX: {st.session_state.get('ugc_pos_graphics')}
+- สไตล์ฟอนต์ (Typography): {st.session_state.get('ugc_pos_typography')}
+- พาดหัวหลัก: "{st.session_state.get('ugc_pos_main_headline')}"
+- ป้ายรอง: "{st.session_state.get('ugc_pos_sub_text')}"
 
 **กฎเหล็กในการแต่ง Prompt (STRICT RULES):**
-1. **ห้ามแปลข้อความ (DO NOT TRANSLATE TEXT):** คำว่า "{st.session_state.get('ugc_pos_text_main')}" และ "{st.session_state.get('ugc_pos_text_sub')}" ต้องเก็บไว้เป็นภาษาไทยในเครื่องหมายคำพูดเป๊ะๆ ห้ามแปลเป็นอังกฤษ!
-2. โครงสร้าง Prompt: 1 ย่อหน้า อธิบายท่าทางคนรีวิว ความน่ากินของอาหาร ต้องมีประโยคเกี่ยวกับการเรนเดอร์ข้อความ เช่น `The text "{st.session_state.get('ugc_pos_text_main')}" is clearly rendered using {st.session_state.get('ugc_pos_font')} typography placed at {st.session_state.get('ugc_pos_text_pos')}.`
-3. ห้ามมั่ว (Anti-Hallucination): `STRICTLY render ONLY the requested text. DO NOT add extra icons, stars, or random text.`
+1. **ห้ามแปลข้อความ (DO NOT TRANSLATE TEXT):** คำว่า "{st.session_state.get('ugc_pos_main_headline')}" และ "{st.session_state.get('ugc_pos_sub_text')}" ต้องเก็บไว้เป็นภาษาไทยในเครื่องหมายคำพูดเป๊ะๆ
+2. โครงสร้าง Prompt: 1 ย่อหน้า อธิบายความน่ากินของอาหารอย่างละเอียด และต้องมีประโยคเกี่ยวกับการเรนเดอร์ข้อความ เช่น `The text "{st.session_state.get('ugc_pos_main_headline')}" and "{st.session_state.get('ugc_pos_sub_text')}" are clearly rendered using {st.session_state.get('ugc_pos_typography')} typography. Apply prominent {st.session_state.get('ugc_pos_graphics')}. STRICTLY render ONLY the requested text. DO NOT render extra gibberish or symbols.
 
 **รูปแบบการตอบกลับ (JSON FORMAT ONLY):**
-ตอบกลับมาเป็น JSON โครงสร้างนี้เท่านั้น
 {{
     "english_prompt": "Prompt สร้างภาพนิ่ง: [Prompt ภาษาอังกฤษทั้งหมด]",
-    "thai_translation": "[คำแปล Prompt อธิบายให้คนอ่านเข้าใจ]"
+    "thai_translation": "[คำแปล Prompt และคำอธิบายภาษาไทยให้คนอ่านเข้าใจ]"
 }}
 """
                 try:
@@ -783,13 +789,14 @@ CTA: {st.session_state.get('ugc_cta')}
 
         if st.session_state.ugc_poster_prompt:
             st.markdown("---")
-            st.markdown("### 📌 สรุปบรีฟปกคลิปรีวิว (Summary Board)")
-            st.info(f"**แอคชั่น:** {st.session_state.get('ugc_pos_actor_act')} | **สไตล์อาหาร:** {st.session_state.get('ugc_pos_food_fx')} | **มุมกล้อง:** {st.session_state.get('ugc_pos_cam')}\n\n**พาดหัวหลัก:** {st.session_state.get('ugc_pos_text_main')} | **ป้ายรอง:** {st.session_state.get('ugc_pos_text_sub')}")
+            st.markdown("### 📌 สรุปบรีฟงานหน้าปกคลิป (Summary Board)")
+            st.info(f"**สไตล์:** {st.session_state.get('ugc_pos_style')} | **โทนสี:** {st.session_state.get('ugc_pos_color')} | **มุมกล้อง:** {st.session_state.get('ugc_pos_cam')}\n\n**พาดหัว:** {st.session_state.get('ugc_pos_main_headline')} | **ราคา:** {st.session_state.get('ugc_pos_sub_text')} | **VFX:** {st.session_state.get('ugc_pos_graphics')}")
             
             c_eng, c_th = st.columns(2)
             with c_eng:
                 st.success("🇬🇧 คำสั่งภาษาอังกฤษ (ส่งให้ระบบ Handoff/บอท)")
-                st.code(st.session_state.ugc_poster_prompt, language="markdown")
+                # Patch: เปลี่ยน st.code เป็น st.text_area
+                st.text_area("📄 Prompt ภาษาอังกฤษหน้าปก:", value=st.session_state.ugc_poster_prompt, height=200, key="ugc_pos_eng_text_output")
             with c_th:
                 st.info("🇹🇭 คำอธิบายภาษาไทย (สำหรับคุณเช็กความถูกต้อง)")
                 st.markdown(f"*{st.session_state.ugc_poster_prompt_th}*")
@@ -848,7 +855,8 @@ elif app_mode == "🎤 วิทยากร AI (AI Spokesperson)":
         if st.button("🚀 เริ่มเขียนสคริปต์วิทยากร", type="primary", use_container_width=True):
             st.session_state.spk_prompt = smart_generate(f"สคริปต์ AI Spokesperson วิทยากร: {st.session_state.get('spk_actor')} ฉาก: {st.session_state.get('spk_setting')} กล้อง: {st.session_state.get('spk_camera')} บทพูด: {st.session_state.spk_raw_text}. แยก Prompt ภาพและวิดีโอ (ใส่ Audio Cues)")
                 
-        if st.session_state.spk_prompt: st.code(st.session_state.spk_prompt, language="markdown")
+        # Patch: st.code -> st.text_area
+        if st.session_state.spk_prompt: st.text_area("📄 สคริปต์วิทยากร AI:", value=st.session_state.spk_prompt, height=300, key="spk_text_output")
     
     with tab_poster:
         col_ai, col_res = st.columns(2)
@@ -863,7 +871,9 @@ elif app_mode == "🎤 วิทยากร AI (AI Spokesperson)":
         render_custom_select("📝 คำโปรยบนปกคลิป (Topic Text):", ["แชร์ทริคความสำเร็จ", "ความลับที่ไม่มีใครบอกคุณ", "พิมพ์กำหนดเอง..."], "spk_poster_txt")
         if st.button("🎨 สร้าง Prompt หน้าปก", type="primary", use_container_width=True):
             st.session_state.spk_poster_prompt = smart_generate(f"Prompt สร้างภาพนิ่ง หน้าปก YouTube ของวิทยากร {st.session_state.get('spk_actor')} ฉาก {st.session_state.get('spk_setting')} ข้อความ: {st.session_state.get('spk_poster_txt')}")
-        if st.session_state.spk_poster_prompt: st.code(st.session_state.spk_poster_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.spk_poster_prompt: st.text_area("📄 Prompt หน้าปกวิทยากร:", value=st.session_state.spk_poster_prompt, height=200, key="spk_pos_text_output")
 
     with tab_run:
         if st.session_state.spk_poster_prompt:
@@ -920,7 +930,8 @@ elif app_mode == "🐾 สัตว์เลี้ยงไวรัล (Viral P
         if st.button("🚀 เริ่มเขียนสคริปต์มีม", type="primary", use_container_width=True):
             st.session_state.pet_prompt = smart_generate(f"สคริปต์มีมสัตว์เลี้ยง (Anthropomorphic) {st.session_state.get('pet_actor')} ชุด {st.session_state.get('pet_costume')} กำลัง {st.session_state.get('pet_act')} ฉาก {st.session_state.get('pet_set')} เสียง: {st.session_state.get('pet_audio')}. แยก Prompt ภาพและวิดีโอ (พร้อม Audio Cues)")
 
-        if st.session_state.pet_prompt: st.code(st.session_state.pet_prompt, language="markdown")
+        # Patch: st.code -> st.text_area
+        if st.session_state.pet_prompt: st.text_area("📄 สคริปต์มีมสัตว์เลี้ยง:", value=st.session_state.pet_prompt, height=300, key="pet_text_output")
     
     with tab_poster:
         col_ai, col_res = st.columns(2)
@@ -937,7 +948,8 @@ elif app_mode == "🐾 สัตว์เลี้ยงไวรัล (Viral P
         if st.button("🚀 เริ่มสร้าง Prompt หน้าปก", type="primary", use_container_width=True):
             st.session_state.pet_poster_prompt = smart_generate(f"Prompt สร้างภาพนิ่ง หน้าปก YouTube ของ {st.session_state.get('pet_actor')} กำลัง {st.session_state.get('pet_act')} ข้อความ: {st.session_state.get('pet_poster_txt')}")
 
-        if st.session_state.pet_poster_prompt: st.code(st.session_state.pet_poster_prompt, language="markdown")
+        # Patch: st.code -> st.text_area
+        if st.session_state.pet_poster_prompt: st.text_area("📄 Prompt หน้าปกมีม:", value=st.session_state.pet_poster_prompt, height=200, key="pet_pos_text_output")
 
     with tab_run:
         if st.session_state.pet_poster_prompt:
@@ -983,7 +995,9 @@ elif app_mode == "🎭 คาแรคเตอร์สายฮา (Caricature
             render_custom_select("💬 เสียง:", ["คุยโวเรื่องถูกหวย", "บ่นเมียหนี"], "meme_dialogue")
         if st.button("🚀 สั่ง AI เขียนสคริปต์มีมไทบ้าน", type="primary", use_container_width=True):
             st.session_state.meme_prompt = smart_generate(f"สคริปต์วิดีโอล้อเลียน {st.session_state.get('meme_count')} คน ลักษณะ: {st.session_state.get('meme_feat')} ชุด: {st.session_state.get('meme_costume')} ฉาก: {st.session_state.get('meme_set')} สไตล์: {st.session_state.get('meme_style')} เสียง: {st.session_state.get('meme_dialogue')}. แยก Prompt ภาพนิ่งและวิดีโอ (พร้อม Audio cues)")
-        if st.session_state.meme_prompt: st.code(st.session_state.meme_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.meme_prompt: st.text_area("📄 สคริปต์มีมไทบ้าน:", value=st.session_state.meme_prompt, height=300, key="meme_text_output")
     
     with tab_poster:
         col_ai, col_res = st.columns(2)
@@ -998,7 +1012,9 @@ elif app_mode == "🎭 คาแรคเตอร์สายฮา (Caricature
         render_custom_select("📝 คำโปรยบนปกคลิป (Clickbait Text):", ["ชีวิตมันเศร้าขอเหล้าเข้มๆ", "ถูกหวยรางวัลที่ 1", "พิมพ์กำหนดเอง..."], "meme_poster_txt")
         if st.button("🎨 สร้าง Prompt หน้าปก", type="primary", use_container_width=True):
             st.session_state.meme_poster_prompt = smart_generate(f"Prompt สร้างภาพนิ่ง หน้าปก YouTube มีมไทบ้าน สไตล์ {st.session_state.get('meme_style')} ฉาก {st.session_state.get('meme_set')} ข้อความ: {st.session_state.get('meme_poster_txt')}")
-        if st.session_state.meme_poster_prompt: st.code(st.session_state.meme_poster_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.meme_poster_prompt: st.text_area("📄 Prompt หน้าปกไทบ้าน:", value=st.session_state.meme_poster_prompt, height=200, key="meme_pos_text_output")
 
     with tab_run:
         if st.session_state.meme_poster_prompt:
@@ -1037,7 +1053,9 @@ elif app_mode == "🎙️ ทอล์คโชว์สายปั่น (Stan
             render_custom_select("🗣️ ท่าทาง:", ["ยกมือสองข้างขึ้น ชูไม้ชูมือ", "ยืนกอดอกหน้าตึง"], "sat_action")
         if st.button("🚀 สั่ง AI ปั้นสคริปต์ปราศรัย", type="primary"):
             st.session_state.sat_prompt = smart_generate(f"สคริปต์วิดีโอล้อเลียน ตัวละคร: {st.session_state.get('sat_actor')} ชุด: {st.session_state.get('sat_costume')} ฉาก: {st.session_state.get('sat_setting')} ท่าทาง: {st.session_state.get('sat_action')} บทพูด: {st.session_state.sat_raw}. แยก Prompt ภาพและวิดีโอ (ใส่ Audio cues)")
-        if st.session_state.sat_prompt: st.code(st.session_state.sat_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.sat_prompt: st.text_area("📄 สคริปต์ปราศรัย:", value=st.session_state.sat_prompt, height=300, key="sat_text_output")
     with tab_run:
         if st.session_state.sat_prompt:
             scenes = [s for s in re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', st.session_state.sat_prompt) if "ฉากที่" in s]
@@ -1061,7 +1079,9 @@ elif app_mode == "🕶️ ช่องคำคมสู้ชีวิต (Sigm
         with c2: render_custom_select("🗣️ เสียงพากย์:", ["ทุ้มต่ำ ดุดัน", "สุขุมนุ่มลึก"], "sigma_voice")
         if st.button("🚀 ผลิตคลิปคำคม", type="primary"):
             st.session_state.sigma_prompt = smart_generate(f"สคริปต์คลิปสั้นคำคมสู้ชีวิต แนว: {topic} ภาพ: {st.session_state.get('sigma_bg')} เสียง: {st.session_state.get('sigma_voice')}. ข้อความขึ้นจอ 1 ประโยคเด็ดๆ แยก Prompt ภาพและวิดีโอ (พร้อม Audio Cues)")
-        if st.session_state.sigma_prompt: st.code(st.session_state.sigma_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.sigma_prompt: st.text_area("📄 สคริปต์คำคม Sigma:", value=st.session_state.sigma_prompt, height=200, key="sigma_text_output")
     with tab_run:
         if st.session_state.sigma_prompt:
             scenes = [s for s in re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', st.session_state.sigma_prompt) if "ฉากที่" in s]
@@ -1083,7 +1103,9 @@ elif app_mode == "👻 ช่องเล่าเรื่องหลอน (C
         render_custom_select("🎨 สไตล์ภาพ:", ["Dark Fantasy หม่นๆ", "สมจริงน่ากลัว"], "creepy_style")
         if st.button("🚀 แบ่งฉากเรื่องหลอน", type="primary"):
             st.session_state.creepy_prompt = smart_generate(f"แบ่งฉากเล่าเรื่องผี โครงเรื่อง: {story} สไตล์: {st.session_state.get('creepy_style')}. แบ่ง 3 ฉาก แต่ละฉากมี Prompt สร้างภาพนิ่ง และ Prompt วิดีโอ (พร้อม Audio Cues เสียงคนเล่า)")
-        if st.session_state.creepy_prompt: st.code(st.session_state.creepy_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.creepy_prompt: st.text_area("📄 สคริปต์เรื่องหลอน:", value=st.session_state.creepy_prompt, height=300, key="creepy_text_output")
     with tab_run:
         if st.session_state.creepy_prompt:
             scenes = [s for s in re.split(r'(?:\n|^)(?=\*?\*?\s*ฉากที่\s*\d+)', st.session_state.creepy_prompt) if "ฉากที่" in s]
@@ -1110,7 +1132,9 @@ elif app_mode == "🕺 สายแดนซ์ชาเลนจ์ (Dance Char
             render_custom_select("🎨 สไตล์:", ["สมจริง 3D", "อนิเมะญี่ปุ่น"], "dance_style")
         if st.button("🚀 เจน Prompt นักเต้น", type="primary"):
             st.session_state.dance_prompt = smart_generate(f"Prompt สร้างภาพนิ่งภาษาอังกฤษ: {st.session_state.get('dance_actor')} ชุด {st.session_state.get('dance_outfit')} ฉาก {st.session_state.get('dance_bg')} สไตล์ {st.session_state.get('dance_style')}. (ต้องเป็นหน้าตรง Full body shot ท่ายืนนิ่งๆ เพื่อไปทำ AI Dance ต่อ)")
-        if st.session_state.dance_prompt: st.code(st.session_state.dance_prompt, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        if st.session_state.dance_prompt: st.text_area("📄 Prompt รูปนิ่งนักเต้น:", value=st.session_state.dance_prompt, height=200, key="dance_pos_text_output")
     with tab_run:
         if st.session_state.dance_prompt:
             if st.button("⚙️ รันบอทสร้างรูปนักเต้น", key="run_img_dance"):
@@ -1132,4 +1156,6 @@ elif app_mode == "🎶 ห้องอัดเสียงเพลงแปล
         render_custom_select("นักร้อง:", ["ผู้ชายเสียงแหบสู้ชีวิต", "แร็ปเปอร์"], "music_vocal")
     if st.button("🚀 สั่ง AI แต่งเนื้อเพลง", type="primary"):
         res = smart_generate(f"แต่งเนื้อเพลงล้อเลียน หัวข้อ: {topic} แนว: {st.session_state.get('music_genre')} ดนตรี: {st.session_state.get('music_inst')} นักร้อง: {st.session_state.get('music_vocal')}. สร้าง 1. Prompt ดนตรีภาษาอังกฤษ 2. เนื้อเพลงภาษาไทยพร้อมโครงสร้าง [Intro, Chorus, Verse]")
-        st.code(res, language="markdown")
+        
+        # Patch: st.code -> st.text_area
+        st.text_area("📄 ผลลัพธ์เนื้อเพลงแปลง:", value=res, height=400, key="music_parody_text_output")
