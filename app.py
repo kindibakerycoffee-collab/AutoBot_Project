@@ -62,18 +62,15 @@ def smart_generate(prompt_contents):
             continue
     raise Exception(f"API Key ติดลิมิตหมดแล้วครับ! กรุณารอ 1 นาที")
 
-# [PATCH] แก้ไขฟังก์ชันให้จำค่าได้แม่นยำและไม่รีเซ็ตเมื่อถูกคลิก
 def render_custom_select(label, options, key, help_text=None):
     opt_list = options + ["พิมพ์กำหนดเอง..."]
     
-    # ถ้ายังไม่มีค่าในระบบ ให้เซ็ตค่าเริ่มต้น
     if key not in st.session_state:
         st.session_state[key] = options[0]
         
     current_val = st.session_state[key]
     idx = options.index(current_val) if current_val in options else len(opt_list) - 1
     
-    # ใช้คีย์แยกสำหรับ widget UI โดยเฉพาะ เพื่อป้องกัน State ชนกัน
     selected = st.selectbox(label, opt_list, index=idx, key=f"ui_widget_{key}", help=help_text)
     
     if selected == "พิมพ์กำหนดเอง...":
@@ -166,7 +163,7 @@ if app_mode == "🏠 หน้าแรก (Dashboard)":
     col3.warning("**🕶️ สาย Faceless:** ทำช่องคำคม หรือช่องเล่าเรื่องผีแบบไม่เปิดหน้า")
 
 # =========================================================================================
-# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director) - [PATCHED FULL AI AUTO-DECISION + UI FIX]
+# 💼 โหมด 1: 🎬 โฆษณาสินค้า (Ad Director)
 # =========================================================================================
 elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
     st.markdown('<div class="main-header">🎬 ระบบผู้กำกับโฆษณา AI</div>', unsafe_allow_html=True)
@@ -241,38 +238,36 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
 
                         context = f"สินค้า: {st.session_state.ad_product_text} | บรีฟพิเศษ: {st.session_state.ad_extra_note}"
                         prompt = f"""คุณคือผู้กำกับโฆษณามืออาชีพ วิเคราะห์ข้อมูลต่อไปนี้: "{context}"
-                        (และรูปภาพถ้ามี) แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อสร้างวิดีโอโปรโมท จากรายการด้านล่าง:
+                        แล้วทำหน้าที่ "เลือก" ตัวเลือกที่เหมาะสมที่สุดจากรายการด้านล่างนี้เท่านั้น:
                         
-                        - ad_pres: ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"]
-                        - ad_voice: ["👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "Bab เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"]
-                        - ad_tone: ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"]
-                        - ad_target: ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"]
-                        - ad_lang: ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อังกฤษ US Native"]
-                        - ad_dur: {dur_options}
-                        - ad_style: ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ"]
-                        - ad_story: ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "สาธิตวิธีใช้ (How-to)"]
-                        - ad_cta: ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "คลิกลิงก์หน้าโปรไฟล์"]
-                        - ad_plat: {plat_options}
-                        - ad_music: ["Pop สนุกสนาน", "Epic อลังการ", "EDM (ตื่นเต้นเร้าใจ)"]
-                        - ad_color: ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)"]
-                        - ad_cam: ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro)", "POV (มุมมองบุคคลที่ 1)"]
-                        - ad_light: ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น)"]
-                        - ad_text: ["ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ไม่มีข้อความ"]
-                        - ad_pacing: ["ตัดฉับไว (Jump Cut)", "Beat Sync"]
-                        - ad_vfx: ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)"]
+                        "ad_pres": ["ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม", "สัตว์เลี้ยง (หมา/แมว)"]
+                        "ad_voice": ["👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "👶 เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"]
+                        "ad_tone": ["เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"]
+                        "ad_target": ["วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"]
+                        "ad_lang": ["ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อังกฤษ US Native"]
+                        "ad_dur": {dur_options}
+                        "ad_style": ["UGC (User Generated Content)", "Cinematic (สวยงามเหมือนภาพยนตร์)", "Vlog เที่ยว/กิน", "ซิทคอมสั้นตลกๆ"]
+                        "ad_story": ["PAS (ปัญหา-ทางแก้)", "Before / After", "AIDA (ดึงดูด-สนใจ-ต้องการ-ซื้อ)", "สาธิตวิธีใช้ (How-to)"]
+                        "ad_cta": ["กดตะกร้าด้านซ้ายล่าง", "ทักแชท", "แจกโค้ดส่วนลด", "คลิกลิงก์หน้าโปรไฟล์"]
+                        "ad_plat": {plat_options}
+                        "ad_music": ["Pop สนุกสนาน", "Epic อลังการ", "EDM (ตื่นเต้นเร้าใจ)"]
+                        "ad_color": ["สดใสสว่างคลีนๆ", "พาสเทลละมุนตา", "โทนดาร์กเท่ๆ (Dark/Moody)"]
+                        "ad_cam": ["ระดับสายตา (Eye Level)", "ซูมใกล้ (Macro)", "POV (มุมมองบุคคลที่ 1)"]
+                        "ad_light": ["แสงธรรมชาติ (Daylight)", "แสงสตูดิโอ", "Golden Hour (แสงเย็น)"]
+                        "ad_text": ["ซับไตเติ้ลคำต่อคำ", "ไฮไลท์เฉพาะคำสำคัญ", "ไม่มีข้อความ"]
+                        "ad_pacing": ["ตัดฉับไว (Jump Cut)", "Beat Sync"]
+                        "ad_vfx": ["ไม่มีเอฟเฟกต์ (เน้นสมจริง)", "โทนฟิล์มเก่า (Retro/VHS)"]
 
-                        ⚠️ กฎการจัดรูปแบบ JSON (สำคัญมาก): ให้ตอบเป็น String ธรรมดาเท่านั้น ห้ามใส่เครื่องหมายก้ามปู [...] หรือลิสต์ครอบค่า Value เด็ดขาด 
-                        ตัวอย่างที่ถูกต้อง: "ad_pres": "KOL / Influencer"
-                        ตัวอย่างที่ผิด (ห้ามทำ): "ad_pres": "['KOL / Influencer']"
-
-                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยเลือกตัวเลือกจากรายการที่กำหนดไว้เท่านั้น ห้ามคิดคำขึ้นมาเองเด็ดขาด
+                        ⚠️ กฎเหล็กขั้นเด็ดขาด (CRITICAL JSON RULES):
+                        1. ห้ามแต่งคำตอบขึ้นมาเองเด็ดขาด! ต้องคัดลอกข้อความจากในวงเล็บก้ามปู [...] ที่ให้ไว้ในแต่ละหัวข้อมาตอบเท่านั้น
+                        2. ตอบกลับเป็น JSON Format ล้วนๆ ห้ามมีคำอธิบายอื่น 
+                        3. Value ต้องเป็น String (ข้อความธรรมดา) ห้ามเป็น List (ห้ามมีครอบ)
                         """
                         try:
                             res = smart_generate(prompt)
                             json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
                             ai_config = json.loads(json_str)
                             
-                            # [PATCH] ตัวกรองข้อมูลให้สะอาด 100% ป้องกัน AI เผลอส่งวงเล็บมา
                             for k, v in ai_config.items():
                                 if isinstance(v, list) and len(v) > 0: 
                                     v = str(v[0])
@@ -290,7 +285,6 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
                 vid_keys = ["ad_pres", "ad_voice", "ad_tone", "ad_target", "ad_lang", "ad_dur", "ad_style", "ad_story", "ad_cta", "ad_plat", "ad_music", "ad_color", "ad_cam", "ad_light", "ad_text", "ad_pacing", "ad_vfx"]
                 for k in vid_keys:
                     if k in st.session_state: del st.session_state[k]
-                    # เคลียร์คีย์ widget ด้วย
                     if f"ui_widget_{k}" in st.session_state: del st.session_state[f"ui_widget_{k}"]
                     if f"ui_custom_{k}" in st.session_state: del st.session_state[f"ui_custom_{k}"]
                 st.rerun()
@@ -298,8 +292,8 @@ elif app_mode == "🎬 โฆษณาสินค้า (Ad Director)":
         st.markdown("---")
         c1, c2, c3 = st.columns(3)
         with c1:
-            render_custom_select("1. 👤 พรีเซนเตอร์:", ["🤖 ปล่อย AI คิดเอง", "ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม"], "ad_pres", "ผู้เชี่ยวชาญ=อาหารเสริม/สกินแคร์, ผู้ใช้งานจริง=ของใช้ทั่วไป")
-            render_custom_select("2. 🚻 เพศเสียงพากย์:", ["🤖 ปล่อย AI คิดเอง", "👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "Bab เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"], "ad_voice", "สำคัญมาก: ช่วยล็อกเพศและสรรพนามของเสียง (แก้ปัญหาแมวตัวผู้เสียงสาว)")
+            render_custom_select("1. 👤 พรีเซนเตอร์:", ["🤖 ปล่อย AI คิดเอง", "ไม่มีพรีเซนเตอร์", "KOL / Influencer", "ผู้เชี่ยวชาญ / หมอ", "ผู้ใช้งานจริง (User)", "มาสคอตแบรนด์", "หญิงสาว", "ชายหนุ่ม", "สัตว์เลี้ยง (หมา/แมว)"], "ad_pres", "ผู้เชี่ยวชาญ=อาหารเสริม/สกินแคร์, ผู้ใช้งานจริง=ของใช้ทั่วไป")
+            render_custom_select("2. 🚻 เพศเสียงพากย์:", ["🤖 ปล่อย AI คิดเอง", "👨 ผู้ชาย (ผม/ครับ/แมนๆ)", "👩 ผู้หญิง (ฉัน/ค่ะ/สาวๆ)", "🐾 สัตว์เลี้ยงตัวผู้ (นุด/ค้าบ/ผม/กวนโอ๊ย)", "🐾 สัตว์เลี้ยงตัวเมีย (นุด/ม้าว/หนู/อ้อนๆ เสียงสอง)", "🧔 ชายสายลุย/ฮาร์ดคอร์ (พี่/ผม/โคตรสุด/ดุดัน)", "💅 ตัวแม่ / LGBTQ+ (แม่/พวกหล่อน/โฮ่งมาก/สับๆ)", "👴👵 ผู้ใหญ่/ลุงป้า (ลุง/ป้า/ลูกหลานเอ๊ย/อบอุ่น)", "👶 เด็กน้อยน่ารัก (หนู/ค้าบ/ค่า/สดใส)"], "ad_voice", "สำคัญมาก: ช่วยล็อกเพศและสรรพนามของเสียง (แก้ปัญหาแมวตัวผู้เสียงสาว)")
             render_custom_select("3. 🗣️ น้ำเสียง (Tone):", ["🤖 ปล่อย AI คิดเอง", "เพื่อนป้ายยา", "ตื่นเต้นขายเก่ง", "พรีเมียม / หรูหรา", "ASMR (กระซิบ)", "เล่าเรื่องน่าติดตาม (Storytelling)", "ดุดันจริงจัง", "ตลกขบขัน"], "ad_tone", "ASMR=สินค้าของกิน/สกินแคร์, ตลก=เพิ่มการแชร์")
             render_custom_select("4. 🎯 กลุ่มเป้าหมาย:", ["🤖 ปล่อย AI คิดเอง", "วัยรุ่น Gen Z", "คนทำงาน / มนุษย์เงินเดือน", "แม่และเด็ก", "สายรักษ์สุขภาพ", "ผู้สูงอายุ"], "ad_target", "ช่วยให้ AI เลือกใช้ศัพท์ให้ตรงกับวัยของลูกค้า")
             render_custom_select("5. 🌐 ภาษาและสำเนียง:", ["🤖 ปล่อย AI คิดเอง", "ภาษาไทยกลาง", "อีสานมาตรฐาน (ขอนแก่น/อุดรฯ)", "อีสานโคราช", "อีสานใต้ (สุรินทร์/บุรีรัมย์)", "ใต้ลึก (นครศรีธรรมราช)", "ใต้ตอนล่าง (สงขลา/หาดใหญ่)", "ใต้ฝั่งอันดามัน (ภูเก็ต)", "เหนือล้านนา (เชียงใหม่)", "เหนือตะวันออก (แพร่/น่าน)", "กลางเหน่อ (สุพรรณบุรี)", "ตะวันออก (ระยอง/จันทบุรี)", "อังกฤษ US Native", "อังกฤษ UK (บริติช)", "อังกฤษ Aussie (ออสเตรเลีย)"], "ad_lang", "เลือกภาษาให้ตรงกับถิ่นฐานกลุ่มเป้าหมายเพื่อความเนียน")
@@ -396,31 +390,32 @@ VFX: {st.session_state.get('ad_vfx')}
                         if st.session_state.ad_imgs:
                             prompt_contents = [Image.open(img_file) for img_file in st.session_state.ad_imgs]
                         
-                        prompt_text = f"""วิเคราะห์ข้อมูล: "{context}" และภาพเหล่านี้:
-                        แล้วเลือกตัวเลือกที่เหมาะสมที่สุดเพื่อออกแบบโปสเตอร์โฆษณา ระดับ Art Director จากรายการด้านล่าง:
+                        prompt_text = f"""วิเคราะห์ข้อมูล: "{context}" และภาพเหล่านี้
+                        แล้วทำหน้าที่ "เลือก" ตัวเลือกที่เหมาะสมที่สุดจากรายการด้านล่างนี้เท่านั้น:
                         
-                        - ad_pos_style: ["Vlog / UGC Review Style (เน้นความเรียลปังๆ)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)", "Cyberpunk Neon (นีออนล้ำสมัย)"]
-                        - ad_pos_color: ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "โทนแดง-ทอง ดุดันพรีเมียม (Red & Gold Premium)", "จัดจ้านตัดกัน (Vibrant Contrast)", "สว่างสดใสคลีนๆ (Clean & Bright)", "โทนดาร์กเท่ๆ (Dark Moody)"]
-                        - ad_pos_cam: ["ระดับสายตาเห็นคนและสินค้า (Eye-level portrait)", "ซูมใกล้เนื้ออาหาร/สินค้าฉ่ำๆ (Macro Close-up)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)"]
-                        - ad_pos_light: ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์Y2K (Hard Flash)", "นีออนสตรีทฟู้ดกลางคืน (Street Neon Light)", "Golden Hour (แสงเย็นอบอุ่น)"]
-                        - ad_pos_display: ["พรีเซนเตอร์ถือและยิ้มหวาน (Presenter holding and smiling)", "พรีเซนเตอร์ถือสินค้าข้างแก้ม (Hand holding near face)", "น้ำสาดกระจายความสดชื่น (Liquid Splash)", "ลอยอยู่กลางอากาศแบบมีมิติ (Floating)", "วัตถุดิบกระจายรอบๆ (Exploding Ingredients)"]
-                        - ad_pos_ad_comp: ["คนอยู่ซ้าย-ข้อความอยู่ขวา (Presenter Left, Text Right)", "สินค้าไซส์ยักษ์อลังการ (Oversized Product Focus)", "เลย์เอาต์แบ่งครึ่ง บน-ล่าง (Split Top-Bottom)", "กฎสามส่วน (Rule of Thirds)"]
-                        - ad_pos_graphics: ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)"]
-                        - ad_pos_bg: ["ฉากเบลอเน้นพรีเซนเตอร์ (Blurred Bokeh)", "ฉากครัว (Kitchen Area)", "สวนหลังบ้าน (Backyard Garden)", "ร้านสตรีทฟู้ด (Street Food Stall)", "สตูดิโอสีพื้น (Solid Studio Color)"]
-                        - ad_pos_typography: ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Minimalist Sans-serif)"]
-                        - ad_pos_typo_effect: ["ข้อความเรืองแสงมีขอบนีออน (Neon Glowing Text)", "ป้ายราคาห้อยเชือก/ป้ายแท็ก 3D (3D Hanging Price Tag)", "ข้อความตัวหนาซ้อนเลเยอร์ (Layered Bold)", "ไม่มีเอฟเฟกต์ (Clean)"]
-                        - ad_pos_badge_style: ["ป้าย 3D เด้งทะลุจอ (3D Pop-up Badge)", "ป้ายนีออนสว่างวาบ (Glowing Neon Sign)", "ป้ายวงกลมสไตล์มินิมอล (Minimalist Circle Sticker)", "ริบบิ้นพาดมุมภาพ (Corner Ribbon Tag)"]
-                        - ad_pos_trust: ["ป้ายรีวิว 5 ดาว (5-Star Rating)", "โลโก้แอปส้ม/แอปตะกร้าตะกร้าตะกร้า (E-com Platform โลโก้)", "ป้ายยอดขาย 100k+ (Top Seller Badge)", "ป้ายรับประกัน/โล่ทอง (Warranty Shield)", "ไม่ใส่ป้าย"]
-                        - ad_pos_text_pos: ["Safe Zone แนวตั้ง (9:16 หลบปุ่ม)", "บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)"]
-                        - ad_pos_main_headline: ["โปรโมชั่นพิเศษ/Sale", "Flash Sale สุดช็อก", "อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
-                        - ad_pos_sub_text: ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ราคาหลักสิบ", "คุ้มมากแม่!", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
-
-                        ⚠️ กฎการจัดรูปแบบ JSON (สำคัญมาก): ให้ตอบเป็น String ธรรมดาเท่านั้น ห้ามใส่เครื่องหมายก้ามปู [...] หรือลิสต์ครอบค่า Value เด็ดขาด 
+                        "ad_pos_style": ["Vlog / UGC Review Style (เน้นความเรียลปังๆ)", "Social Media Clickbait Ad (หน้าปกไวรัลดึงดูดตา)", "High-end E-commerce Catalog (หรูหราแคตตาล็อก)", "Hyper-Realistic 3D Render (3D สมจริง)", "Cyberpunk Neon (นีออนล้ำสมัย)"]
+                        "ad_pos_color": ["สดใสอมส้มกระตุ้นความหิว (Warm & Appetizing)", "โทนแดง-ทอง ดุดันพรีเมียม (Red & Gold Premium)", "จัดจ้านตัดกัน (Vibrant Contrast)", "สว่างสดใสคลีนๆ (Clean & Bright)", "โทนดาร์กเท่ๆ (Dark Moody)"]
+                        "ad_pos_cam": ["ระดับสายตาเห็นคนและสินค้า (Eye-level portrait)", "ซูมใกล้เนื้ออาหาร/สินค้าฉ่ำๆ (Macro Close-up)", "มุมมองแทนสายตาตอนกิน (First-Person POV)", "มุมสูงถ่ายเจาะเต็มโต๊ะ (Top-down Flat Lay)"]
+                        "ad_pos_light": ["แสงธรรมชาติริมหน้าต่าง (Soft Window Light)", "สาดแฟลชตรงๆ สไตล์Y2K (Hard Flash)", "นีออนสตรีทฟู้ดกลางคืน (Street Neon Light)", "Golden Hour (แสงเย็นอบอุ่น)"]
+                        "ad_pos_display": ["พรีเซนเตอร์ถือและยิ้มหวาน (Presenter holding and smiling)", "พรีเซนเตอร์ถือสินค้าข้างแก้ม (Hand holding near face)", "น้ำสาดกระจายความสดชื่น (Liquid Splash)", "ลอยอยู่กลางอากาศแบบมีมิติ (Floating)", "วัตถุดิบกระจายรอบๆ (Exploding Ingredients)"]
+                        "ad_pos_ad_comp": ["คนอยู่ซ้าย-ข้อความอยู่ขวา (Presenter Left, Text Right)", "สินค้าไซส์ยักษ์อลังการ (Oversized Product Focus)", "เลย์เอาต์แบ่งครึ่ง บน-ล่าง (Split Top-Bottom)", "กฎสามส่วน (Rule of Thirds)"]
+                        "ad_pos_graphics": ["ประกายแสงวิบวับและออร่า (Sparkles &Glowing Aura)", "สายฟ้าและพลังงาน (Lightning Energy FX)", "ลูกศรนีออนชี้ไปที่สินค้า (Glowing Arrow Pointer)", "เส้นสปีดไลน์พุ่งเข้าหาตรงกลาง (Action Speed Lines)"]
+                        "ad_pos_bg": ["ฉากเบลอเน้นพรีเซนเตอร์ (Blurred Bokeh)", "ฉากครัว (Kitchen Area)", "สวนหลังบ้าน (Backyard Garden)", "ร้านสตรีทฟู้ด (Street Food Stall)", "สตูดิโอสีพื้น (Solid Studio Color)"]
+                        "ad_pos_typography": ["ฟอนต์ตัวหนากระแทกตาแบบ Youtuber (Bold with Stroke)", "ฟอนต์ลายมือดูเป็นมิตร (Friendly Handwritten)", "ฟอนต์คาเฟ่มินิมอล (Minimalist Sans-serif)"]
+                        "ad_pos_typo_effect": ["ข้อความเรืองแสงมีขอบนีออน (Neon Glowing Text)", "ป้ายราคาห้อยเชือก/ป้ายแท็ก 3D (3D Hanging Price Tag)", "ข้อความตัวหนาซ้อนเลเยอร์ (Layered Bold)", "ไม่มีเอฟเฟกต์ (Clean)"]
+                        "ad_pos_badge_style": ["ป้าย 3D เด้งทะลุจอ (3D Pop-up Badge)", "ป้ายนีออนสว่างวาบ (Glowing Neon Sign)", "ป้ายวงกลมสไตล์มินิมอล (Minimalist Circle Sticker)", "ริบบิ้นพาดมุมภาพ (Corner Ribbon Tag)"]
+                        "ad_pos_trust": ["ป้ายรีวิว 5 ดาว (5-Star Rating)", "โลโก้แอปส้ม/แอปตะกร้าตะกร้าตะกร้า (E-com Platform โลโก้)", "ป้ายยอดขาย 100k+ (Top Seller Badge)", "ป้ายรับประกัน/โล่ทอง (Warranty Shield)", "ไม่ใส่ป้าย"]
+                        "ad_pos_text_pos": ["Safe Zone แนวตั้ง (9:16 หลบปุ่ม)", "บนซ้าย (Top-Left)", "บนขวา (Top-Right)", "พาดกลางภาพ (Center Bold)"]
+                        "ad_pos_main_headline": ["โปรโมชั่นพิเศษ/Sale", "Flash Sale สุดช็อก", "อร่อยแสงออกปาก!", "ร้านลับต้องลอง!", "ให้เยอะจนจุก!", "ชื่อสินค้าโดดๆ", "ไม่มีข้อความ"]
+                        "ad_pos_sub_text": ["ส่งฟรี!", "ซื้อ 1 แถม 1", "ราคาหลักสิบ", "คุ้มมากแม่!", "คิวยาวมาก", "รีวิว 5 ดาว", "ไม่มีข้อความ"]
 
                         ⚠️ กฎพิเศษในการตั้งค่า:
                         {ratio_constraint_pos}
 
-                        ตอบกลับมาเป็น JSON Format เท่านั้น โดยใช้ Key ตามลิสต์ด้านบนและ Value ตรงกับตัวเลือกเป๊ะๆ
+                        ⚠️ กฎเหล็กขั้นเด็ดขาด (CRITICAL JSON RULES):
+                        1. ห้ามแต่งคำตอบขึ้นมาเองเด็ดขาด! ต้องคัดลอกข้อความจากในวงเล็บก้ามปู [...] ที่ให้ไว้ในแต่ละหัวข้อมาตอบเท่านั้น
+                        2. ตอบกลับเป็น JSON Format ล้วนๆ ห้ามมีคำอธิบายอื่น 
+                        3. Value ต้องเป็น String ห้ามครอบด้วย List
                         """
                         prompt_contents.append(prompt_text)
                         
@@ -429,7 +424,6 @@ VFX: {st.session_state.get('ad_vfx')}
                             json_str = re.search(r'\{.*\}', res, re.DOTALL).group(0)
                             ai_config = json.loads(json_str)
                             
-                            # [PATCH] กรองข้อมูลให้สะอาดสำหรับ Poster ด้วย
                             for k, v in ai_config.items():
                                 if isinstance(v, list) and len(v) > 0: 
                                     v = str(v[0])
@@ -551,7 +545,7 @@ VFX: {st.session_state.get('ad_vfx')}
 # 🍰 โหมด 2: 🍰 รีวิวร้านตัวเอง (UGC Vlogger) 
 # =========================================================================================
 elif app_mode == "🍰 รีวิวร้านตัวเอง (UGC Vlogger)":
-    st.markdown('<div class="main-header">🍰 สตูดิเจ้าของร้านรีวิวเอง (UGC Vlogger)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">🍰 สตูดิโอเจ้าของร้านรีวิวเอง (UGC Vlogger)</div>', unsafe_allow_html=True)
     if 'ugc_prompt' not in st.session_state: st.session_state.ugc_prompt = ""
     if 'ugc_poster_prompt' not in st.session_state: st.session_state.ugc_poster_prompt = ""
     if 'ugc_poster_prompt_th' not in st.session_state: st.session_state.ugc_poster_prompt_th = ""
